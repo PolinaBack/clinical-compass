@@ -8,7 +8,7 @@ from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -353,6 +353,24 @@ def create_app(db_path=None):
                 (pid, last_id),
             )
         return back(pid)
+
+    def doctor_reference_access(request):
+        if identity(request) != "doctor":
+            raise HTTPException(403, "Справочник доступен демоврачу")
+
+    @app.get("/reference/aviandr")
+    def aviandr_reference(request: Request):
+        doctor_reference_access(request)
+        return render(request, "aviandr.html")
+
+    @app.get("/reference/aviandr/source")
+    def aviandr_source(request: Request):
+        doctor_reference_access(request)
+        return FileResponse(
+            ROOT / "references" / "aviandr_patient_leaflet.pdf",
+            media_type="application/pdf",
+            filename="aviandr_patient_leaflet.pdf",
+        )
 
     @app.get("/sources")
     def sources(request: Request):

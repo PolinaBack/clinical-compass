@@ -287,3 +287,39 @@ def test_acknowledgement_does_not_hide_unseen_events(client):
     assert rows[0]["body"] == "Unseen" and rows[0]["acknowledged"] == 0
     assert rows[1]["acknowledged"] == 1
     assert post(client, "/patients/1/acknowledge", last_id=999).status_code == 422
+
+
+@pytest.mark.parametrize(
+    "role,expected", [(None, 401), ("patient1", 403), ("patient2", 403)]
+)
+def test_aviandr_reference_restricted_to_doctor(client, role, expected):
+    if role:
+        login(client, role)
+    assert client.get("/reference/aviandr").status_code == expected
+    assert client.get("/reference/aviandr/source").status_code == expected
+
+
+def test_aviandr_reference_and_original_pdf(client):
+    login(client, "doctor")
+    response = client.get("/reference/aviandr")
+    assert response.status_code == 200
+    assert "Актуальность по ГРЛС не подтверждена" in response.text
+    assert "старше 18 лет" in response.text
+    assert "СКФ &lt;60 мл/мин" in response.text
+    assert "страница 4" in response.text
+    assert re.findall(r'<form[^>]+action="([^"]+)"', response.text) == ["/logout"]
+    pdf = client.get("/reference/aviandr/source")
+    assert pdf.status_code == 200
+    assert pdf.headers["content-type"] == "application/pdf"
+    assert pdf.content.startswith(b"%PDF")
+
+
+def test_aviandr_source_integrity():
+    import hashlib
+    from app.main import ROOT
+
+    content = (ROOT / "references" / "aviandr_patient_leaflet.pdf").read_bytes()
+    assert (
+        hashlib.sha256(content).hexdigest()
+        == "a6447914c7c5a56592c72949d4c91e04bb9d827582a03e36fb9a38ac8ff04fdc"
+    )
