@@ -1,1 +1,27 @@
-{% extends 'base.html' %}{% block content %}<section class="hero"><p class="eyebrow">НА СВЯЗИ МЕЖДУ ВИЗИТАМИ</p><h1>Состояние пациента.<br>В поле зрения врача.</h1><p>Самоотчёт, динамика и обратная связь в одном пространстве.</p></section><h2>Выберите демороль</h2><p>Это открытая демонстрация без паролей, а не авторизация для реальных пациентов.</p><div class="grid">{% for role,title,text in [('patient1','Пациент А','Заполнить дневник и отправить вопрос'),('patient2','Пациент Б','Проверить отдельный профиль'),('doctor','Лечащий врач','Посмотреть сообщения и принять решение')] %}<section class="card"><h2>{{ title }}</h2><p>{{ text }}</p><form action="/login" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="role" value="{{ role }}"><button>Открыть кабинет →</button></form></section>{% endfor %}</div>{% endblock %}
+{% extends 'base.html' %}
+{% block content %}
+    <section class="hero">
+        <p class="eyebrow">НА СВЯЗИ МЕЖДУ ВИЗИТАМИ</p>
+        <h1>
+            Состояние пациента.
+            <br>
+            В поле зрения врача.
+        </h1>
+        <p>Самоотчёт, динамика и обратная связь в одном пространстве.</p>
+    </section>
+    <h2>Выберите демороль</h2>
+    <p>Это открытая демонстрация без паролей, а не авторизация для реальных пациентов.</p>
+    <div class="grid">
+        {% for role,title,text in [('patient1','Пациент А','Заполнить дневник и отправить вопрос'),('patient2','Пациент Б','Проверить отдельный профиль'),('doctor','Лечащий врач','Посмотреть сообщения и принять решение')] %}
+            <section class="card">
+                <h2>{{ title }}</h2>
+                <p>{{ text }}</p>
+                <form action="/login" method="post">
+                    <input type="hidden" name="csrf" value="{{ csrf }}">
+                    <input type="hidden" name="role" value="{{ role }}">
+                    <button>Открыть кабинет →</button>
+                </form>
+            </section>
+        {% endfor %}
+    </div>
+{% endblock %}
