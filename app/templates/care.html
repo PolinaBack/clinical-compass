@@ -67,7 +67,7 @@
             </label>
             <label class="check">
                 <input type="checkbox" name="confirmed" value="true" required>
-                Подтверждаю решение как врач (демороль)
+                Подтверждаю решение как врач в учебном режиме
             </label>
             <button>Подтвердить и сохранить</button>
         </form>
@@ -76,7 +76,7 @@
     {% for d in decisions|reverse %}
         <article class="{{ 'critical' if d.category == 'required' else 'warning' if d.category == 'recommended' else 'message' }}"><strong>{{ {'required':'ОБЯЗАТЕЛЬНО: направление к психиатру','recommended':'ЖЕЛАТЕЛЬНО: направление к психиатру','plan':'План врача'}[d.category] }}</strong>
             <p>{{ d.body }}</p>
-            <small>{{ d.day }} · Подтверждено демоврачом · Основание: {{ d.source }}</small></article>
+            <small>{{ d.day }} · Подтверждено учётной записью врача · Основание: {{ d.source }}</small></article>
     {% else %}
         <p>Решений пока нет. Никакие клинические действия автоматически не выполняются.</p>
     {% endfor %}

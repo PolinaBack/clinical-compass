@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+    <a href="/assessments/{{ aid }}">← Исходные ответы</a>
+    <h1>Предыдущие версии ответов</h1>
+    <p>
+        Специалист не переписывает самоотчёт. При изменении пациентом старая версия остаётся в истории. Текущее значение — на странице анкеты.
+    </p>
+    <section class="card">
+        {% for row in changes %}
+            <article><strong>Вопрос {{ row.item }} · изменение {{ row.created_at }}</strong>
+                <p>
+                    Учётная запись: {{ row.account_id }} · предыдущее состояние: {{ row.previous.state }} · значение: {{ row.previous.value if row.previous.value is not none else 'отсутствует' }}
+                </p>
+                <p class="text">Комментарий: {{ row.previous.comment or '—' }}</p>
+            </article>
+        {% else %}
+            <p>Сохранённых изменений ответов пока нет.</p>
+        {% endfor %}
+    </section>
+{% endblock %}

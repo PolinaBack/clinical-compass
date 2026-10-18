@@ -21,6 +21,10 @@ def seed(path):
                     "relatives",
                     "risks",
                     "decisions",
+                    "assessments",
+                    "answers",
+                    "consents",
+                    "audio_notes",
                 ]
             ):
                 raise ValueError(

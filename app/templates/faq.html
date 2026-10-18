@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="page-intro">
+        <p class="eyebrow">МОЖНО СПРОСИТЬ</p>
+        <h1>
+            Сначала — доверие.
+            <br>
+            Потом — вопросы.
+        </h1>
+        <p class="lead">Читайте то, что важно именно вам. FAQ открыт без регистрации, согласия на анкеты и личной истории.</p>
+    </div>
+    <section class="faq-list">
+        {% for id,question,answer in faq_items %}
+            <details id="{{ id }}">
+                <summary>
+                    {{ question }}<span aria-hidden="true">+</span>
+                </summary>
+                <p>{{ answer }}</p>
+            </details>
+        {% endfor %}
+    </section>
+    <section class="support-banner">
+        <div>
+            <h2>Хотите задать личный вопрос?</h2>
+            <p>
+                Он будет связан с аккаунтом и доступен вашему специалисту. Это не анонимная очередь; настоящая служба ответа в прототипе не подключена.
+            </p>
+        </div>
+        <a class="button"
+           href="{{ '/me' if user and user != 'doctor' else '/login/patient' }}">{{ 'В мой кабинет' if user and user != 'doctor' else 'Войти как пациент' }} →</a>
+    </section>
+    <p class="caption">
+        Источник текстов: предоставленный FAQ.pdf, страницы 9–12 исходного ТЗ. Формулировки адаптированы под фактический локальный режим. При реальном внедрении нужна проверка специалистом. Чтение без аккаунта не означает отсутствия технических записей запросов.
+    </p>
+{% endblock %}

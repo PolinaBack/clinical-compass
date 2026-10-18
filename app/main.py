@@ -8,10 +8,16 @@ from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from .content import FAQ, RESOURCES
+from .security import verify_password
+from .storage import extend_schema, audit, now
+from .workflows import register_workflows, overview
 
 ROOT = Path(__file__).resolve().parent
 
@@ -51,9 +57,14 @@ def create_app(db_path=None):
             INSERT OR IGNORE INTO patients(id,name,doctor_id) VALUES(1, 'Демо-пациент А',1), (2, 'Демо-пациент Б',1);
             """
             )
+            extend_schema(c)
         yield
 
     app = FastAPI(title="Клинический компас — демо", lifespan=lifespan)
+    from .security import hash_password
+
+    app.state.dummy_hash = hash_password(secrets.token_urlsafe(24))
+    app.state.db_path = path
     app.add_middleware(
         SessionMiddleware,
         secret_key=secrets.token_hex(32),
@@ -63,24 +74,48 @@ def create_app(db_path=None):
     app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
     templates = Jinja2Templates(directory=ROOT / "templates")
 
+    def account(request):
+        uid = request.session.get("account_id")
+        with db() as c:
+            row = c.execute(
+                "SELECT * FROM accounts WHERE id=? AND active=1", (uid,)
+            ).fetchone()
+        if not row or row["auth_version"] != request.session.get("auth_version"):
+            raise HTTPException(401, "Сессия завершена. Войдите в свой кабинет.")
+        return row
+
     def identity(request):
-        user = request.session.get("user")
-        if user not in ["doctor", "patient1", "patient2"]:
-            raise HTTPException(401, "Выберите демороль на главной странице")
-        return user
+        user = account(request)
+        return "doctor" if user["role"] == "doctor" else f"patient{user['patient_id']}"
+
+    def has_consent(pid):
+        with db() as c:
+            row = c.execute(
+                "SELECT accepted,adult FROM consents WHERE patient_id=? ORDER BY id DESC LIMIT 1",
+                (pid,),
+            ).fetchone()
+        return bool(row and row["accepted"] and row["adult"])
 
     def access(request, pid, write_patient=False):
-        user = identity(request)
-        if (user != "doctor" and user != f"patient{pid}") or (
-            write_patient and user == "doctor"
-        ):
-            raise HTTPException(403, "Нет доступа")
+        user = account(request)
         with db() as c:
-            if not c.execute(
-                "SELECT id FROM patients WHERE id=? AND doctor_id=1", (pid,)
-            ).fetchone():
-                raise HTTPException(404, "Пациент не найден")
-        return user
+            p = c.execute(
+                "SELECT id,doctor_id FROM patients WHERE id=?", (pid,)
+            ).fetchone()
+            allowed = p and (
+                (user["role"] == "doctor" and p["doctor_id"] == user["doctor_id"])
+                or (user["role"] == "patient" and user["patient_id"] == pid)
+            )
+            if not allowed or (write_patient and user["role"] == "doctor"):
+                audit(c, user["id"], "access_denied", pid)
+        if not allowed or (write_patient and user["role"] == "doctor"):
+            raise HTTPException(403 if p else 404, "Нет доступа к этой карточке")
+        if write_patient and not has_consent(pid):
+            raise HTTPException(
+                403,
+                "Сначала ознакомьтесь с правилами и подтвердите участие в синтетической демонстрации.",
+            )
+        return "doctor" if user["role"] == "doctor" else f"patient{pid}"
 
     def csrf_check(request, token):
         if (
@@ -97,9 +132,39 @@ def create_app(db_path=None):
             context={
                 "user": request.session.get("user"),
                 "csrf": request.session["csrf"],
+                "session_pid": request.session.get("patient_id"),
+                "resources": RESOURCES,
+                "faq_items": FAQ,
+                "current_page": request.url.path,
                 **context,
             },
         )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_error(request, exc):
+        if request.url.path.startswith("/api/"):
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(
+                {"detail": str(exc.detail)}, status_code=exc.status_code
+            )
+        response = render(
+            request, "error.html", status=exc.status_code, detail=str(exc.detail)
+        )
+        response.status_code = exc.status_code
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request, exc):
+        response = render(
+            request,
+            "error.html",
+            status=422,
+            detail="Проверьте обязательные поля, форматы и допустимые значения. Данные не сохранены.",
+        )
+        response.status_code = 422
+        return response
 
     def back(pid):
         return RedirectResponse(f"/patients/{pid}", status_code=303)
@@ -108,16 +173,73 @@ def create_app(db_path=None):
     def home(request: Request):
         return render(request, "home.html")
 
+    @app.get("/login/{portal}")
+    def login_page(request: Request, portal: str):
+        if portal not in ["patient", "specialist"]:
+            raise HTTPException(404, "Страница не найдена")
+        if request.session.get("account_id"):
+            return render(request, "switch.html", portal=portal)
+        return render(request, "login.html", portal=portal, error=None)
+
     @app.post("/login")
-    def login(request: Request, role: str = Form(...), csrf: str = Form(...)):
+    def login(
+        request: Request,
+        username: str = Form(..., max_length=80),
+        password: str = Form(..., max_length=256),
+        portal: str = Form(...),
+        csrf: str = Form(...),
+    ):
         csrf_check(request, csrf)
-        if role not in ["doctor", "patient1", "patient2"]:
-            raise HTTPException(422, "Неизвестная роль")
-        request.session.clear()
-        request.session.update(user=role, csrf=secrets.token_urlsafe(24))
-        return RedirectResponse(
-            "/doctor" if role == "doctor" else f"/patients/{role[-1]}", status_code=303
+        if request.session.get("account_id"):
+            raise HTTPException(409, "Сначала выйдите из текущего кабинета")
+        expected = (
+            "doctor"
+            if portal == "specialist"
+            else "patient" if portal == "patient" else None
         )
+        with db() as c:
+            user = c.execute(
+                "SELECT * FROM accounts WHERE username=? AND active=1",
+                (username.strip(),),
+            ).fetchone()
+            valid = (
+                verify_password(password, user["password_hash"])
+                if user
+                else verify_password(password, app.state.dummy_hash)
+            )
+            if not user or not valid or user["role"] != expected:
+                audit(c, None, "login_failed")
+                return templates.TemplateResponse(
+                    request=request,
+                    name="login.html",
+                    context={
+                        "portal": portal,
+                        "error": "Неверные данные или другой тип кабинета",
+                        "csrf": request.session.get("csrf"),
+                        "user": None,
+                    },
+                    status_code=401,
+                )
+            audit(c, user["id"], "login")
+        request.session.clear()
+        role = "doctor" if user["role"] == "doctor" else f"patient{user['patient_id']}"
+        request.session.update(
+            account_id=user["id"],
+            auth_version=user["auth_version"],
+            user=role,
+            patient_id=user["patient_id"],
+            csrf=secrets.token_urlsafe(24),
+        )
+        return RedirectResponse(
+            "/doctor" if role == "doctor" else "/me", status_code=303
+        )
+
+    @app.get("/me")
+    def me(request: Request):
+        user = account(request)
+        if user["role"] != "patient":
+            raise HTTPException(403, "Эта страница только для пациента")
+        return RedirectResponse(f"/patients/{user['patient_id']}", status_code=303)
 
     @app.post("/logout")
     def logout(request: Request, csrf: str = Form(...)):
@@ -131,7 +253,8 @@ def create_app(db_path=None):
             raise HTTPException(403, "Только для врача")
         with db() as c:
             patients = c.execute(
-                """SELECT p.*, (SELECT count(*) FROM diary d WHERE d.patient_id=p.id AND (d.adherence='missed' OR d.contact=1)) alerts FROM patients p WHERE p.doctor_id=1"""
+                """SELECT p.*, (SELECT count(*) FROM diary d WHERE d.patient_id=p.id AND (d.adherence='missed' OR d.contact=1)) alerts FROM patients p WHERE p.doctor_id=?""",
+                (account(request)["doctor_id"],),
             ).fetchall()
         return render(request, "doctor.html", patients=patients)
 
@@ -140,6 +263,7 @@ def create_app(db_path=None):
         access(request, pid)
         with db() as c:
             p = c.execute("SELECT * FROM patients WHERE id=?", (pid,)).fetchone()
+            audit(c, account(request)["id"], "patient_view", pid)
             data = {
                 table: [
                     dict(r)
@@ -163,10 +287,16 @@ def create_app(db_path=None):
         )
         return render(
             request,
-            "patient.html",
+            (
+                "specialist_patient.html"
+                if identity(request) == "doctor"
+                else "patient.html"
+            ),
             patient=p,
             today=date.today().isoformat(),
             points=points,
+            consent=has_consent(pid),
+            assessment_data=overview(db, pid),
             **data,
         )
 
@@ -219,6 +349,8 @@ def create_app(db_path=None):
         body: str = Form(..., min_length=1, max_length=3000),
     ):
         user = access(request, pid)
+        if user != "doctor" and not has_consent(pid):
+            raise HTTPException(403, "Нужно согласие на демонстрацию")
         csrf_check(request, csrf)
         if not body.strip():
             raise HTTPException(422, "Введите сообщение")
@@ -329,7 +461,8 @@ def create_app(db_path=None):
                 CASE WHEN r.id <= COALESCE(a.risk_id,0) THEN 1 ELSE 0 END acknowledged
                 FROM risks r JOIN patients p ON p.id=r.patient_id
                 LEFT JOIN acknowledgements a ON a.patient_id=r.patient_id
-                WHERE p.doctor_id=1 ORDER BY r.urgent DESC,r.id DESC"""
+                WHERE p.doctor_id=? ORDER BY r.urgent DESC,r.id DESC""",
+                (account(request)["doctor_id"],),
             ).fetchall()
         return {"alerts": [dict(row) for row in rows]}
 
@@ -376,6 +509,9 @@ def create_app(db_path=None):
     def sources(request: Request):
         return render(request, "sources.html")
 
+    register_workflows(
+        app, db, account, identity, access, csrf_check, render, has_consent
+    )
     return app
 
 

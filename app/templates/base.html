@@ -2,29 +2,66 @@
 <html lang="ru">
     <head>
         <meta charset="utf-8">
+        <meta name="csrf-token" content="{{ csrf }}">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>Клинический компас</title>
+        <title>
+            {% block title %}Клинический компас{% endblock %}
+        </title>
         <link rel="stylesheet" href="/static/style.css">
-        <script src="/static/app.js" defer></script>
+        <script src="/static/app.js" defer></script><script src="/static/workflows.js" defer></script>
     </head>
-    <body>
-        <header>
-            <a class="brand" href="/">✳ Клинический компас</a><span>Учебный MVP · только синтетические данные</span>
-            {% if user %}
-                <form action="/logout" method="post">
-                    <input type="hidden" name="csrf" value="{{ csrf }}">
-                    <button class="secondary">Сменить демороль</button>
-                </form>
-            {% endif %}
-        </header>
-        <main>
-            <div class="notice">
-                Демонстрационный инструмент. Не ставит диагнозы и не назначает лечение. Не используйте реальные персональные или медицинские данные. Сообщения не являются каналом экстренной помощи.
+    <body class="{{ 'specialist-space' if user == 'doctor' else 'patient-space' }}">
+        <a class="skip-link" href="#main">К содержанию</a>
+        <header class="site-header">
+            <div class="header-inner">
+                <a class="brand" href="/"><span class="brand-symbol" aria-hidden="true">
+                    <svg viewBox="0 0 64 64" aria-hidden="true">
+                        <path d="M32 8V56M8 32H56M15 15L49 49M49 15L15 49" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+                    </svg>
+                </span><span>клинический
+                <br>
+                <b>компас</b></span></a>
+            <nav class="header-nav" aria-label="Основная навигация">
+                {% if user == 'doctor' %}
+                    <a href="/doctor">Мои пациенты</a><a href="/clinical-tools">Инструменты</a><a href="/reference/aviandr">Справочник</a>
+                {% elif user %}
+                    <a href="/me">Мой кабинет</a><a href="/patients/{{ session_pid }}/results">Моя динамика</a><a href="/faq">Вопросы и ответы</a>
+                {% else %}
+                    <a href="/#how">Как это работает</a><a href="/faq">Вопросы и ответы</a><a href="/#resources">Полезные материалы</a>
+                {% endif %}
+            </nav>
+            <div class="header-actions">
+                <a class="help-link" href="/help-now">Мне нужна помощь сейчас →</a>
+                {% if user %}
+                    <span class="role-badge">{{ 'Специалист' if user == 'doctor' else 'Пациент' }}</span>
+                    <form action="/logout" method="post">
+                        <input type="hidden" name="csrf" value="{{ csrf }}">
+                        <button class="text-button">Выйти</button>
+                    </form>
+                {% else %}
+                    <a class="button small" href="/login/patient">Войти</a>
+                {% endif %}
             </div>
-            {% block content %}{% endblock %}
-        </main>
-        <footer>
-            Локальный прототип для кейс-чемпионата · Решения о лечении принимает врач
-        </footer>
-    </body>
+        </div>
+    </header>
+    <main id="main">
+        <div class="demo-line">
+            <span class="status-dot"></span> Исследовательский прототип · 18+ · только синтетические данные · служба помощи не подключена
+        </div>
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="site-footer">
+        <a class="brand" href="/">✳ Клинический компас</a>
+        <p>
+            Помогаем подготовиться к разговору.
+            <br>
+            Диагноз и лечение определяет специалист.
+        </p>
+        <div>
+            <a href="/privacy">Конфиденциальность</a><a href="/sources">Источники и ограничения</a><a href="/faq">FAQ</a>
+        </div>
+        <small>Локальный учебный проект. Не вводите реальные медицинские данные.</small>
+    </footer>
+    <p id="voice-status" role="status"></p>
+</body>
 </html>

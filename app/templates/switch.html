@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+    <section class="card narrow">
+        <h1>Вы уже в своём кабинете</h1>
+        <p>
+            Сейчас открыта роль «{{ 'Специалист' if user == 'doctor' else 'Пациент' }}». Для другого аккаунта сначала завершите эту сессию, затем войдите с его логином и паролем.
+        </p>
+        <a class="button" href="{{ '/doctor' if user == 'doctor' else '/me' }}">Вернуться в кабинет</a>
+        <form action="/logout" method="post">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button class="secondary">Выйти и выбрать другой кабинет</button>
+        </form>
+        <p class="caption">Для параллельной демонстрации используйте отдельное окно браузера в режиме инкогнито.</p>
+    </section>
+{% endblock %}

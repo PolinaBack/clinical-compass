@@ -6,20 +6,7 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 
 
-def token(client, path="/"):
-    page = client.get(path)
-    assert page.status_code == 200
-    return re.search(r'name="csrf" value="([^"]+)"', page.text).group(1)
-
-
-def login(client, role):
-    response = client.post("/login", data={"role": role, "csrf": token(client)})
-    assert response.status_code == 200
-
-
-def post(client, endpoint, **data):
-    data.setdefault("csrf", token(client, "/patients/1"))
-    return client.post(endpoint, data=data)
+from tests.helpers import token, login, post, TEST_PASSWORD
 
 
 @pytest.fixture
@@ -142,7 +129,16 @@ def test_role_and_patient_isolation(client):
 def test_csrf_and_session_rotation(client):
     old = token(client)
     assert (
-        client.post("/login", data={"role": "doctor", "csrf": "bad"}).status_code == 403
+        client.post(
+            "/login",
+            data={
+                "username": "doctor",
+                "password": TEST_PASSWORD,
+                "portal": "specialist",
+                "csrf": "bad",
+            },
+        ).status_code
+        == 403
     )
     login(client, "patient1")
     assert post(client, "/patients/1/messages", csrf=old, body="bad").status_code == 403

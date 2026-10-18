@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+    <section class="login-layout">
+        <div>
+            <p class="eyebrow">{{ 'ПРОСТРАНСТВО СПЕЦИАЛИСТА' if portal == 'specialist' else 'ВАШЕ ЛИЧНОЕ ПРОСТРАНСТВО' }}</p>
+            <h1>{{ 'Внимание к каждому пациенту.' if portal == 'specialist' else 'Хорошо, что вы здесь.' }}</h1>
+            <p class="lead">
+                {{ 'Сводка, назначения и исходные ответы — только по вашим пациентам.' if portal == 'specialist' else 'Дневник, назначенные анкеты и связь со своим специалистом.' }}
+            </p>
+            <a href="/">← Вернуться к выбору кабинета</a>
+        </div>
+        <section class="card login-card">
+            <span class="role-badge">{{ 'Вход для специалиста' if portal == 'specialist' else 'Вход для пациента' }}</span>
+            <h2>Войти в кабинет</h2>
+            {% if error %}<div class="warning" role="alert">{{ error }}</div>{% endif %}
+            <form method="post" action="/login">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <input type="hidden" name="portal" value="{{ portal }}">
+                <label>
+                    Логин
+                    <input name="username" autocomplete="username" maxlength="80" required>
+                </label>
+                <label>
+                    Пароль
+                    <input name="password"
+                           type="password"
+                           autocomplete="current-password"
+                           maxlength="256"
+                           required>
+                </label>
+                <button class="full">Войти {{ 'как специалист' if portal == 'specialist' else 'как пациент' }} →</button>
+            </form>
+            <p class="caption">
+                Локальные аккаунты создаются владельцем проекта. Если их ещё нет, выполните команду настройки из README. Общего демопароля нет.
+            </p>
+            <p class="caption">Права определяет учётная запись. Выбор этой страницы не меняет вашу роль.</p>
+        </section>
+    </section>
+{% endblock %}

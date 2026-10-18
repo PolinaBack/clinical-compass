@@ -1,185 +1,79 @@
 {% extends 'base.html' %}
 {% block content %}
-    <p class="eyebrow">{{ 'КАРТОЧКА ПАЦИЕНТА' if user == 'doctor' else 'ЛИЧНЫЙ КАБИНЕТ' }}</p>
-    <h1>{{ patient.name }}</h1>
-    <p>
-        Синтетический профиль · Ведущий врач: Демо-врач
-        {% if user == 'doctor' %}· <a href="/doctor">Все пациенты</a>{% endif %}
-    </p>
-    <nav>
-        <a href="#diary">Дневник</a><a href="#screening">Скрининг</a><a href="#care">Риски и решения</a><a href="#messages">Связь с врачом</a><a href="#family">Генограмма</a>
-    </nav>
-    <section class="card">
-        <h2>Динамика самочувствия</h2>
-        <p>
-            Субъективная оценка: 0 — очень плохо, 10 — очень хорошо. Точки расположены по дате записи, расстояние между ними не отражает календарные интервалы.
-        </p>
-        {% if diary %}
-            <svg viewBox="0 0 600 200"
-                 role="img"
-                 aria-label="График самочувствия от 0 до 10">
-                <text x="0" y="35">10</text><text x="0" y="175">0</text>
-                <path d="M25 25V175H580" fill="none" stroke="#c6d6d4" />
-                <polyline points="{{ points }}" fill="none" stroke="#15766d" stroke-width="3" />
-                {% for point in points.split() %}
-                    <circle cx="{{ point.split(',')[0] }}" cy="{{ point.split(',')[1] }}" r="4" fill="#15766d" />
-                {% endfor %}
-            </svg>
-        {% else %}
-            <p class="empty">Первая запись появится здесь после заполнения дневника.</p>
-        {% endif %}
-    </section>
-    <div class="grid two">
-        <section class="card" id="diary">
-            <h2>Клинический дневник</h2>
-            {% if user != 'doctor' %}
-                <form method="post" action="/patients/{{ patient.id }}/diary">
-                    <input type="hidden" name="csrf" value="{{ csrf }}">
-                    <label>
-                        Дата
-                        <input type="date" name="day" value="{{ today }}" max="{{ today }}" required>
-                    </label>
-                    <label>
-                        Самочувствие, 0–10
-                        <input type="number" name="wellbeing" min="0" max="10" value="5" required>
-                    </label>
-                    <label>
-                        Продолжительность сна, часы
-                        <input type="number"
-                               name="sleep"
-                               min="0"
-                               max="24"
-                               step="0.5"
-                               value="8"
-                               required>
-                    </label>
-                    <label>
-                        Выполнение назначения врача
-                        <select name="adherence">
-                            <option value="none">Нет назначения / не применимо</option>
-                            <option value="taken">Выполнено</option>
-                            <option value="missed">Был пропуск</option>
-                        </select>
-                    </label>
-                    <label>
-                        Заметка<textarea id="diary-note" name="note" maxlength="3000"></textarea>
-                    </label>
-                    <button type="button" class="secondary voice" data-target="diary-note">🎙 Голосовой ввод</button>
-                    <label class="check">
-                        <input type="checkbox" name="contact" value="true">
-                        Прошу врача связаться со мной
-                    </label>
-                    <button>Сохранить запись</button>
-                </form>
-            {% endif %}
-            {% for row in diary|reverse %}
-                <article><strong>{{ row.day }} · {{ row.wellbeing }}/10</strong>
-                    <p>
-                        Сон: {{ row.sleep }} ч · {{ {'none':'Не применимо','taken':'Назначение выполнено','missed':'Сообщён пропуск'}[row.adherence] }}
-                    </p>
-                    {% if row.contact or row.adherence == 'missed' %}
-                        <p class="warning">
-                            Внимание врачу: {{ 'запрос связи' if row.contact else '' }} {{ '· пропуск назначения' if row.adherence == 'missed' else '' }}
-                        </p>
-                    {% endif %}
-                    <p class="text">{{ row.note }}</p>
-                </article>
-            {% else %}
-                <p>Записей пока нет.</p>
-            {% endfor %}
-        </section>
-        <section class="card" id="screening">
-            <h2>Первичный самоотчёт</h2>
-            <div class="notice">
-                Демонстрационная анкета, не валидированная диагностическая шкала. Баллы не интерпретируются и не определяют направление к специалисту.
-            </div>
-            {% if user != 'doctor' %}
-                <form method="post" action="/patients/{{ patient.id }}/screening">
-                    <input type="hidden" name="csrf" value="{{ csrf }}">
-                    <label>
-                        Субъективное напряжение сейчас, 0–10
-                        <input name="tension" type="number" min="0" max="10" required>
-                    </label>
-                    <label>
-                        Субъективные трудности повседневной деятельности, 0–10
-                        <input name="difficulty" type="number" min="0" max="10" required>
-                    </label>
-                    <label>
-                        Что хотите обсудить?<textarea name="note" maxlength="3000"></textarea>
-                    </label>
-                    <button>Отправить врачу</button>
-                </form>
-            {% endif %}
-            {% for s in screenings|reverse %}
-                <article><strong>{{ s.day }}</strong>
-                    <p>Напряжение: {{ s.tension }}/10 · Трудности: {{ s.difficulty }}/10</p>
-                    <p>{{ s.note }}</p>
-                </article>
-            {% else %}
-                <p>Анкет пока нет.</p>
-            {% endfor %}
-        </section>
+    <div class="dashboard-intro">
+        <div>
+            <p class="eyebrow">МОЙ КАБИНЕТ · ПАЦИЕНТ</p>
+            <h1>
+                Рады вас видеть,
+                <br>
+                <em>{{ patient.name }}.</em>
+            </h1>
+            <p class="muted">Можно двигаться постепенно. Сначала — то, что важно вам.</p>
+        </div>
+        <div class="privacy-pill">
+            ♧ Ответы доступны вам
+            <br>
+            и назначенному специалисту
+        </div>
     </div>
-    {% include 'care.html' %}
-    <section class="card" id="messages">
-        <h2>Связь с {{ 'пациентом' if user == 'doctor' else 'врачом' }}</h2>
-        {% for m in messages %}
-            <article class="message"><strong>{{ m.author }} · {{ m.day }}</strong>
-                <p class="text">{{ m.body }}</p>
-            </article>
-        {% else %}
-            <p>Сообщений пока нет. Задайте вопрос или оставьте рекомендацию.</p>
-        {% endfor %}
-        <form action="/patients/{{ patient.id }}/messages" method="post">
-            <input type="hidden" name="csrf" value="{{ csrf }}">
-            <label>
-                {{ 'Рекомендация / ответ врача' if user == 'doctor' else 'Вопрос врачу' }}<textarea id="message-text" name="body" maxlength="3000" required></textarea>
-            </label>
-            <button type="button" class="secondary voice" data-target="message-text">🎙 Голосовой ввод</button>
-            <button>Отправить</button>
-        </form>
-    </section>
-    <section class="card" id="family">
-        <h2>Генограмма — семейная схема</h2>
-        <p>
-            Имена вымышленные. Стрелка обозначает связь родитель → ребёнок. Это упрощённая схема, без расчёта медицинских рисков и стандартных клинических обозначений.
-        </p>
-        <div id="genogram" data-family='{{ relatives|tojson }}'></div>
-        <ul>
-            {% for r in relatives %}
-                <li>
-                    {{ r.name }} · {{ {'self':'Сам пациент','mother':'Мать','father':'Отец','sibling':'Брат/сестра','child':'Ребёнок','other':'Другой родственник'}[r.relation] }}
-                    {% if r.parent_id %}· родитель №{{ r.parent_id }}{% endif %}
-                </li>
-            {% else %}
-                <li>Добавьте участников семьи.</li>
-            {% endfor %}
-        </ul>
-        {% if user != 'doctor' %}
-            <form action="/patients/{{ patient.id }}/relatives" method="post">
-                <input type="hidden" name="csrf" value="{{ csrf }}">
-                <label>
-                    Вымышленное имя
-                    <input name="name" maxlength="80" required>
-                </label>
-                <label>
-                    Отношение к пациенту
-                    <select name="relation">
-                        {% for key,label in [('self','Сам пациент'),('mother','Мать'),('father','Отец'),('sibling','Брат/сестра'),('child','Ребёнок'),('other','Другой родственник')] %}
-                            <option value="{{ key }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label>
-                    Родитель этого участника
-                    <select name="parent_id">
-                        <option value="">Не указан</option>
-                        {% for r in relatives %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}
-                    </select>
-                </label>
-                <button>Добавить участника</button>
-            </form>
-        {% endif %}
-    </section>
-    <p id="voice-status" role="status"></p>
+    <nav class="tab-nav" aria-label="Разделы кабинета пациента">
+        <a href="#assessments">Мои анкеты</a><a href="#diary">Дневник</a><a href="/patients/{{ patient.id }}/results">Динамика</a><a href="#messages">Мой специалист</a><a href="#family">Семейная схема</a>
+    </nav>
+    {% if not consent %}
+        <section class="onboarding-banner">
+            <div>
+                <p class="eyebrow">ПЕРВЫЙ ШАГ</p>
+                <h2>Заранее знать, что будет с ответами</h2>
+                <p>Ознакомьтесь с правилами и подтвердите участие в синтетической демонстрации. FAQ и помощь доступны и без этого.</p>
+            </div>
+            <a class="button" href="/consent">Посмотреть условия →</a>
+        </section>
+    {% endif %}
+    <div class="dashboard-grid">
+        <div>
+            {% include 'assessment_list.html' %}
+            {% if consent %}
+                {% include 'diary_block.html' %}
+            {% endif %}
+        </div>
+        <aside>
+            <section class="card soft-card">
+                <span class="icon-tile lavender">✦</span>
+                <h2>Ваш следующий шаг</h2>
+                <p>
+                    {{ 'Можно начать короткую анкету, сохранить запись в дневник или задать вопрос.' if consent else 'Начните с FAQ или знакомства с правилами. Торопиться не нужно.' }}
+                </p>
+                <a href="/faq">Открыть вопросы и ответы →</a>
+            </section>
+            <section class="card">
+                <h3>«! Обсудить» — это тема для беседы</h3>
+                <p>
+                    Можно отметить конкретный ответ. Специалист увидит исходный текст и ваш комментарий. Эта отметка не означает срочный сигнал.
+                </p>
+                <a href="/help-now">Когда помощь нужна сейчас →</a>
+            </section>
+        </aside>
+    </div>
+    {% include 'safety_block.html' %}
+    {% if consent %}
+        <details class="section-fold">
+            <summary>Самочувствие, события и решения специалиста</summary>
+            {% include 'care.html' %}
+        </details>
+        {% include 'messages_block.html' %}
+        <details class="section-fold">
+            <summary>Семейная схема · генограмма</summary>
+            {% include 'family_block.html' %}
+        </details>
+    {% endif %}
+    {% if screenings %}
+        <details class="section-fold">
+            <summary>Предыдущие демонстрационные самоотчёты</summary>
+            {% for s in screenings %}<p>{{ s.day }} · {{ s.note }}</p>{% endfor %}
+        </details>
+    {% endif %}
+    {% include 'resources.html' %}
+    <p class="caption">
+        <a href="/consent">Управлять участием в демонстрации</a>
+    </p>
 {% endblock %}

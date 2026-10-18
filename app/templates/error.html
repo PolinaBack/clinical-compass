@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+    <section class="card narrow">
+        <p class="eyebrow">{{ status }}</p>
+        <h1>{{ 'Нужно войти в свой кабинет' if status == 401 else 'Действие не выполнено' }}</h1>
+        <p role="alert">{{ detail }}</p>
+        <p>Не показываем успешное сохранение, если операция не завершилась.</p>
+        <a class="button" href="/">На главную</a><a class="button secondary" href="/faq">Читать FAQ</a>
+    </section>
+{% endblock %}
