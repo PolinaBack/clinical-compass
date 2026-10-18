@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
     <div class="page-intro">
-        <a href="/patients/{{ pid }}">← {{ 'Карточка пациента' if user == 'doctor' else 'Мой кабинет' }}</a>
+        <a href="/patients/{{ pid }}">{{ 'Карточка пациента' if user == 'doctor' else 'Мой кабинет' }}</a>
         <p class="eyebrow">СРАВНИВАТЬ СОПОСТАВИМОЕ</p>
         <h1>Динамика по отдельным шкалам</h1>
         <p class="lead">
@@ -61,7 +61,7 @@
                                 {% if a.category %}<small>{{ a.category }} · не диагноз</small>{% endif %}
                             </td>
                             <td>
-                                <a href="/assessments/{{ a.id }}">Открыть →</a>
+                                <a href="/assessments/{{ a.id }}">Открыть</a>
                             </td>
                         </tr>
                     {% else %}

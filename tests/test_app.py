@@ -267,8 +267,8 @@ def test_persistence_after_restart(tmp_path):
         assert "Survives restart" in second.get("/patients/1").text
 
 
-def test_public_sources_and_static_files(client):
-    assert client.get("/sources").status_code == 200
+def test_removed_sources_page_and_static_files(client):
+    assert client.get("/sources").status_code == 404
     assert client.get("/static/app.js").status_code == 200
     assert client.get("/static/style.css").status_code == 200
 

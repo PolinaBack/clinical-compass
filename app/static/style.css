@@ -553,7 +553,7 @@ button.small {
   padding: 26px;
   transition: transform 0.2s;
 }
-.resource-card:hover {
+a.resource-card:hover {
   transform: translateY(-3px);
   color: var(--ink);
 }
@@ -563,9 +563,6 @@ button.small {
   font-size: 11px;
   color: #7a6a8c;
   margin-bottom: 34px;
-}
-.resource-number span {
-  font-size: 20px;
 }
 .resource-card h3 {
   font-family: Georgia, serif;
@@ -1636,4 +1633,23 @@ li {
 }
 .floating-star {
   line-height: 1;
+}
+
+.carousel-controls .circle-button {
+  width: auto;
+  min-width: 72px;
+  border-radius: 999px;
+  padding: 0 14px;
+  font-size: 12px;
+}
+
+@media (max-width: 540px) {
+  .resources-section .section-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .resources-section .carousel-controls {
+    justify-content: flex-end;
+  }
 }

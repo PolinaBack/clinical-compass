@@ -4,7 +4,7 @@
             <p class="eyebrow">БЕЗОПАСНОСТЬ — ОТДЕЛЬНО</p>
             <h2>{{ 'События и реагирование' if user == 'doctor' else 'Если важно поговорить сейчас' }}</h2>
         </div>
-        <a class="help-link" href="/help-now">Мне нужна помощь сейчас →</a>
+        <a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>
     </div>
     <p>
         Официальная выбранная русская форма C-SSRS ещё не предоставлена. Оценка по ней не проводилась; отсутствие формы или сигнала не означает «риска нет».
@@ -12,7 +12,7 @@
     {% for event in assessment_data.events %}
         <article class="critical"><strong>Нужно клиническое уточнение</strong>
             <p>
-                Сохранён ответ &gt;0 на пункт 9 PHQ-9. Основание не зависит от общей суммы симптомов. <a href="/assessments/{{ event.assessment_id }}">Исходный ответ →</a>
+                Сохранён ответ &gt;0 на пункт 9 PHQ-9. Основание не зависит от общей суммы симптомов. <a href="/assessments/{{ event.assessment_id }}">Исходный ответ</a>
             </p>
             <p class="caption">
                 Создано: {{ event.created_at }}

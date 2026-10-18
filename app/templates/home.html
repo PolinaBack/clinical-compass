@@ -21,12 +21,11 @@
             </p>
             <div class="hero-buttons">
                 {% if user %}
-                    <a class="button" href="{{ '/doctor' if user == 'doctor' else '/me' }}">В мой кабинет →</a>
+                    <a class="button" href="{{ '/doctor' if user == 'doctor' else '/me' }}">В мой кабинет</a>
                 {% else %}
-                    <a class="button" href="/login/patient">Я пациент →</a><a class="button secondary" href="/login/specialist">Я специалист</a>
+                    <a class="button" href="/login/patient">Я пациент</a><a class="button secondary" href="/login/specialist">Я специалист</a>
                 {% endif %}
             </div>
-            <p class="caption">Можно начать с FAQ. Читать всё и сразу не нужно.</p>
         </div>
         <div class="hero-visual"
              aria-label="Дневник, анкеты и поддержка специалиста">
@@ -74,11 +73,6 @@
                     к поддержке между встречами
                 </h2>
             </div>
-            <p class="muted">
-                Пациент и специалист работают
-                <br>
-                в отдельных кабинетах.
-            </p>
         </div>
         <div class="steps-grid">
             {% for n,title,text in [('01','Познакомьтесь','Узнайте, кто увидит ответы, и выберите, готовы ли вы начать.'),('02','Расскажите о себе','Заполняйте анкеты в своём темпе. Можно сделать паузу и добавить пояснение.'),('03','Обсудите со специалистом','Назначенные формы, ваши вопросы и следующий шаг — в одном месте.')] %}
@@ -96,6 +90,6 @@
             <h2>Трудно сделать первый шаг?</h2>
             <p>Посмотрите ответы на вопросы о доверии, лечении и конфиденциальности.</p>
         </div>
-        <a class="button secondary" href="/faq">Открыть FAQ →</a>
+        <a class="button secondary" href="/faq">Открыть FAQ</a>
     </section>
 {% endblock %}

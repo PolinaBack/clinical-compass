@@ -2,7 +2,7 @@
 {% block title %}{{ definition.name }} · Клинический компас{% endblock %}
 {% block content %}
     <div class="assessment-intro">
-        <a href="/patients/{{ assessment.patient_id }}#assessments">← {{ 'Карточка пациента' if user == 'doctor' else 'Мои анкеты' }}</a>
+        <a href="/patients/{{ assessment.patient_id }}#assessments"> {{ 'Карточка пациента' if user == 'doctor' else 'Мои анкеты' }}</a>
         <p class="eyebrow">{{ 'ИСХОДНЫЙ САМООТЧЁТ · СПЕЦИАЛИСТ' if user == 'doctor' else 'В ВАШЕМ ТЕМПЕ' }}</p>
         <h1>{{ definition.name }}</h1>
         <span class="badge">{{ {'draft':'Черновик','incomplete':'Не завершено','completed':'Отправлено'}[assessment.status] }}</span>
@@ -17,7 +17,7 @@
             Версия: {{ assessment.version }} · {{ 'Период состояний подъёма: по инструкции каждого вопроса' if assessment.scale == 'hcl33' else 'Период: ' ~ assessment.period_start ~ ' — ' ~ assessment.period_end }} · {{ result.answered }}/{{ result.count }} стандартных ответов
         </p>
         <div class="notice">
-            Исследовательская цифровая копия предоставленного текста. {{ definition.validation }} Диагноз и план помощи определяет специалист. <a href="/sources">Источники и ограничения</a>.
+            Исследовательская цифровая копия предоставленного текста. {{ definition.validation }} Диагноз и план помощи определяет специалист.
         </div>
     </div>
     {% if request.query_params.get('saved') %}
@@ -117,7 +117,7 @@
                 </p>
                 <div>
                     <button name="intent" value="draft" class="secondary">Сохранить и сделать паузу</button>
-                    <button name="intent" value="submit">Завершить и отправить →</button>
+                    <button name="intent" value="submit">Завершить и отправить</button>
                 </div>
                 <a href="/help-now">Мне нужна помощь сейчас</a>
             </div>
@@ -263,6 +263,6 @@
     Источник формы: {{ definition.source }}. При изменении ответа прежняя версия остаётся в истории; специалист не редактирует исходный самоотчёт.
 </p>
 <p>
-    <a href="/assessments/{{ assessment.id }}/history">История изменений ответов →</a>
+    <a href="/assessments/{{ assessment.id }}/history">История изменений ответов</a>
 </p>
 {% endblock %}

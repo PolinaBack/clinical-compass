@@ -505,10 +505,6 @@ def create_app(db_path=None):
             filename="aviandr_patient_leaflet.pdf",
         )
 
-    @app.get("/sources")
-    def sources(request: Request):
-        return render(request, "sources.html")
-
     register_workflows(
         app, db, account, identity, access, csrf_check, render, has_consent
     )

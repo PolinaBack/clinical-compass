@@ -10,7 +10,7 @@
             </h1>
             <p class="muted">Только пациенты, закреплённые за вашей учётной записью.</p>
         </div>
-        <a class="button secondary" href="/clinical-tools">Клинические инструменты →</a>
+        <a class="button secondary" href="/clinical-tools">Клинические инструменты</a>
     </div>
     <section class="card safety-card">
         <div class="section-heading">
@@ -42,7 +42,7 @@
                 <p class="{{ 'warning' if p.alerts else 'quiet-panel' }}">
                     {{ p.alerts }} записей с пропуском назначения или запросом связи
                 </p>
-                <a class="button full" href="/patients/{{ p.id }}">Карточка пациента →</a>
+                <a class="button full" href="/patients/{{ p.id }}">Карточка пациента</a>
             </section>
         {% else %}
             <section class="card">

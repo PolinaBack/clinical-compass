@@ -7,7 +7,7 @@
             <p class="lead">
                 {{ 'Сводка, назначения и исходные ответы — только по вашим пациентам.' if portal == 'specialist' else 'Дневник, назначенные анкеты и связь со своим специалистом.' }}
             </p>
-            <a href="/">← Вернуться к выбору кабинета</a>
+            <a href="/">Вернуться к выбору кабинета</a>
         </div>
         <section class="card login-card">
             <span class="role-badge">{{ 'Вход для специалиста' if portal == 'specialist' else 'Вход для пациента' }}</span>
@@ -28,7 +28,7 @@
                            maxlength="256"
                            required>
                 </label>
-                <button class="full">Войти {{ 'как специалист' if portal == 'specialist' else 'как пациент' }} →</button>
+                <button class="full">Войти {{ 'как специалист' if portal == 'specialist' else 'как пациент' }}</button>
             </form>
             <p class="caption">
                 Локальные аккаунты создаются владельцем проекта. Если их ещё нет, выполните команду настройки из README. Общего демопароля нет.

@@ -398,7 +398,7 @@ def test_public_materials_available_without_consent_or_account(client):
         response = client.get("/project-sources/" + slug)
         assert response.status_code == 200 and response.content.startswith(b"%PDF")
     assert client.get("/project-sources/unknown").status_code == 404
-    for url in ["/faq", "/privacy", "/help-now", "/sources"]:
+    for url in ["/faq", "/privacy", "/help-now"]:
         assert client.get(url).status_code == 200
 
 
