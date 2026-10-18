@@ -18,6 +18,7 @@ from .content import FAQ, RESOURCES
 from .security import verify_password
 from .storage import extend_schema, audit, now
 from .workflows import register_workflows, overview
+from .portal import register_portal, portal_data
 
 ROOT = Path(__file__).resolve().parent
 
@@ -253,13 +254,12 @@ def create_app(db_path=None):
             raise HTTPException(403, "Только для врача")
         with db() as c:
             patients = c.execute(
-                """SELECT p.*, (SELECT count(*) FROM diary d WHERE d.patient_id=p.id AND (d.adherence='missed' OR d.contact=1)) alerts FROM patients p WHERE p.doctor_id=?""",
+                """SELECT p.*, (SELECT count(*) FROM diary d WHERE d.patient_id=p.id AND (d.adherence='missed' OR d.contact=1)) alerts, (SELECT count(*) FROM specialist_questions q WHERE q.patient_id=p.id AND q.status!='answered') pending_questions FROM patients p WHERE p.doctor_id=?""",
                 (account(request)["doctor_id"],),
             ).fetchall()
         return render(request, "doctor.html", patients=patients)
 
-    @app.get("/patients/{pid}")
-    def patient(request: Request, pid: int):
+    def patient_context(request, pid):
         access(request, pid)
         with db() as c:
             p = c.execute("SELECT * FROM patients WHERE id=?", (pid,)).fetchone()
@@ -285,6 +285,18 @@ def create_app(db_path=None):
             f'{30+i*540/max(len(ordered)-1,1):.1f},{170-r["wellbeing"]*14}'
             for i, r in enumerate(ordered)
         )
+        return dict(
+            patient=p,
+            today=date.today().isoformat(),
+            points=points,
+            consent=has_consent(pid),
+            assessment_data=overview(db, pid),
+            **portal_data(db, pid, identity(request) == "doctor"),
+            **data,
+        )
+
+    @app.get("/patients/{pid}")
+    def patient(request: Request, pid: int):
         return render(
             request,
             (
@@ -292,13 +304,12 @@ def create_app(db_path=None):
                 if identity(request) == "doctor"
                 else "patient.html"
             ),
-            patient=p,
-            today=date.today().isoformat(),
-            points=points,
-            consent=has_consent(pid),
-            assessment_data=overview(db, pid),
-            **data,
+            **patient_context(request, pid),
         )
+
+    register_portal(
+        app, db, account, identity, access, csrf_check, render, patient_context
+    )
 
     @app.post("/patients/{pid}/diary")
     def diary(
@@ -364,7 +375,7 @@ def create_app(db_path=None):
                     date.today().isoformat(),
                 ),
             )
-        return back(pid)
+        return RedirectResponse(f"/patients/{pid}/contact#messages", status_code=303)
 
     @app.post("/patients/{pid}/relatives")
     def relative(
@@ -402,7 +413,7 @@ def create_app(db_path=None):
                 "INSERT INTO relatives(patient_id,name,relation,parent_id) VALUES(?,?,?,?)",
                 (pid, name.strip(), relation, parent),
             )
-        return back(pid)
+        return RedirectResponse(f"/patients/{pid}/profile#family", status_code=303)
 
     @app.post("/patients/{pid}/risks")
     def risk(

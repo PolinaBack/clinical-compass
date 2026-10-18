@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="page-intro">
+        <p class="eyebrow">ПЕРВЫЙ ШАГ · БЕЗОПАСНОСТЬ</p>
+        <h1>
+            Можно рассказать
+            <br>
+            <em>о сложном.</em>
+        </h1>
+        <p class="lead">Если трудно отвечать в анкете, можно начать с разговора со специалистом.</p>
+    </div>
+    {% if user != 'doctor' %}
+        {% include 'patient_nav.html' %}
+    {% else %}
+        <a href="/patients/{{ patient.id }}">Карточка пациента</a>
+    {% endif %}
+    <section class="card">
+        <h2>C-SSRS · беседа о безопасности</h2>
+        {% if safety_review %}
+            <span class="badge">Беседа записана специалистом</span>
+            <p class="caption">{{ safety_review.created_at }} (UTC) · {{ safety_review.form_version }}</p>
+            <p class="text">{{ safety_review.patient_summary }}</p>
+            {% if user == 'doctor' %}
+                <p>Источник: {{ safety_review.source }}</p>
+                <p class="text">{{ safety_review.notes }}</p>
+            {% endif %}
+        {% else %}
+            <p>
+                Можно пройти короткие учебные вопросы о переживаниях и поведении. Можно оставить комментарий, голосовое пояснение, отказаться от ответа или остановиться.
+            </p>
+        {% endif %}
+        <p class="caption">
+            Учебная адаптация C-SSRS по предоставленной статье. Это не официальная валидированная самостоятельная форма.
+        </p>
+        {% if user != 'doctor' and consent %}
+            <form action="/safety/start" method="post">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <button>Начать / продолжить вопросы о безопасности</button>
+            </form>
+        {% endif %}
+        <a class="button secondary"
+           href="/patients/{{ patient.id }}/contact#ask">Поговорить со специалистом</a><a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>
+    </section>
+    {% if user != 'doctor' and consent %}
+        <section class="card">
+            <h2>Далее — короткая анкета PHQ-4</h2>
+            <p>
+                Она посвящена настроению и тревоге за последние две недели. Если пока не готовы отвечать на учебные вопросы безопасности, можно отложить их и обсудить со специалистом. Это не будет означать отрицательный результат.
+            </p>
+            {% if assessment_data.assessments|rejectattr('scale','equalto','safety6')|list %}
+                <a class="button" href="/patients/{{ patient.id }}/profile#assessments">Мои анкеты</a>
+            {% else %}
+                <form action="/assessments/start" method="post">
+                    <input type="hidden" name="csrf" value="{{ csrf }}">
+                    <button>Продолжить с PHQ-4</button>
+                </form>
+            {% endif %}
+        </section>
+    {% endif %}
+    {% if user == 'doctor' %}
+        <section class="card">
+            <h2>Запись проведённой беседы</h2>
+            <p>
+                Для учебного сценария с внешней официальной формой. Запись заключения не создаёт ответов пациента и не имитирует самостоятельное прохождение.
+            </p>
+            <form action="/patients/{{ patient.id }}/safety-review" method="post">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <label>
+                    Точное название и версия использованной формы
+                    <input name="form_version" maxlength="200" required>
+                </label>
+                <label>
+                    Источник формы
+                    <input name="source" maxlength="1000" required>
+                </label>
+                <label>
+                    Наблюдения и действия специалиста<textarea name="notes" maxlength="3000" required></textarea>
+                </label>
+                <label>
+                    Итог беседы и следующий шаг для пациента<textarea name="patient_summary" maxlength="3000" required></textarea>
+                </label>
+                <button>Сохранить запись беседы</button>
+            </form>
+        </section>
+    {% endif %}
+{% endblock %}

@@ -57,7 +57,7 @@
                             <td>{{ a.period_label }}</td>
                             <td>{{ a.result.answered }}/{{ a.result.count }} · {{ a.status }}</td>
                             <td>
-                                {{ a.result.total if a.result.total is not none else 'Не сформирована' }}
+                                {{ 'Не применяется' if a.scale == 'safety6' else a.result.total if a.result.total is not none else 'Не сформирована' }}
                                 {% if a.category %}<small>{{ a.category }} · не диагноз</small>{% endif %}
                             </td>
                             <td>

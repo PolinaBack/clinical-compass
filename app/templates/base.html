@@ -23,9 +23,9 @@
                 <b>компас</b></span></a>
             <nav class="header-nav" aria-label="Основная навигация">
                 {% if user == 'doctor' %}
-                    <a href="/doctor">Мои пациенты</a><a href="/clinical-tools">Инструменты</a><a href="/reference/aviandr">Справочник</a>
+                    <a href="/doctor">Мои пациенты</a><a href="/clinical-tools">Библиотека анкет</a><a href="/reference/aviandr">Справочник</a>
                 {% elif user %}
-                    <a href="/me">Мой кабинет</a><a href="/patients/{{ session_pid }}/results">Моя динамика</a><a href="/faq">Вопросы и ответы</a>
+                    <a href="/me">Мой маршрут</a><a href="/patients/{{ session_pid }}/profile">Личный профиль</a><a href="/patients/{{ session_pid }}/contact">Мой специалист</a>
                 {% else %}
                     <a href="/#how">Как это работает</a><a href="/faq">Вопросы и ответы</a><a href="/#resources">Полезные материалы</a>
                 {% endif %}

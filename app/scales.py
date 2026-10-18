@@ -1,5 +1,7 @@
 """Research digitisation of the supplied Russian forms; no diagnosis or treatment."""
 
+from .safety import SAFETY_ITEMS, safety_result
+
 VERSION = "supplied-ru-2026-10-17-v1"
 INSTRUCTION = "Оцените, пожалуйста, насколько часто следующие проблемы беспокоили вас в течение прошедших двух недель. Для ответов используйте следующую шкалу:"
 OPTIONS = [
@@ -70,6 +72,13 @@ HCL = [
     "Я больше ем или я больше переедаю",
 ]
 SCALES = {
+    "safety6": {
+        "name": "C-SSRS · учебная адаптация",
+        "items": SAFETY_ITEMS,
+        "max": None,
+        "source": "Предоставленная пользователем статья «C-SSRS: Как задать самый страшный вопрос и не разрушить контакт», 18.10.2026; Plan.pdf, стр.4,15; SpecificationV2.pdf, стр.14–16",
+        "validation": "Учебная адаптация по вторичной статье. Это не официальная валидированная русская self-report форма C-SSRS. До клинического применения нужны точная форма и проверка пояснений специалистом.",
+    },
     "phq4": {
         "name": "PHQ-4",
         "items": PHQ4,
@@ -199,6 +208,8 @@ ANSWER_STATES = {"unanswered", "deferred", "declined"}
 
 def score(scale, answers):
     """Nulls never become zero; each PHQ-4 subscale has its own completeness."""
+    if scale == "safety6":
+        return safety_result(answers)
     definition = SCALES[scale]
     values = [
         (
@@ -247,7 +258,7 @@ def combined(phq9, gad7):
 
 
 def cssrs_branch(question2):
-    """Branch contract only; official Russian questions not supplied or exposed."""
+    """Official branch contract, also used to test the labelled teaching adaptation."""
     return (
         {
             "3": "not_asked_by_rule",

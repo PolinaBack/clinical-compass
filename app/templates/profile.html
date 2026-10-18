@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="dashboard-intro">
+        <div>
+            <p class="eyebrow">{{ 'КАРТОЧКА ПАЦИЕНТА' if user == 'doctor' else 'ЛИЧНЫЙ ПРОФИЛЬ' }}</p>
+            <h1>{{ patient.name }}</h1>
+            <p class="lead">История, которой вы хотите поделиться, и результаты совместной работы.</p>
+        </div>
+        {% if user == 'doctor' %}
+            <a class="button secondary" href="/patients/{{ patient.id }}">Карточка пациента</a>
+        {% endif %}
+    </div>
+    {% if user != 'doctor' %}
+        {% include 'patient_nav.html' %}
+    {% endif %}
+    <nav class="tab-nav" aria-label="Разделы профиля">
+        <a href="#about">Обо мне</a><a href="#reports">Отчёты специалиста</a><a href="#assessments">Анкеты</a><a href="#family">Семейная история</a>
+    </nav>
+    <section class="card" id="about">
+        <p class="eyebrow">МОЯ ИСТОРИЯ</p>
+        <h2>То, что важно знать обо мне</h2>
+        {% if user != 'doctor' and consent %}
+            <p>Необязательные поля. Можно написать «не знаю», отложить или рассказать лично.</p>
+            {% if request.query_params.get('saved') %}<p class="success" role="status">Профиль сохранён.</p>{% endif %}
+            <form action="/patients/{{ patient.id }}/profile" method="post">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                {% for key,label,hint in profile_fields %}
+                    <label>
+                        {{ label }}<textarea name="{{ key }}" maxlength="3000" placeholder="{{ hint }}">{{ profile.get(key,'') }}</textarea>
+                    </label>
+                {% endfor %}
+                <button>Сохранить профиль</button>
+            </form>
+        {% else %}
+            {% for key,label,hint in profile_fields %}
+                <h3>{{ label }}</h3>
+                <p class="text">{{ profile.get(key) or 'Пока не заполнено' }}</p>
+            {% endfor %}
+        {% endif %}
+    </section>
+    {% include 'reports_block.html' %}
+    {% include 'assessment_list.html' %}
+    <section class="card">
+        <h2>Изменения со временем</h2>
+        <p>Отдельные графики PHQ-9 и GAD-7 и ваши исходные ответы.</p>
+        <a class="button secondary" href="/patients/{{ patient.id }}/results">Открыть динамику</a>
+    </section>
+    {% include 'family_block.html' %}
+    {% if consent or user == 'doctor' %}
+        <details class="section-fold">
+            <summary>Самочувствие, события и решения специалиста</summary>
+            {% include 'care.html' %}
+        </details>
+    {% endif %}
+    {% if user != 'doctor' %}
+        {% include 'resources.html' %}
+    {% endif %}
+{% endblock %}

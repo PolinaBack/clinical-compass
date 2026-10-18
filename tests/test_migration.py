@@ -28,3 +28,54 @@ def test_additive_upgrade_preserves_existing_v1_diary_and_creates_no_default_pas
             )
             assert c.execute("SELECT COUNT(*) FROM accounts").fetchone()[0] == 0
             assert c.execute("PRAGMA foreign_key_check").fetchall() == []
+
+
+def test_upgrade_v2_preserves_accounts_assessments_and_adds_care_sections(tmp_path):
+    from app.storage import connect
+    from tests.helpers import login
+    from tests.test_workflows import start, save
+
+    path = tmp_path / "v2.db"
+    with TestClient(create_app(path)) as client:
+        login(client, "patient1")
+        aid = start(client)
+        assert save(client, aid, [1, 2, 1, 2]).status_code == 200
+    # Reconstruct the previously shipped database: new tables had not existed.
+    with connect(path) as c:
+        old_password_hash = c.execute(
+            "SELECT password_hash FROM accounts WHERE username='patient1'"
+        ).fetchone()[0]
+        for table in [
+            "patient_profiles",
+            "diary_comments",
+            "specialist_reports",
+            "specialist_questions",
+            "appointments",
+            "safety_reviews",
+        ]:
+            c.execute(f"DROP TABLE {table}")
+    for _ in range(2):
+        with TestClient(create_app(path)) as client:
+            login(client, "patient1")
+            assert client.get("/patients/1/profile").status_code == 200
+            assert client.get("/patients/1/contact").status_code == 200
+        with connect(path) as c:
+            assert (
+                c.execute(
+                    "SELECT password_hash FROM accounts WHERE username='patient1'"
+                ).fetchone()[0]
+                == old_password_hash
+            )
+            assert (
+                c.execute(
+                    "SELECT count(*) FROM answers WHERE assessment_id=?", (aid,)
+                ).fetchone()[0]
+                == 4
+            )
+            assert (
+                c.execute(
+                    "SELECT status FROM assessments WHERE id=?", (aid,)
+                ).fetchone()[0]
+                == "completed"
+            )
+            assert c.execute("PRAGMA foreign_key_check").fetchall() == []

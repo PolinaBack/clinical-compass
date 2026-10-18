@@ -1,0 +1,57 @@
+<section class="card" id="reports">
+    <p class="eyebrow">СОВМЕСТНАЯ РАБОТА</p>
+    <h2>Отчёты специалиста</h2>
+    {% for report in reports %}
+        <article class="report">
+            <div class="section-heading">
+                <h3>{{ report.title }}</h3>
+                <span class="badge">{{ 'Доступен пациенту' if report.published else 'Черновик · только специалисту' }}</span>
+            </div>
+            <p class="caption">{{ report.author }} · {{ report.created_at }} (UTC)</p>
+            {% for label,key in [('Самоотчёт пациента','self_report'),('Наблюдения специалиста','observations'),('Заключение специалиста','conclusion'),('Дальнейший план','plan')] %}
+                {% if report[key] %}
+                    <h4>{{ label }}</h4>
+                    <p class="text">{{ report[key] }}</p>
+                {% endif %}
+            {% endfor %}
+            {% if user == 'doctor' and not report.published %}
+                <form action="/patients/{{ patient.id }}/reports/{{ report.id }}/publish"
+                      method="post">
+                    <input type="hidden" name="csrf" value="{{ csrf }}">
+                    <button>Поделиться отчётом с пациентом</button>
+                </form>
+            {% endif %}
+        </article>
+    {% else %}
+        <p class="empty">Здесь появятся отчёты после встречи со специалистом.</p>
+    {% endfor %}
+    {% if user == 'doctor' %}
+        <details class="inset">
+            <summary>Подготовить отчёт</summary>
+            <form action="/patients/{{ patient.id }}/reports" method="post">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <label>
+                    Название
+                    <input name="title" maxlength="120" required>
+                </label>
+                <label>
+                    Самоотчёт пациента<textarea name="self_report" maxlength="3000"></textarea>
+                </label>
+                <label>
+                    Наблюдения специалиста<textarea name="observations" maxlength="3000"></textarea>
+                </label>
+                <label>
+                    Заключение специалиста<textarea name="conclusion" maxlength="3000" required></textarea>
+                </label>
+                <label>
+                    Дальнейший план<textarea name="plan" maxlength="3000" required></textarea>
+                </label>
+                <label class="check">
+                    <input type="checkbox" name="published" value="true">
+                    Поделиться с пациентом после сохранения
+                </label>
+                <button>Сохранить отчёт</button>
+            </form>
+        </details>
+    {% endif %}
+</section>

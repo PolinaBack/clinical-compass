@@ -27,6 +27,6 @@
             </p>
         </div>
         <a class="button"
-           href="{{ '/me' if user and user != 'doctor' else '/login/patient' }}">{{ 'В мой кабинет' if user and user != 'doctor' else 'Войти как пациент' }} </a>
+           href="{{ '/patients/' ~ session_pid ~ '/contact#ask' if user and user != 'doctor' else '/login/patient' }}">{{ 'В мой кабинет' if user and user != 'doctor' else 'Войти как пациент' }} </a>
     </section>
 {% endblock %}

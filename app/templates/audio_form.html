@@ -1,0 +1,62 @@
+<section class="card" id="audio">
+    <h2>Голосовое пояснение · до 60 секунд</h2>
+    <p>
+        Необязательно. Запись хранится в локальной базе, не отправляется внешнему ИИ и не меняет ответы. Можно прослушать её перед отправкой. После записи проверьте поле «Расшифровка» самостоятельно — автоматического распознавания этого аудио нет.
+    </p>
+    <form action="/assessments/{{ assessment.id }}/audio"
+          method="post"
+          enctype="multipart/form-data"
+          id="audio-form">
+        <input name="csrf" type="hidden" value="{{ csrf }}">
+        <label>
+            К какому вопросу
+            <select name="item">
+                {% for q in definition['items'] %}
+                    {% if step is not defined or step == loop.index %}
+                        <option value="{{ loop.index }}">{{ loop.index }}. {{ q }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </label>
+        <label class="check">
+            <input name="consent"
+                   type="checkbox"
+                   value="true"
+                   id="audio-consent"
+                   required>
+            Согласен(на) сохранить синтетическую аудиозапись в локальной базе и предоставить доступ назначенному специалисту.
+        </label>
+        <div class="audio-controls">
+            <button type="button" id="record-start" class="secondary">Начать запись</button>
+            <button type="button" id="record-stop" class="secondary" disabled>Остановить</button>
+        </div>
+        <audio id="audio-preview" controls hidden></audio>
+        <label>
+            Аудиофайл WebM, Ogg или MP4
+            <input type="file"
+                   name="recording"
+                   accept="audio/webm,audio/ogg,audio/mp4"
+                   id="recording-file"
+                   required>
+        </label>
+        <label>
+            Длительность, секунды
+            <input name="duration"
+                   id="recording-duration"
+                   type="number"
+                   min="0.1"
+                   max="60"
+                   step="0.1"
+                   required>
+        </label>
+        <label>
+            Расшифровка / проверенный текст, если есть<textarea name="transcript" maxlength="3000"></textarea>
+        </label>
+        <label class="check">
+            <input name="transcript_reviewed" type="checkbox" value="true">
+            Я проверил(а) введённый текст; он хранится отдельно от исходной записи.
+        </label>
+        <p id="audio-status" role="status"></p>
+        <button>Сохранить голосовое пояснение</button>
+    </form>
+</section>

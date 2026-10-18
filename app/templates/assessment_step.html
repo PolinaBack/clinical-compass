@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% block title %}{{ definition.name }} · Клинический компас{% endblock %}
+{% block content %}
+    <div class="assessment-shell">
+        <a href="/patients/{{ assessment.patient_id }}/profile#assessments">Мои анкеты</a>
+        <div class="assessment-intro">
+            <p class="eyebrow">В ВАШЕМ ТЕМПЕ</p>
+            <h1>{{ definition.name }}</h1>
+            <span class="badge">{{ {'draft':'Черновик','incomplete':'Не завершено','completed':'Отправлено'}[assessment.status] }}</span>
+            {% if assessment.scale == 'safety6' %}
+                <p class="caption">Вопрос {{ step_position }} · сохранено ответов: {{ result.answered }}</p>
+            {% else %}
+                <p class="caption">
+                    Вопрос {{ step_position }} из {{ step_count }} · {{ result.answered }}/{{ result.count }} ответов сохранено
+                </p>
+                <progress value="{{ step_position }}"
+                          max="{{ step_count }}"
+                          aria-label="Текущий вопрос"></progress>
+            {% endif %}
+            <p class="lead">
+                {% if assessment.scale == 'hcl33' %}
+                    Попробуйте припомнить состояние «подъема». Как Вы себя тогда чувствовали? Ответьте вне зависимости от Вашего нынешнего состояния.
+                {% elif assessment.scale == 'safety6' %}
+                    Можно отвечать прямо, оставить комментарий или остановиться. Вопросы помогут подготовить беседу со специалистом.
+                {% else %}
+                    {{ instruction }}
+                {% endif %}
+            </p>
+            {% if assessment.scale == 'safety6' %}
+                <p class="notice">Учебная адаптация по предоставленной статье. Это не официальная самостоятельная форма C-SSRS.</p>
+                <p class="caption">
+                    {{ 'За жизнь' if step == 6 else 'За последние 3 месяца' if step == 7 else 'За последний месяц: ' ~ assessment.period_start ~ ' — ' ~ assessment.period_end }}
+                </p>
+            {% elif assessment.scale != 'hcl33' %}
+                <p class="caption">{{ assessment.period_start }} — {{ assessment.period_end }}</p>
+            {% endif %}
+        </div>
+        {% if request.query_params.get('saved') %}
+            <p class="success" role="status">Ответ сохранён на сервере. Это не означает, что специалист уже прочитал его.</p>
+        {% endif %}
+        {% if assessment.scale == 'safety6' and result.positive_items %}
+            <div class="notice">
+                <p>
+                    Спасибо, что рассказали. Можно обсудить переживания со специалистом. Если помощь нужна сейчас, не ждите ответа на обычное сообщение.
+                </p>
+                <a href="/patients/{{ assessment.patient_id }}/contact#ask">Поговорить со специалистом</a>
+            </div>
+        {% endif %}
+        <form action="/assessments/{{ assessment.id }}/save"
+              method="post"
+              class="questionnaire"
+              id="assessment-form">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="revision" value="{{ assessment.revision }}">
+            <input type="hidden" name="request_id" value="{{ request_id }}">
+            <input type="hidden" name="step_item" value="{{ step }}">
+            {% if assessment.scale != 'hcl33' and assessment.period_end < today %}
+                <div class="warning">
+                    <p>Вы вернулись к анкете за прежний период. Если состояние изменилось, обсудите новую сессию со специалистом.</p>
+                    <label class="check">
+                        <input type="checkbox" name="period_ack" value="true" required>
+                        Мои ответы относятся к указанному периоду.
+                    </label>
+                </div>
+            {% endif %}
+            {% if assessment.scale == 'hcl33' and step == 1 %}
+                <section class="card">
+                    <h2>Перед вопросами о состоянии подъёма</h2>
+                    {% with context_rows=hcl_context[:2] %}
+                        {% include 'hcl_context.html' %}
+                    {% endwith %}
+                </section>
+            {% endif %}
+            {% set key = step|string %}{% set answer = answers.get(key,{}) %}
+            <fieldset class="question-card" id="item-{{ key }}">
+                <legend>
+                    <span class="question-number">{{ '6а' if assessment.scale == 'safety6' and step == 7 else step }}</span>{{ definition['items'][step-1] }}
+                </legend>
+                <div class="answer-options"
+                     {% if assessment.scale == 'phq9' and step == 9 %}data-safety-answer{% endif %}
+                     {% if assessment.scale == 'safety6' and step == 6 %}data-safety-recent{% endif %}>
+                    {% for value,label in ([(0,'Нет'),(1,'Да')] if assessment.scale in ['hcl33','safety6'] else options) %}
+                        <label class="answer-option">
+                            <input type="radio"
+                                   name="answer_{{ key }}"
+                                   value="{{ value }}"
+                                   {% if answer.get('state') == 'answered' and answer.get('value') == value %}checked{% endif %}>
+                            <span>{{ label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+                <details class="question-extra">
+                    <summary>Зачем этот вопрос?</summary>
+                    <p>
+                        {% if assessment.scale == 'safety6' %}
+                            {{ safety_explanations[step-1] }}
+                        {% else %}
+                            Это один из вопросов {{ definition.name }}. Отвечайте о собственном опыте за указанный период. Если формулировка непонятна или подходящего ответа нет, можно оставить комментарий и обсудить её со специалистом.
+                        {% endif %}
+                    </p>
+                    <p class="caption">Ответ описывает переживание, а не вашу личность. Он сам по себе не устанавливает диагноз.</p>
+                </details>
+                <details class="question-extra"
+                         {% if answer.get('comment') or answer.get('discuss') %}open{% endif %}>
+                    <summary>Добавить комментарий или обсудить</summary>
+                    <label>
+                        Комментарий к вопросу {{ key }}<textarea name="comment_{{ key }}" maxlength="3000">{{ answer.get('comment','') }}</textarea>
+                    </label>
+                    <label class="check">
+                        <input type="checkbox"
+                               name="discuss_{{ key }}"
+                               value="true"
+                               {% if answer.get('discuss') %}checked{% endif %}>
+                        ! Хочу обсудить этот вопрос со специалистом
+                    </label>
+                    <p class="caption">
+                        Можно рассказать свою историю. {{ 'Баллы по этой форме не рассчитываются.' if assessment.scale == 'safety6' else 'Комментарий не меняет выбранный балл.' }} Обычное сообщение могут прочитать не сразу.
+                    </p>
+                </details>
+                <details class="question-extra">
+                    <summary>Пока не готов(а) отвечать</summary>
+                    <div class="skip-options">
+                        {% for state,label in [('unanswered','Пока без ответа'),('deferred','Отложить'),('declined','Не готов(а) отвечать')] %}
+                            <label>
+                                <input type="radio"
+                                       name="answer_{{ key }}"
+                                       value="{{ state }}"
+                                       {% if answer.get('state','unanswered') == state %}checked{% endif %}>
+                                {{ label }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </details>
+            </fieldset>
+            {% if assessment.scale == 'hcl33' and step == result.count %}
+                <section class="card">
+                    <h2>Контекст состояний подъёма</h2>
+                    {% with context_rows=hcl_context[2:] %}
+                        {% include 'hcl_context.html' %}
+                    {% endwith %}
+                </section>
+            {% endif %}
+            <div class="save-bar">
+                <p id="save-state" role="status">Ответ отправится при сохранении или переходе к следующему вопросу.</p>
+                <div class="button-row">
+                    {% if step > 1 %}<button name="intent" value="back" class="secondary">Предыдущий вопрос</button>{% endif %}
+                    <button name="intent" value="draft" class="secondary">Сохранить и сделать паузу</button>
+                    {% if has_next %}
+                        <button name="intent" value="next">Сохранить и продолжить</button>
+                    {% else %}
+                        <button name="intent" value="submit">Завершить и отправить</button>
+                    {% endif %}
+                </div>
+                <a href="/help-now">Мне нужна помощь сейчас</a>
+            </div>
+        </form>
+        <details class="section-fold">
+            <summary>Голосовой комментарий к вопросу {{ step }}</summary>
+            {% include 'audio_form.html' %}
+        </details>
+        {% for note in audio if note.item == key %}
+            <section class="card">
+                <h3>Голосовой комментарий к вопросу {{ key }}</h3>
+                <audio controls preload="none" src="/audio/{{ note.id }}"></audio>
+                <p class="text">{{ note.transcript or 'Без расшифровки' }}</p>
+                <p class="caption">
+                    {{ 'Текст проверен пациентом' if note.transcript_status == 'reviewed_patient' else 'Без автоматического распознавания' }}
+                </p>
+                <form action="/audio/{{ note.id }}/delete" method="post">
+                    <input type="hidden" name="csrf" value="{{ csrf }}">
+                    <button class="secondary">Удалить запись</button>
+                </form>
+            </section>
+        {% endfor %}
+        <details class="provenance">
+            <summary>О форме и сохранённых ответах</summary>
+            <p>{{ definition.source }} · версия {{ assessment.version }}</p>
+            <p>{{ definition.validation }}</p>
+            <a href="/assessments/{{ assessment.id }}/history">История изменений ответов</a>
+        </details>
+    </div>
+{% endblock %}

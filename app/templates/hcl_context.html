@@ -21,7 +21,7 @@
                    type="number"
                    min="0"
                    max="366"
-                   value="{{ answer.value if answer.get('state') == 'answered' else '' }}">
+                   value="{{ answer.value if answer.get("state") == 'answered' else '' }}">
             <small>Если в предыдущем вопросе «нет», это поле не включается и не превращается в 0.</small>
         {% endif %}
     </label>

@@ -48,6 +48,22 @@ if (assessmentForm) {
       event.returnValue = "";
     }
   });
+  document.getElementById("audio-form")?.addEventListener("submit", (event) => {
+    if (changed) {
+      event.preventDefault();
+      document.getElementById("audio-status").textContent =
+        "Сначала сохраните ответ кнопкой «Сохранить и сделать паузу», затем отправьте запись. Она останется в выбранном файле до ухода со страницы.";
+    }
+  });
+  const behavior = assessmentForm.querySelector("[data-safety-recent]");
+  if (behavior) behavior.addEventListener("change", (event) => {
+    const button = assessmentForm.querySelector('button[name="intent"][value="submit"],button[name="intent"][value="next"]');
+    if (button) {
+      const continues = event.target.value === "1";
+      button.value = continues ? "next" : "submit";
+      button.textContent = continues ? "Сохранить и продолжить" : "Завершить и отправить";
+    }
+  });
   const safety = assessmentForm.querySelector("[data-safety-answer]");
   if (safety)
     safety.addEventListener("change", (event) => {
@@ -75,7 +91,7 @@ if (workflowAlerts) {
         box.className = "critical";
         const link = document.createElement("a");
         link.href = "/patients/" + item.patient_id + "#safety";
-        link.textContent = item.name + " · нужно уточнение по пункту 9 PHQ-9";
+        link.textContent = item.name + (item.kind.startsWith("safety6_") ? " · новые ответы о безопасности" : " · нужно уточнение по пункту 9 PHQ-9");
         const status = document.createElement("p");
         status.textContent = item.acknowledged_at
           ? "Получение подтверждено; действие ещё не записано."

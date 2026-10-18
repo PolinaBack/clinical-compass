@@ -53,9 +53,8 @@ def test_end_to_end_patient_doctor_patient(client):
     login(client, "doctor")
     assert "1 записей" in client.get("/doctor").text
     card = client.get("/patients/1").text
-    assert all(
-        text in card for text in ["Демовопрос врачу", "Демоанкета", "Демо-событие"]
-    )
+    assert all(text in card for text in ["Демоанкета", "Демо-событие"])
+    assert "Демовопрос врачу" in client.get("/patients/1/contact").text
     alerts = client.get("/api/alerts").json()["alerts"]
     assert (
         len(alerts) == 1 and alerts[0]["urgent"] == 1 and alerts[0]["acknowledged"] == 0
@@ -77,8 +76,8 @@ def test_end_to_end_patient_doctor_patient(client):
         == 200
     )
     login(client, "patient1")
-    card = client.get("/patients/1").text
-    assert "Демоответ врача" in card and "ЖЕЛАТЕЛЬНО" in card
+    assert "Демоответ врача" in client.get("/patients/1/contact").text
+    assert "ЖЕЛАТЕЛЬНО" in client.get("/patients/1/profile").text
 
 
 @pytest.mark.parametrize("path", ["/patients/1", "/doctor", "/api/alerts"])
@@ -211,7 +210,7 @@ def test_genogram_and_foreign_parent(client):
         ).status_code
         == 200
     )
-    assert "Демо-мать" in client.get("/patients/1").text
+    assert "Демо-мать" in client.get("/patients/1/profile").text
     assert (
         post(
             client,
@@ -264,7 +263,7 @@ def test_persistence_after_restart(tmp_path):
         post(first, "/patients/1/messages", body="Survives restart")
     with TestClient(create_app(path)) as second:
         login(second, "patient1")
-        assert "Survives restart" in second.get("/patients/1").text
+        assert "Survives restart" in second.get("/patients/1/contact").text
 
 
 def test_removed_sources_page_and_static_files(client):

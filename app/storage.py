@@ -51,6 +51,16 @@ def extend_schema(c):
     CREATE INDEX IF NOT EXISTS assessments_patient ON assessments(patient_id);
     CREATE INDEX IF NOT EXISTS events_patient ON assessment_events(patient_id);
     CREATE INDEX IF NOT EXISTS audit_patient ON audit(patient_id);
+    CREATE TABLE IF NOT EXISTS patient_profiles(patient_id INTEGER PRIMARY KEY REFERENCES patients(id), biography TEXT NOT NULL DEFAULT '', goals TEXT NOT NULL DEFAULT '', course TEXT NOT NULL DEFAULT '', health TEXT NOT NULL DEFAULT '', stressors TEXT NOT NULL DEFAULT '', family_context TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS diary_comments(id INTEGER PRIMARY KEY, patient_id INTEGER NOT NULL REFERENCES patients(id), diary_id INTEGER NOT NULL REFERENCES diary(id), author_id INTEGER NOT NULL REFERENCES accounts(id), body TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS specialist_reports(id INTEGER PRIMARY KEY, patient_id INTEGER NOT NULL REFERENCES patients(id), author_id INTEGER NOT NULL REFERENCES accounts(id), title TEXT NOT NULL, self_report TEXT NOT NULL, observations TEXT NOT NULL, conclusion TEXT NOT NULL, plan TEXT NOT NULL, published INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS specialist_questions(id INTEGER PRIMARY KEY, patient_id INTEGER NOT NULL REFERENCES patients(id), persona TEXT NOT NULL, body TEXT NOT NULL, estimated_minutes INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'sent', reply TEXT NOT NULL DEFAULT '', responder_id INTEGER REFERENCES accounts(id), created_at TEXT NOT NULL, read_at TEXT, replied_at TEXT);
+    CREATE TABLE IF NOT EXISTS appointments(id INTEGER PRIMARY KEY, patient_id INTEGER NOT NULL REFERENCES patients(id), author_id INTEGER NOT NULL REFERENCES accounts(id), starts_at TEXT NOT NULL, timezone_label TEXT NOT NULL, url TEXT NOT NULL, fallback TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'planned', preparation_confirmed_at TEXT, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS safety_reviews(id INTEGER PRIMARY KEY, patient_id INTEGER NOT NULL REFERENCES patients(id), author_id INTEGER NOT NULL REFERENCES accounts(id), form_version TEXT NOT NULL, source TEXT NOT NULL, notes TEXT NOT NULL, patient_summary TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS diary_comments_patient ON diary_comments(patient_id);
+    CREATE INDEX IF NOT EXISTS reports_patient ON specialist_reports(patient_id);
+    CREATE INDEX IF NOT EXISTS questions_patient ON specialist_questions(patient_id);
+    CREATE INDEX IF NOT EXISTS appointments_patient ON appointments(patient_id);
     """
     )
     account_columns = {r["name"] for r in c.execute("PRAGMA table_info(accounts)")}

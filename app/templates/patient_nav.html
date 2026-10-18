@@ -1,0 +1,10 @@
+<nav class="tab-nav" aria-label="Разделы кабинета пациента">
+    <a href="/me"
+       {% if current_page == '/patients/' ~ patient.id %}aria-current="page"{% endif %}>Мой маршрут</a>
+    <a href="/patients/{{ patient.id }}/profile"
+       {% if '/profile' in current_page %}aria-current="page"{% endif %}>Личный профиль</a>
+    <a href="/patients/{{ patient.id }}/contact"
+       {% if '/contact' in current_page %}aria-current="page"{% endif %}>Мой специалист</a>
+    <a href="/me/start"
+       {% if current_page == '/me/start' %}aria-current="page"{% endif %}>С чего начать</a>
+</nav>

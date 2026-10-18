@@ -1653,3 +1653,41 @@ li {
     justify-content: flex-end;
   }
 }
+
+/* Personal care spaces. Questionnaire pages need no JavaScript to progress. */
+.tab-nav [aria-current="page"] { background: var(--purple, #826b9a); color: #fff; }
+.journey-strip { display: flex; align-items: center; gap: 16px; padding: 16px 22px; margin: 20px 0 30px; border-radius: 20px; background: #f0eaf5; }
+.journey-strip p { flex: 1; margin: 0; }
+.journey-dot { width: 12px; height: 12px; border-radius: 50%; background: #9076a8; flex-shrink: 0; }
+.intro-quote { align-self: center; padding: 38px; border-radius: 50% 50% 8px 50%; background: #ebe2f0; font: italic 30px/1.5 Georgia, serif; color: #6b547e; }
+.trust-questions details { padding: 16px 0; border-top: 1px solid #e9e3ed; }
+.trust-questions > a { display: inline-block; margin-top: 20px; }
+.specialist-mini { display: flex; align-items: center; gap: 18px; padding: 12px 0; }
+.specialist-mini h3, .specialist-mini p { margin: 4px 0; }
+.specialist-persona { padding: 24px; border-radius: 20px; background: #f8f5fa; border: 1px solid #e7e0ed; }
+.clinician-comment { padding: 18px 22px; margin: 16px 0; border-left: 3px solid #698c7d; background: #eef5f0; border-radius: 0 14px 14px 0; }
+.clinician-comment p { margin: 8px 0; }
+.report + .report { margin-top: 24px; padding-top: 22px; border-top: 1px solid #e9e3ed; }
+.assessment-shell { max-width: 820px; margin: 0 auto; }
+.assessment-shell .assessment-intro { padding-bottom: 0; }
+.assessment-shell progress { display: block; width: 100%; height: 7px; accent-color: #89709e; margin: 20px 0 26px; }
+.assessment-shell .question-card { padding: 28px; }
+.assessment-shell .question-card legend { font-size: 1.3rem; line-height: 1.55; }
+.assessment-shell .answer-options { display: grid; grid-template-columns: 1fr 1fr; }
+.assessment-shell .question-extra { border-top: 1px solid #e8e2ed; padding: 16px 0; }
+.assessment-shell .section-fold { margin-top: 20px; }
+.assessment-shell .provenance { padding: 18px 0; font-size: 0.85rem; color: #6d6375; }
+.button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+#video article, #questions article { margin: 20px 0; padding-bottom: 20px; border-bottom: 1px solid #e9e3ed; }
+#video .button { margin-bottom: 12px; }
+@media (max-width: 650px) {
+  .journey-strip { align-items: flex-start; flex-wrap: wrap; }
+  .journey-strip a { flex-basis: 100%; }
+  .intro-quote { font-size: 24px; padding: 28px; width: 100%; border-radius: 22px; }
+  .assessment-shell .answer-options { grid-template-columns: 1fr; }
+  .assessment-shell .question-card { padding: 18px 14px; }
+  .assessment-shell .question-card legend { font-size: 1.1rem; }
+  .specialist-mini { align-items: flex-start; }
+  .button-row > button { flex: 1 1 auto; }
+}
+.assessment-shell .save-bar { position: static; margin-top: 20px; }
