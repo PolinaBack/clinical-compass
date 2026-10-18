@@ -41,13 +41,22 @@
             {% endif %}
         </article>
     {% else %}
-        <p class="empty">Видеовстреча пока не назначена. Можно обсудить удобное время в сообщении.</p>
+        <p class="empty">Видеовстреча пока не назначена. Выберите удобное время в форме записи на консультацию.</p>
     {% endfor %}
     {% if user == 'doctor' %}
         <details class="inset">
             <summary>Назначить видеоприём</summary>
             <form action="/patients/{{ patient.id }}/appointments" method="post">
                 <input type="hidden" name="csrf" value="{{ csrf }}">
+                <label>
+                    Заявка пациента
+                    <select name="booking_id">
+                        <option value="">Без заявки</option>
+                        {% for booking in bookings if booking.status == 'requested' %}
+                            <option value="{{ booking.id }}">{{ booking.preferred_day }} · {{ booking.time_window }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
                 <label>
                     Дата и время
                     <input type="datetime-local" name="starts_at" required>

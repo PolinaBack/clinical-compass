@@ -30,16 +30,14 @@ def test_end_to_end_patient_doctor_patient(client):
     assert r.status_code == 200
     assert "Синтетическая запись" in r.text
     assert "пропуск назначения" in r.text
-    assert "polyline points=" in r.text
+    assert "polyline points=" in client.get("/patients/1/results").text
     assert (
         post(
             client, "/patients/1/screening", tension=4, difficulty=2, note="Демоанкета"
         ).status_code
         == 200
     )
-    assert (
-        post(client, "/patients/1/messages", body="Демовопрос врачу").status_code == 200
-    )
+    assert post(client, "/patients/1/notes", body="Демовопрос врачу").status_code == 200
     assert (
         post(
             client,
@@ -54,7 +52,7 @@ def test_end_to_end_patient_doctor_patient(client):
     assert "1 записей" in client.get("/doctor").text
     card = client.get("/patients/1").text
     assert all(text in card for text in ["Демоанкета", "Демо-событие"])
-    assert "Демовопрос врачу" in client.get("/patients/1/contact").text
+    assert "Демовопрос врачу" in client.get("/patients/1/diary").text
     alerts = client.get("/api/alerts").json()["alerts"]
     assert (
         len(alerts) == 1 and alerts[0]["urgent"] == 1 and alerts[0]["acknowledged"] == 0
@@ -62,7 +60,8 @@ def test_end_to_end_patient_doctor_patient(client):
     assert post(client, "/patients/1/acknowledge", last_id=1).status_code == 200
     assert client.get("/api/alerts").json()["alerts"][0]["acknowledged"] == 1
     assert (
-        post(client, "/patients/1/messages", body="Демоответ врача").status_code == 200
+        post(client, "/patients/1/diary/1/comments", body="Демоответ врача").status_code
+        == 200
     )
     assert (
         post(
@@ -76,8 +75,8 @@ def test_end_to_end_patient_doctor_patient(client):
         == 200
     )
     login(client, "patient1")
-    assert "Демоответ врача" in client.get("/patients/1/contact").text
-    assert "ЖЕЛАТЕЛЬНО" in client.get("/patients/1/profile").text
+    assert "Демоответ врача" in client.get("/patients/1/diary").text
+    assert "ЖЕЛАТЕЛЬНО" in client.get("/patients/1/results").text
 
 
 @pytest.mark.parametrize("path", ["/patients/1", "/doctor", "/api/alerts"])
@@ -93,7 +92,7 @@ def test_role_and_patient_isolation(client):
     csrf = token(client, "/patients/2")
     assert (
         client.post(
-            "/patients/1/messages", data={"csrf": csrf, "body": "forbidden"}
+            "/patients/1/notes", data={"csrf": csrf, "body": "forbidden"}
         ).status_code
         == 403
     )
@@ -140,11 +139,9 @@ def test_csrf_and_session_rotation(client):
         == 403
     )
     login(client, "patient1")
-    assert post(client, "/patients/1/messages", csrf=old, body="bad").status_code == 403
-    assert (
-        post(client, "/patients/1/messages", csrf="bad", body="bad").status_code == 403
-    )
-    assert post(client, "/patients/1/messages", csrf="", body="bad").status_code == 403
+    assert post(client, "/patients/1/notes", csrf=old, body="bad").status_code == 403
+    assert post(client, "/patients/1/notes", csrf="bad", body="bad").status_code == 403
+    assert post(client, "/patients/1/notes", csrf="", body="bad").status_code == 403
 
 
 @pytest.mark.parametrize(
@@ -173,7 +170,7 @@ def test_screening_and_decision_validation(client):
         post(client, "/patients/1/screening", tension=11, difficulty=3).status_code
         == 422
     )
-    assert post(client, "/patients/1/messages", body="  ").status_code == 422
+    assert post(client, "/patients/1/notes", body="  ").status_code == 422
     assert (
         post(client, "/patients/1/risks", kind="invalid", body="demo").status_code
         == 422
@@ -210,7 +207,7 @@ def test_genogram_and_foreign_parent(client):
         ).status_code
         == 200
     )
-    assert "Демо-мать" in client.get("/patients/1/profile").text
+    assert "Демо-мать" in client.get("/patients/1/profile/family").text
     assert (
         post(
             client,
@@ -235,12 +232,12 @@ def test_genogram_and_foreign_parent(client):
 def test_xss_escaped(client):
     login(client, "patient1")
     payload = '<script>alert("demo")</script>'
-    response = post(client, "/patients/1/messages", body=payload)
+    response = post(client, "/patients/1/notes", body=payload)
     assert payload not in response.text
     assert "&lt;script&gt;" in response.text
-    response = post(client, "/patients/1/relatives", name=payload, relation="self")
+    response = post(client, "/patients/1/relatives", name=payload, relation="mother")
     assert payload not in response.text
-    assert "\\u003cscript\\u003e" in response.text
+    assert "&lt;script&gt;" in response.text
 
 
 def test_new_alert_after_acknowledgement(client):
@@ -260,10 +257,10 @@ def test_persistence_after_restart(tmp_path):
     path = tmp_path / "persistent.db"
     with TestClient(create_app(path)) as first:
         login(first, "patient1")
-        post(first, "/patients/1/messages", body="Survives restart")
+        post(first, "/patients/1/notes", body="Survives restart")
     with TestClient(create_app(path)) as second:
         login(second, "patient1")
-        assert "Survives restart" in second.get("/patients/1/contact").text
+        assert "Survives restart" in second.get("/patients/1/diary").text
 
 
 def test_removed_sources_page_and_static_files(client):

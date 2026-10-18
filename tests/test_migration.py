@@ -79,3 +79,61 @@ def test_upgrade_v2_preserves_accounts_assessments_and_adds_care_sections(tmp_pa
                 == "completed"
             )
             assert c.execute("PRAGMA foreign_key_check").fetchall() == []
+
+
+def test_v3_upgrade_keeps_private_history_and_adds_family_slots_without_duplicates(
+    tmp_path,
+):
+    from app.storage import connect
+    from tests.helpers import login, token
+
+    path = tmp_path / "v3.db"
+    with TestClient(create_app(path)) as client:
+        login(client, "patient1")
+    with connect(path) as c:
+        c.execute(
+            "INSERT INTO relatives(patient_id,name,relation) VALUES(1,'Учебная мама из прежней версии','mother')"
+        )
+        c.execute(
+            "INSERT INTO messages(patient_id,author,body,day) VALUES(1,'Пациент','Сохранённая старая запись','2026-10-01')"
+        )
+        c.execute(
+            "INSERT INTO specialist_questions(patient_id,persona,body,estimated_minutes,created_at) VALUES(1,'anna','Старый учебный вопрос',90,'2026-10-01')"
+        )
+        for table in [
+            "family_conditions",
+            "family_details",
+            "consultation_requests",
+            "diary_notes",
+            "forum_questions",
+        ]:
+            c.execute(f"DROP TABLE {table}")
+        c.execute("DROP INDEX relative_slot")
+        c.execute("ALTER TABLE relatives DROP COLUMN slot")
+    for _ in range(2):
+        with TestClient(create_app(path)) as client:
+            login(client, "patient1")
+            assert (
+                "Учебная мама из прежней версии"
+                in client.get("/patients/1/profile/family").text
+            )
+            assert (
+                client.post(
+                    "/patients/1/messages",
+                    data={"csrf": token(client), "body": "Новый вопрос"},
+                ).status_code
+                == 410
+            )
+        with connect(path) as c:
+            assert (
+                c.execute(
+                    "SELECT count(*) FROM relatives WHERE slot='mother'"
+                ).fetchone()[0]
+                == 1
+            )
+            assert c.execute("SELECT count(*) FROM messages").fetchone()[0] == 1
+            assert (
+                c.execute("SELECT count(*) FROM specialist_questions").fetchone()[0]
+                == 1
+            )
+            assert c.execute("PRAGMA foreign_key_check").fetchall() == []

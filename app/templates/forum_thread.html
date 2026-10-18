@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="section-page-heading">
+        <h1>Вопрос в FAQ</h1>
+        <a href="/faq#forum">Все вопросы</a>
+    </div>
+    <section class="card">
+        <span class="badge">Анонимный вопрос</span>
+        <p class="text">{{ question.body }}</p>
+        {% if question.status == 'published' %}
+            <div class="forum-answer">
+                <h2>Ответ команды</h2>
+                <p class="text">{{ question.reply }}</p>
+                <small>{{ question.replied_at }} (UTC)</small>
+            </div>
+        {% else %}
+            <p class="notice" role="status">
+                Вопрос принят и ожидает ответа. Сохраните ссылку на эту страницу, чтобы вернуться к обсуждению. В общем списке он появится после проверки и публикации ответа.
+            </p>
+        {% endif %}
+    </section>
+{% endblock %}

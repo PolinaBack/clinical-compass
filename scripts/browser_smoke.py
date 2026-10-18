@@ -81,8 +81,17 @@ def run(
         patient.get_by_label("Пароль", exact=True).fill(patient_password)
         patient.get_by_role("button", name="Войти как пациент").click()
         expect(patient.locator(".role-badge")).to_contain_text("Пациент")
-        patient.get_by_role("link", name="Начать знакомство").click()
-        expect(patient.get_by_role("heading", name="Прежде чем начать")).to_be_visible()
+        assert patient.url.endswith("/me/start")
+        expect(
+            patient.get_by_role("heading", name="Здесь можно отвечать честно")
+        ).to_be_visible()
+        labels = patient.locator(".header-nav a").all_text_contents()
+        assert labels == [
+            "Личный профиль",
+            "Дневник",
+            "Динамика опросников",
+            "С чего начать",
+        ]
         expect(patient.locator(".trust-questions details")).to_have_count(3)
         expect(
             patient.locator(".trust-questions").get_by_role(
@@ -90,7 +99,7 @@ def run(
             )
         ).to_be_visible()
         capture(patient, "introduction-desktop")
-        patient.get_by_role("link", name="Посмотреть условия участия").click()
+        patient.get_by_role("link", name="Посмотреть условия участия").first.click()
         patient.get_by_label("Мне 18 лет").check()
         patient.get_by_label("Я ознакомился").check()
         patient.get_by_role("button", name="Продолжить", exact=True).click()
@@ -131,7 +140,7 @@ def run(
         expect(doctor.get_by_text("Предложение по PHQ-2", exact=False)).to_be_visible()
         doctor.goto(url + "/clinical-tools?patient_id=1")
         doctor.get_by_role("button", name="Назначить PHQ-ADS", exact=True).click()
-        patient.goto(url + "/patients/1/profile")
+        patient.goto(url + "/patients/1/profile/assessments")
         patient.locator(".assessment-row").filter(has_text="PHQ-9").get_by_role(
             "link"
         ).click()
@@ -166,7 +175,7 @@ def run(
             "Спасибо, что рассказали"
         )
         patient.get_by_role("button", name="Завершить и отправить", exact=True).click()
-        patient.goto(url + "/patients/1/profile")
+        patient.goto(url + "/patients/1/profile/assessments")
         patient.locator(".assessment-row").filter(has_text="GAD-7").get_by_role(
             "link"
         ).click()
@@ -174,7 +183,7 @@ def run(
         patient.goto(url + "/patients/1/results")
         expect(patient.locator(".symptom-chart")).to_have_count(2)
 
-        patient.goto(url + "/me")
+        patient.goto(url + "/patients/1/diary")
         patient.get_by_label("Заметка", exact=True).fill(
             "Синтетическая браузерная запись"
         )
@@ -194,7 +203,15 @@ def run(
         capture(patient, "patient-mobile")
         patient.set_viewport_size({"width": 1280, "height": 900})
 
-        doctor.goto(url + "/patients/1/profile")
+        patient.get_by_label("Новая заметка", exact=True).fill(
+            "Учебная заметка к следующей консультации"
+        )
+        patient.get_by_role("button", name="Сохранить заметку").click()
+        doctor.goto(url + "/patients/1")
+        expect(
+            doctor.get_by_text("Учебная заметка к следующей консультации", exact=True)
+        ).to_be_visible()
+        doctor.goto(url + "/patients/1/results")
         doctor.get_by_text("Подготовить отчёт", exact=True).click()
         doctor.get_by_label("Название", exact=True).fill(
             "Синтетический отчёт после встречи"
@@ -207,67 +224,111 @@ def run(
         )
         doctor.get_by_label("Поделиться с пациентом после сохранения").check()
         doctor.get_by_role("button", name="Сохранить отчёт", exact=True).click()
-        patient.goto(url + "/patients/1/profile")
+        patient.goto(url + "/patients/1/results")
         expect(
             patient.get_by_text("Учебное заключение специалиста", exact=True)
         ).to_be_visible()
-        patient.get_by_label("Обо мне", exact=True).fill(
-            "Учебная биография для браузерного сценария"
-        )
+        expect(patient.locator(".axis-label")).to_have_count(6)
+        capture(patient, "dynamics-desktop")
+        patient.set_viewport_size({"width": 390, "height": 844})
+        capture(patient, "dynamics-mobile")
+        patient.set_viewport_size({"width": 1280, "height": 900})
+        patient.goto(url + "/patients/1/profile")
+        expect(patient.locator(".profile-tile")).to_have_count(4)
+        assert patient.locator("textarea").count() == 0
+        capture(patient, "profile-desktop")
+        patient.goto(url + "/patients/1/profile/about")
+        patient.get_by_label("Обо мне", exact=True).fill("Учебная биография")
         patient.get_by_role("button", name="Сохранить профиль").click()
-        patient.get_by_label("Вымышленное имя").fill("Демо-мать")
-        patient.get_by_label("Отношение к пациенту").select_option("mother")
-        patient.get_by_role("button", name="Добавить участника").click()
-        parent = patient.locator("select[name=parent_id] option").last.get_attribute(
+        patient.goto(url + "/patients/1/profile/family")
+        expect(patient.locator(".family-leaf")).to_have_count(6)
+        patient.locator('.family-leaf[href$="/mother"]').click()
+        patient.get_by_label("Имя или родство", exact=True).fill("Учебная мама")
+        patient.get_by_label("Что хотите рассказать о близком").fill(
+            "Вымышленный контекст"
+        )
+        patient.get_by_role("button", name="Сохранить сведения", exact=True).click()
+        patient.get_by_role("link", name="Что известно", exact=True).click()
+        patient.get_by_label(
+            "Какие заболевания или особенности здоровья вам известны?"
+        ).fill("Учебные сведения со слов близкого")
+        patient.get_by_label("Есть заболевания, могу вспомнить", exact=True).check()
+        patient.get_by_role("button", name="Сохранить сведения", exact=True).click()
+        patient.get_by_text("Добавить своими словами", exact=True).click()
+        patient.get_by_label("Известное название или описание").fill(
+            "Сообщённое учебное название"
+        )
+        patient.get_by_label("Примерно сколько лет?").fill("Около 48 лет")
+        patient.get_by_label("Откуда вам это известно?").select_option(
+            label="Со слов родственника"
+        )
+        patient.get_by_label("Могу ошибаться, нужно уточнить").check()
+        patient.get_by_role("button", name="Добавить сведения", exact=True).click()
+        expect(
+            patient.get_by_role("heading", name="Сообщённое учебное название")
+        ).to_be_visible()
+        capture(patient, "family-member-desktop")
+        patient.get_by_role("link", name="Пояснения", exact=True).click()
+        patient.get_by_label("Что важно уточнить").fill("Учебная тема к консультации")
+        patient.get_by_label("Хочу обсудить на консультации").check()
+        patient.get_by_role("button", name="Сохранить сведения", exact=True).click()
+        patient.get_by_role("link", name="К дереву", exact=True).click()
+        expect(patient.locator(".family-discuss")).to_have_count(1)
+        capture(patient, "family-desktop")
+        patient.set_viewport_size({"width": 390, "height": 844})
+        capture(patient, "family-mobile")
+        patient.get_by_role("link", name="Список", exact=True).click()
+        expect(patient.locator(".family-list-item")).to_have_count(6)
+        capture(patient, "family-list-mobile")
+        patient.set_viewport_size({"width": 1280, "height": 900})
+        patient.goto(url + "/patients/1/profile/video")
+        patient.get_by_label("Желаемая дата").fill("2026-12-01")
+        patient.get_by_label("Удобное время", exact=True).fill("10:00–12:00")
+        patient.get_by_role(
+            "button", name="Записаться на консультацию", exact=True
+        ).click()
+        expect(
+            patient.get_by_text("Ожидает подтверждения времени", exact=True)
+        ).to_be_visible()
+        doctor.goto(url + "/patients/1/profile/video")
+        doctor.get_by_text("Назначить видеоприём", exact=True).click()
+        booking = doctor.locator('select[name="booking_id"] option').last.get_attribute(
             "value"
         )
-        patient.get_by_label("Вымышленное имя").fill("Демо-ребёнок")
-        patient.get_by_label("Отношение к пациенту").select_option("child")
-        patient.get_by_label("Родитель этого участника").select_option(parent)
-        patient.get_by_role("button", name="Добавить участника").click()
-        expect(patient.locator("#genogram svg line")).to_have_count(1)
-        capture(patient, "profile-desktop")
-        patient.set_viewport_size({"width": 390, "height": 844})
-        capture(patient, "profile-mobile")
-        patient.set_viewport_size({"width": 1280, "height": 900})
-
-        patient.goto(url + "/patients/1/contact")
-        patient.locator('form[action="/patients/1/questions"] textarea').fill(
-            "Учебный вопрос перед обследованием"
-        )
-        patient.get_by_role("button", name="Отправить личный вопрос").click()
-        expect(patient.locator("#questions")).to_contain_text(
-            "Передан в локальную очередь"
-        )
-        doctor.goto(url + "/patients/1/contact")
-        doctor.get_by_role("button", name="Подтвердить прочтение вопроса").click()
-        doctor.get_by_label("Ответ пациенту", exact=True).fill(
-            "Учебный ответ на личный вопрос"
-        )
-        doctor.get_by_role("button", name="Отправить ответ", exact=True).click()
-        doctor.get_by_text("Назначить видеоприём", exact=True).click()
+        doctor.locator('select[name="booking_id"]').select_option(booking)
         doctor.get_by_label("Дата и время", exact=True).fill("2026-12-01T10:30")
         doctor.get_by_label("HTTPS-ссылка согласованного сервиса").fill(
             "https://example.org/synthetic-video"
         )
-        doctor.get_by_label("Как связаться при обрыве").fill(
-            "Учебный резервный канал в согласованное время"
-        )
+        doctor.get_by_label("Как связаться при обрыве").fill("Учебный резервный канал")
         doctor.get_by_role("button", name="Сохранить видеоприём").click()
         patient.reload()
         expect(
-            patient.get_by_text("Учебный ответ на личный вопрос", exact=True)
-        ).to_be_visible()
-        expect(
             patient.get_by_role("link", name="Открыть видеоприём")
         ).to_have_attribute("href", "https://example.org/synthetic-video")
-        patient.get_by_label("Вопрос врачу", exact=True).fill(
-            "Синтетическое сообщение специалисту"
+        capture(patient, "video-desktop")
+        guest_context = browser.new_context(viewport={"width": 390, "height": 844})
+        guest = guest_context.new_page()
+        guest.on("pageerror", lambda e: errors.append(str(e)))
+        guest.goto(url + "/faq")
+        guest.get_by_label("Ваш вопрос", exact=True).fill(
+            "Учебный анонимный вопрос для FAQ"
         )
-        patient.get_by_role("button", name="Отправить", exact=True).click()
-        capture(patient, "contact-desktop")
-        patient.set_viewport_size({"width": 390, "height": 844})
-        capture(patient, "contact-mobile")
+        guest.get_by_label("Понимаю, что вопрос и ответ").check()
+        guest.get_by_role("button", name="Задать анонимный вопрос").click()
+        thread_url = guest.url
+        expect(guest.get_by_role("status")).to_contain_text("Вопрос принят")
+        doctor.goto(url + "/doctor/faq")
+        doctor.get_by_label("Проверенный общий ответ").fill(
+            "Учебный публичный ответ команды"
+        )
+        doctor.get_by_role("button", name="Опубликовать вопрос и ответ").click()
+        guest.goto(thread_url)
+        expect(
+            guest.get_by_text("Учебный публичный ответ команды", exact=True)
+        ).to_be_visible()
+        guest.goto(url + "/faq")
+        capture(guest, "faq-forum-mobile")
         doctor.goto(url + "/patients/1")
         capture(doctor, "specialist-desktop")
         doctor.set_viewport_size({"width": 390, "height": 844})
@@ -275,7 +336,7 @@ def run(
         assert not errors, errors
         browser.close()
     print(
-        "UI check passed: separate portals, trust/FAQ, teaching safety adaptation with hidden branches, stepped PHQ-4/9/GAD-7, PHQ-ADS assignment, safety events, synthetic audio, diary comments, profile/genogram, published report, personal question/reply, video link, desktop/mobile; no JS errors."
+        "UI check passed: separate portals, trust/FAQ, teaching safety adaptation with hidden branches, stepped PHQ-4/9/GAD-7, PHQ-ADS assignment, safety events, synthetic audio, diary comments, separate profile pages, family tree/tabs, reports in dynamics, anonymous moderated FAQ, diary notes, consultation booking/video link, desktop/mobile; no JS errors."
     )
 
 

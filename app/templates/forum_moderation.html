@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="section-page-heading">
+        <h1>Вопросы в FAQ</h1>
+    </div>
+    <p>
+        Общие публичные ответы, без доступа к личности автора. Перед публикацией проверьте, что в тексте вопроса нет персональных сведений. Вопрос с личными данными можно скрыть.
+    </p>
+    {% for question in questions %}
+        <section class="card">
+            <span class="badge">{{ {'pending':'Ожидает ответа','published':'Опубликован','hidden':'Скрыт'}[question.status] }}</span>
+            <p class="text">{{ question.body }}</p>
+            <form action="/doctor/faq/{{ question.id }}" method="post">
+                <input name="csrf" type="hidden" value="{{ csrf }}">
+                <label>
+                    Проверенный общий ответ<textarea name="reply" maxlength="3000">{{ question.reply }}</textarea>
+                </label>
+                <div class="button-row">
+                    <button name="intent" value="publish">Опубликовать вопрос и ответ</button>
+                    <button name="intent" value="hide" class="secondary">Скрыть вопрос</button>
+                </div>
+            </form>
+        </section>
+    {% else %}
+        <p class="empty">Вопросов пока нет.</p>
+    {% endfor %}
+{% endblock %}

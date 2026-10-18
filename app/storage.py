@@ -61,8 +61,34 @@ def extend_schema(c):
     CREATE INDEX IF NOT EXISTS reports_patient ON specialist_reports(patient_id);
     CREATE INDEX IF NOT EXISTS questions_patient ON specialist_questions(patient_id);
     CREATE INDEX IF NOT EXISTS appointments_patient ON appointments(patient_id);
+    CREATE TABLE IF NOT EXISTS diary_notes(id INTEGER PRIMARY KEY, patient_id INTEGER NOT NULL REFERENCES patients(id), body TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS consultation_requests(id INTEGER PRIMARY KEY, patient_id INTEGER NOT NULL REFERENCES patients(id), preferred_day TEXT NOT NULL, time_window TEXT NOT NULL, timezone_label TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'requested', appointment_id INTEGER REFERENCES appointments(id), created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS forum_questions(id INTEGER PRIMARY KEY, public_id TEXT UNIQUE NOT NULL, body TEXT NOT NULL, reply TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'pending', created_at TEXT NOT NULL, replied_at TEXT, moderator_id INTEGER REFERENCES accounts(id));
+    CREATE TABLE IF NOT EXISTS family_details(relative_id INTEGER PRIMARY KEY REFERENCES relatives(id), about TEXT NOT NULL DEFAULT '', answer_kind TEXT NOT NULL DEFAULT 'unknown', description TEXT NOT NULL DEFAULT '', explanation TEXT NOT NULL DEFAULT '', discuss INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS family_conditions(id INTEGER PRIMARY KEY, relative_id INTEGER NOT NULL REFERENCES relatives(id), label TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', age_kind TEXT NOT NULL, age_text TEXT NOT NULL DEFAULT '', source TEXT NOT NULL, uncertain INTEGER NOT NULL DEFAULT 0);
+    CREATE INDEX IF NOT EXISTS diary_notes_patient ON diary_notes(patient_id);
+    CREATE INDEX IF NOT EXISTS consultation_patient ON consultation_requests(patient_id);
+
     """
     )
+    forum_columns = {r["name"] for r in c.execute("PRAGMA table_info(forum_questions)")}
+    if "submission_id" not in forum_columns:
+        c.execute("ALTER TABLE forum_questions ADD COLUMN submission_id TEXT")
+    c.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS forum_submission ON forum_questions(submission_id) WHERE submission_id IS NOT NULL"
+    )
+    relative_columns = {r["name"] for r in c.execute("PRAGMA table_info(relatives)")}
+    if "slot" not in relative_columns:
+        c.execute("ALTER TABLE relatives ADD COLUMN slot TEXT")
+    c.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS relative_slot ON relatives(patient_id,slot) WHERE slot IS NOT NULL"
+    )
+    # Map existing named parents without creating or deleting family data.
+    for slot in ["mother", "father"]:
+        c.execute(
+            "UPDATE relatives SET slot=? WHERE id IN (SELECT min(id) FROM relatives WHERE relation=? GROUP BY patient_id) AND slot IS NULL AND NOT EXISTS (SELECT 1 FROM relatives other WHERE other.patient_id=relatives.patient_id AND other.slot=?)",
+            (slot, slot, slot),
+        )
     account_columns = {r["name"] for r in c.execute("PRAGMA table_info(accounts)")}
     if "auth_version" not in account_columns:
         c.execute(

@@ -9,7 +9,7 @@
         <a class="button secondary" href="/doctor">Мои пациенты</a>
     </div>
     <nav class="tab-nav" aria-label="Разделы карточки">
-        <a href="#safety">Безопасность</a><a href="#assessments">Анкеты и назначения</a><a href="/patients/{{ patient.id }}/results">Динамика</a><a href="/patients/{{ patient.id }}/profile">Профиль и отчёты</a><a href="/patients/{{ patient.id }}/contact">Связь и видео</a><a href="/patients/{{ patient.id }}/audit">Журнал доступа</a>
+        <a href="#safety">Безопасность</a><a href="#assessments">Анкеты и назначения</a><a href="/patients/{{ patient.id }}/results">Динамика</a><a href="/patients/{{ patient.id }}/profile">Личный профиль</a><a href="/patients/{{ patient.id }}/profile/video">Консультации и видео</a><a href="/patients/{{ patient.id }}/audit">Журнал доступа</a>
     </nav>
     {% include 'safety_block.html' %}
     {% include 'assessment_list.html' %}
@@ -19,15 +19,17 @@
             <p class="eyebrow">НАБЛЮДЕНИЕ</p>
             <h2>История и совместная работа</h2>
             <p>Личный профиль, семейная история, отчёты и план наблюдения.</p>
-            <a class="button secondary" href="/patients/{{ patient.id }}/profile">Профиль и отчёты</a>
+            <a class="button secondary" href="/patients/{{ patient.id }}/profile">Личный профиль</a>
             <hr>
             <a href="/clinical-tools?patient_id={{ patient.id }}">Назначить обследование из библиотеки</a>
             <hr>
-            <a href="/patients/{{ patient.id }}/contact#video">Запланировать видеоприём</a>
+            <a href="/patients/{{ patient.id }}/profile/video">Запланировать видеоприём</a>
         </section>
     </div>
     {% include 'care.html' %}
-    {% include 'reports_block.html' %}
+    {% include 'notes_block.html' %}
+    <a class="button secondary"
+       href="/patients/{{ patient.id }}/results#reports">Динамика и отчёты специалиста</a>
     {% include 'conversation_support.html' %}
     {% if screenings %}
         <details class="section-fold">

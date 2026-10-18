@@ -2,7 +2,7 @@
 {% block title %}{{ definition.name }} · Клинический компас{% endblock %}
 {% block content %}
     <div class="assessment-intro">
-        <a href="{{ '/patients/' ~ assessment.patient_id ~ ('#assessments' if user == 'doctor' else '/profile#assessments') }}">{{ 'Карточка пациента' if user == 'doctor' else 'Мои анкеты' }}</a>
+        <a href="{{ '/patients/' ~ assessment.patient_id ~ ('#assessments' if user == 'doctor' else '/profile/assessments') }}">{{ 'Карточка пациента' if user == 'doctor' else 'Мои анкеты' }}</a>
         <p class="eyebrow">{{ 'ИСХОДНЫЙ САМООТЧЁТ · СПЕЦИАЛИСТ' if user == 'doctor' else 'ВАШИ СОХРАНЁННЫЕ ОТВЕТЫ' }}</p>
         <h1>{{ definition.name }}</h1>
         <span class="badge">{{ {'draft':'Черновик','incomplete':'Не завершено','completed':'Отправлено'}[assessment.status] }}</span>
@@ -113,7 +113,7 @@
                     <button>Продолжить с PHQ-4</button>
                 </form>
             {% endif %}
-            <a href="/patients/{{ assessment.patient_id }}/contact#ask">Обсудить ответы со специалистом</a>
+            <a href="/patients/{{ assessment.patient_id }}/profile/video">Записаться на консультацию</a>
         </section>
     {% endif %}
     {% if audio %}

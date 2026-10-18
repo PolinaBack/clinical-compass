@@ -10,7 +10,6 @@
         <p class="lead">Если трудно отвечать в анкете, можно начать с разговора со специалистом.</p>
     </div>
     {% if user != 'doctor' %}
-        {% include 'patient_nav.html' %}
     {% else %}
         <a href="/patients/{{ patient.id }}">Карточка пациента</a>
     {% endif %}
@@ -39,7 +38,7 @@
             </form>
         {% endif %}
         <a class="button secondary"
-           href="/patients/{{ patient.id }}/contact#ask">Поговорить со специалистом</a><a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>
+           href="/patients/{{ patient.id }}/profile/video">Записаться на консультацию</a><a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>
     </section>
     {% if user != 'doctor' and consent %}
         <section class="card">
@@ -48,7 +47,7 @@
                 Она посвящена настроению и тревоге за последние две недели. Если пока не готовы отвечать на учебные вопросы безопасности, можно отложить их и обсудить со специалистом. Это не будет означать отрицательный результат.
             </p>
             {% if assessment_data.assessments|rejectattr('scale','equalto','safety6')|list %}
-                <a class="button" href="/patients/{{ patient.id }}/profile#assessments">Мои анкеты</a>
+                <a class="button" href="/patients/{{ patient.id }}/profile/assessments">Мои анкеты</a>
             {% else %}
                 <form action="/assessments/start" method="post">
                     <input type="hidden" name="csrf" value="{{ csrf }}">

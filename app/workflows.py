@@ -19,6 +19,8 @@ from .scales import (
     symptom_category,
 )
 from .storage import now, audit
+from .charts import chart
+from .portal import portal_data
 from .safety import (
     SAFETY_VERSION,
     SAFETY_EXPLANATIONS,
@@ -120,10 +122,6 @@ def register_workflows(
         for row in changes:
             row["previous"] = json.loads(row["payload"])
         return render(request, "history.html", aid=aid, changes=changes)
-
-    @app.get("/faq")
-    def faq(request: Request):
-        return render(request, "faq.html")
 
     @app.get("/help-now")
     def help_now(request: Request):
@@ -700,35 +698,32 @@ def register_workflows(
             summaries.append({"sid": sid, "total": total, "reason": reason})
         graphs = []
         for scale in ["phq9", "gad7"]:
-            rows = sorted(
-                [a for a in data["assessments"] if a["scale"] == scale],
-                key=lambda a: (a["period_end"], a["id"]),
-            )
-            segments = []
-            current = []
-            points = []
-            for i, a in enumerate(rows):
-                total = a["result"]["total"]
-                if total is None:
-                    if current:
-                        segments.append(" ".join(current))
-                        current = []
-                    continue
-                x = 40 + i * 520 / max(len(rows) - 1, 1)
-                y = 165 - total / SCALES[scale]["max"] * 130
-                current.append(f"{x:.1f},{y:.1f}")
-                points.append({"x": x, "y": y, "assessment": a, "total": total})
-            if current:
-                segments.append(" ".join(current))
+            rows = [
+                dict(a, total=a["result"]["total"])
+                for a in data["assessments"]
+                if a["scale"] == scale
+            ]
             graphs.append(
-                {
-                    "scale": scale,
-                    "name": SCALES[scale]["name"],
-                    "max": SCALES[scale]["max"],
-                    "segments": segments,
-                    "points": points,
-                }
+                chart(rows, SCALES[scale]["max"], SCALES[scale]["name"], scale)
             )
+        with db() as c:
+            diary_rows = [
+                dict(r)
+                for r in c.execute(
+                    "SELECT * FROM diary WHERE patient_id=? ORDER BY day,id", (pid,)
+                )
+            ]
+        with db() as c:
+            decisions = [
+                dict(r)
+                for r in c.execute(
+                    "SELECT * FROM decisions WHERE patient_id=? AND confirmed=1 ORDER BY id DESC",
+                    (pid,),
+                )
+            ]
+        diary_graph = chart(
+            diary_rows, 10, "Самочувствие по дневнику", "diary", "day", "wellbeing"
+        )
         with db() as c:
             audit(c, account(request)["id"], "results_view", pid)
         return render(
@@ -738,6 +733,10 @@ def register_workflows(
             data=data,
             summaries=summaries,
             graphs=graphs,
+            diary_graph=diary_graph,
+            decisions=decisions,
+            patient={"id": pid},
+            **portal_data(db, pid, identity(request) == "doctor"),
         )
 
     @app.get("/api/workflow-alerts")

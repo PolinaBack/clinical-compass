@@ -42,9 +42,9 @@
                 <p class="{{ 'warning' if p.alerts else 'quiet-panel' }}">
                     {{ p.alerts }} записей с пропуском назначения или запросом связи
                 </p>
-                {% if p.pending_questions %}
+                {% if p.pending_consultations %}
                     <p>
-                        <a class="badge new" href="/patients/{{ p.id }}/contact#questions">Личные вопросы без ответа: {{ p.pending_questions }}</a>
+                        <a class="badge new" href="/patients/{{ p.id }}/profile/video#booking">Заявки на консультацию: {{ p.pending_consultations }}</a>
                     </p>
                 {% endif %}
                 <a class="button full" href="/patients/{{ p.id }}">Карточка пациента</a>

@@ -1691,3 +1691,40 @@ li {
   .button-row > button { flex: 1 1 auto; }
 }
 .assessment-shell .save-bar { position: static; margin-top: 20px; }
+
+/* Compact section headings and navigation live in the common header. */
+.section-page-heading { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:32px 0 22px; }
+.section-page-heading h1 { font-size:36px; margin:0; }
+.header-nav [aria-current="page"] { color:var(--primary-dark); background:var(--soft); border-radius:30px; padding:9px 14px; text-decoration:none; }
+.profile-sections { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }
+.profile-tile { display:block; text-decoration:none; margin:0; }
+.profile-tile h2 { font-size:28px; }.profile-tile p { color:var(--muted); }.profile-tile span { font-size:13px; }
+.profile-nav { margin-bottom:28px; }
+.chart-scroll { overflow-x:auto; }.chart-scroll svg { min-width:570px; width:100%; max-height:none; }
+.chart-scroll text { fill:#5e586b; font:12px 'Segoe UI',sans-serif; }.chart-scroll .axis-label { font-size:14px; font-weight:600; }
+.forum-answer { background:#f0f5ef; border-radius:14px; padding:20px; margin-top:16px; }
+.faq-forum { max-width:920px; margin:35px auto; }
+/* The tree is a descriptive family history, with six optional empty slots. */
+.family-panel { background:#fffefa; border:1px solid #e2e8d8; border-radius:26px; padding:30px; color:#30483c; }
+.family-view-switch { display:flex; gap:4px; background:#f0f3e9; border-radius:15px; padding:5px; }
+.family-view-switch a { padding:8px 14px; text-decoration:none; color:#60744e; border-radius:11px; }
+.family-view-switch [aria-current="page"] { background:white; box-shadow:0 2px 5px #3549270a; }
+.family-tree-scroll { overflow-x:auto; border-radius:20px; }
+.family-tree { position:relative; min-width:850px; aspect-ratio:1100/760; }
+.family-tree .tree-art { position:absolute; inset:0; width:100%; height:100%; max-height:none; }
+.tree-canopy { fill:#eff3e6; }.tree-branches { fill:none; stroke:#a5b597; stroke-width:10; stroke-linecap:round; }.tree-leaves { fill:#d2ddc1; }.tree-ground { stroke:#d4ddc8; fill:none; stroke-width:2; }
+.family-leaf { position:absolute; left:var(--leaf-x); top:var(--leaf-y); transform:translate(-50%,-10%); width:18%; min-height:106px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:16px 12px; text-align:center; border-radius:40px 14px 40px 14px; border:1px solid #d8e2c9; background:#fafcf4; text-decoration:none; color:#314939; box-shadow:0 10px 20px #62734b08; }
+.family-leaf strong { font:27px Georgia,serif; }.family-leaf span { font-size:12px; color:#84956e; }.family-leaf small { color:#8d9d7a; font-size:11px; }.family-leaf:hover { border-color:#8a9f72; color:#304d35; }
+.family-leaf.parent-leaf { width:20%; border-radius:55px 17px 55px 17px; }.family-leaf.leaf-filled { background:#e3eccf; }.family-leaf.parent-leaf.leaf-filled { color:#fff; background:#3e624a; }.family-leaf.parent-leaf.leaf-filled span,.family-leaf.parent-leaf.leaf-filled small { color:#d7e3ca; }.family-leaf.leaf-draft { border-style:dashed; background:#edeee1; }
+.family-discuss { position:absolute; right:0; top:-12px; width:32px; height:32px; display:grid; place-items:center; border-radius:50%; background:#edd097; border:4px solid #fff; color:#755019!important; font-weight:bold; }
+.tree-branch-label { position:absolute; top:2%; color:#96a485; letter-spacing:2px; font-size:12px; }.tree-branch-label.maternal { left:14%; }.tree-branch-label.paternal { right:14%; }
+.tree-self { position:absolute; left:50%; top:86%; transform:translateX(-50%); width:65px; height:65px; border:6px solid #fffefa; border-radius:50%; background:#e9d9b7; display:grid; place-items:center; color:#715c36; font:italic 31px Georgia,serif; }
+.tree-root-caption { position:absolute; top:97%; left:50%; transform:translateX(-50%); white-space:nowrap; color:#b0ad91; font-size:10px; letter-spacing:3px; }
+.family-progress { margin:24px 0 12px; padding:22px; border-radius:18px; background:#f4f6f0; }.family-progress p { margin:6px 0 0; color:#93a086; font-size:13px; }.family-context-note { background:#eef2e5; border-radius:16px; padding:18px 22px; color:#8c9d77; font-size:14px; }
+.family-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }.family-list-item { display:flex; flex-direction:column; gap:6px; padding:20px; border:1px solid #dce4d1; border-radius:16px; text-decoration:none; color:#40593c; }
+.family-member { background:#fffefa; color:#30483c; border:1px solid #e1e7d8; border-radius:28px; overflow:hidden; }.family-member-heading { padding:32px 38px 20px; }.family-member-heading h2 { font-size:40px; }.family-member-tabs { display:flex; border-block:1px solid #e1e7d8; }.family-member-tabs a { flex:1; text-align:center; padding:20px 12px; text-decoration:none; color:#9caa8b; }.family-member-tabs [aria-current="page"] { color:#607a45; box-shadow:inset 0 -3px #8fa472; }
+.family-member-body { padding:30px 38px; }.family-member-body h3 { font:28px Georgia,serif; }.family-member-body input,.family-member-body textarea,.family-member-body select { border-color:#dbe3cd; accent-color:#819b60; }.family-member-body button { background:#607f4e; }.family-member-body .text-button { color:#607f4e; background:none; }
+.family-memory { background:#eef4e2; border-color:#d7e3c1; }.family-memory summary { color:#78914e; }.family-answer-kind { border:0; padding:15px 0; display:grid; grid-template-columns:1fr 1fr; gap:10px; }.family-answer-kind legend { margin:12px 0; }.family-answer-kind .answer-option { align-items:center; min-height:60px; border-color:#dce4d0; font-size:14px; }.family-answer-kind .answer-option:has(input:checked) { background:#f0f5e7; border-color:#98b076; }
+.family-condition { border:1px solid #dce4cf; padding:22px; border-radius:20px; background:#fafbf5; margin:18px 0; }.family-condition h4 { margin-top:0; }.family-recalled { padding:14px; background:#f5efdc; border-radius:12px; color:#a08f64; }
+@media (max-width:800px) { .header-nav { flex-wrap:wrap; gap:8px 16px; }.family-panel { padding:20px; }.family-member-heading,.family-member-body { padding:24px; } }
+@media (max-width:540px) { .section-page-heading h1 { font-size:30px; }.section-page-heading { align-items:flex-start; }.profile-sections,.family-list { grid-template-columns:1fr; }.family-panel { padding:16px; }.family-answer-kind { grid-template-columns:1fr; }.family-member-tabs a { font-size:12px; padding:16px 6px; }.family-member-heading,.family-member-body { padding:20px; }.profile-nav { overflow:auto; flex-wrap:nowrap; }.profile-nav a { flex-shrink:0; }.family-panel .section-heading { flex-wrap:wrap; } }

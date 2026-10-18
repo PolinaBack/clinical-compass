@@ -1,8 +1,4 @@
-"""Longitudinal care, personal history and local specialist communication.
-
-Demo personas never grant additional access: only the patient's assigned doctor can
-read or answer. Published reports and original self-reports remain separate records.
-"""
+"""Patient history, diary notes, reports and consultation scheduling."""
 
 from datetime import datetime
 from urllib.parse import urlsplit
@@ -13,22 +9,6 @@ from fastapi.responses import RedirectResponse
 from .storage import now, audit
 from .scales import SCALES, OPTIONS
 
-PERSONAS = {
-    "anna": {
-        "name": "Анна Миронова",
-        "role": "Врач-психиатр",
-        "initials": "АМ",
-        "base_minutes": 90,
-        "availability": "Демонстрация: завершает приём",
-    },
-    "mikhail": {
-        "name": "Михаил Лебедев",
-        "role": "Врач-психотерапевт",
-        "initials": "МЛ",
-        "base_minutes": 240,
-        "availability": "Демонстрация: несколько приёмов подряд",
-    },
-}
 PROFILE_FIELDS = (
     ("biography", "Обо мне", "Учёба, работа, интересы и то, что важно знать обо мне."),
     ("goals", "Что я хочу изменить", "Мои цели и ожидания от поддержки."),
@@ -74,10 +54,16 @@ def portal_data(db, pid, doctor=False):
                 (pid, int(doctor)),
             )
         ]
-        questions = [
+        notes = [
             dict(r)
             for r in c.execute(
-                "SELECT * FROM specialist_questions WHERE patient_id=? ORDER BY id DESC",
+                "SELECT * FROM diary_notes WHERE patient_id=? ORDER BY id DESC", (pid,)
+            )
+        ]
+        bookings = [
+            dict(r)
+            for r in c.execute(
+                "SELECT * FROM consultation_requests WHERE patient_id=? ORDER BY id DESC",
                 (pid,),
             )
         ]
@@ -142,29 +128,15 @@ def portal_data(db, pid, doctor=False):
                         ),
                     }
                 )
-        # An estimate for this patient's LOCAL demo queue, never a real duty roster.
-        counts = dict(
-            c.execute(
-                "SELECT persona,count(*) FROM specialist_questions WHERE patient_id=? AND status!='answered' GROUP BY persona",
-                (pid,),
-            )
-        )
-    personas = {
-        key: {
-            **value,
-            "estimated_minutes": value["base_minutes"] + 15 * counts.get(key, 0),
-        }
-        for key, value in PERSONAS.items()
-    }
     return dict(
         conversation_topics=topics,
         profile=dict(profile) if profile else {},
         profile_fields=PROFILE_FIELDS,
         diary_comments=comments,
         reports=reports,
-        questions=questions,
+        diary_notes=notes,
+        bookings=bookings,
         appointments=visits,
-        personas=personas,
         safety_review=dict(safety) if safety else None,
     )
 
@@ -186,12 +158,94 @@ def register_portal(
         if user["role"] != "patient":
             raise HTTPException(403, "Раздел пациента")
         return render(
-            request, "introduction.html", **patient_context(request, user["patient_id"])
+            request,
+            "home.html",
+            patient_home=True,
+            **patient_context(request, user["patient_id"]),
         )
 
     @app.get("/patients/{pid}/profile")
     def profile_page(request: Request, pid: int):
-        return render(request, "profile.html", **patient_context(request, pid))
+        return render(
+            request, "profile.html", section=None, **patient_context(request, pid)
+        )
+
+    @app.get("/patients/{pid}/profile/{section}")
+    def profile_section(request: Request, pid: int, section: str, view: str = "tree"):
+        if section not in ["about", "assessments", "family", "video"]:
+            raise HTTPException(404, "Раздел не найден")
+        context = patient_context(request, pid)
+        if section == "family":
+            from .family import family_tree
+
+            context.update(
+                family_tree(context["relatives"]),
+                family_view="list" if view == "list" else "tree",
+            )
+        return render(request, "profile.html", section=section, **context)
+
+    @app.get("/patients/{pid}/diary")
+    def diary_page(request: Request, pid: int):
+        return render(request, "patient.html", **patient_context(request, pid))
+
+    @app.post("/patients/{pid}/notes")
+    def note(
+        request: Request,
+        pid: int,
+        csrf: str = Form(...),
+        body: str = Form(..., min_length=1, max_length=3000),
+    ):
+        access(request, pid, True)
+        csrf_check(request, csrf)
+        if not body.strip():
+            raise HTTPException(422, "Напишите заметку")
+        with db() as c:
+            nid = c.execute(
+                "INSERT INTO diary_notes(patient_id,body,created_at) VALUES(?,?,?)",
+                (pid, body.strip(), now()),
+            ).lastrowid
+            audit(c, account(request)["id"], "diary_note_saved", pid, nid)
+        return redirect(pid, "/diary#notes")
+
+    @app.post("/patients/{pid}/consultations")
+    def request_visit(
+        request: Request,
+        pid: int,
+        csrf: str = Form(...),
+        preferred_day: str = Form(...),
+        time_window: str = Form(..., min_length=1, max_length=100),
+        timezone_label: str = Form(..., min_length=1, max_length=80),
+    ):
+        access(request, pid, True)
+        csrf_check(request, csrf)
+        from datetime import date
+
+        try:
+            day = date.fromisoformat(preferred_day)
+        except ValueError:
+            raise HTTPException(422, "Проверьте дату")
+        if day < date.today() or not time_window.strip() or not timezone_label.strip():
+            raise HTTPException(422, "Выберите будущую дату, время и часовой пояс")
+        with db() as c:
+            c.execute("BEGIN IMMEDIATE")
+            existing = c.execute(
+                "SELECT id FROM consultation_requests WHERE patient_id=? AND preferred_day=? AND time_window=? AND timezone_label=? AND status='requested'",
+                (pid, day.isoformat(), time_window.strip(), timezone_label.strip()),
+            ).fetchone()
+            if existing:
+                return redirect(pid, "/profile/video#booking")
+            c.execute(
+                "INSERT INTO consultation_requests(patient_id,preferred_day,time_window,timezone_label,created_at) VALUES(?,?,?,?,?)",
+                (
+                    pid,
+                    day.isoformat(),
+                    time_window.strip(),
+                    timezone_label.strip(),
+                    now(),
+                ),
+            )
+            audit(c, account(request)["id"], "consultation_requested", pid)
+        return redirect(pid, "/profile/video#booking")
 
     @app.post("/patients/{pid}/profile")
     async def profile_save(request: Request, pid: int):
@@ -207,7 +261,7 @@ def register_portal(
                 (pid, *values, now()),
             )
             audit(c, account(request)["id"], "profile_saved", pid)
-        return redirect(pid, "/profile?saved=1#about")
+        return redirect(pid, "/profile/about?saved=1")
 
     @app.post("/patients/{pid}/diary/{did}/comments")
     def diary_comment(
@@ -231,7 +285,7 @@ def register_portal(
                 (pid, did, user["id"], body.strip(), now()),
             ).lastrowid
             audit(c, user["id"], "diary_comment_added", pid, cid)
-        return redirect(pid, f"#diary-entry-{did}")
+        return redirect(pid, f"/diary#diary-entry-{did}")
 
     @app.post("/patients/{pid}/reports")
     def report(
@@ -271,7 +325,7 @@ def register_portal(
                 pid,
                 rid,
             )
-        return redirect(pid, "/profile#reports")
+        return redirect(pid, "/results#reports")
 
     @app.post("/patients/{pid}/reports/{rid}/publish")
     def publish_report(request: Request, pid: int, rid: int, csrf: str = Form(...)):
@@ -285,78 +339,18 @@ def register_portal(
             if not result.rowcount:
                 raise HTTPException(404, "Черновик не найден")
             audit(c, user["id"], "report_published", pid, rid)
-        return redirect(pid, "/profile#reports")
+        return redirect(pid, "/results#reports")
 
     @app.get("/patients/{pid}/contact")
-    def contact_page(request: Request, pid: int):
-        return render(request, "contact.html", **patient_context(request, pid))
+    def old_contact(request: Request, pid: int):
+        access(request, pid)
+        return redirect(pid, "/profile/video")
 
     @app.post("/patients/{pid}/questions")
-    def ask(
-        request: Request,
-        pid: int,
-        csrf: str = Form(...),
-        persona: str = Form(...),
-        body: str = Form(..., min_length=1, max_length=3000),
-    ):
-        access(request, pid, True)
-        csrf_check(request, csrf)
-        if persona not in PERSONAS or not body.strip():
-            raise HTTPException(422, "Выберите специалиста и напишите вопрос")
-        with db() as c:
-            count = c.execute(
-                "SELECT count(*) FROM specialist_questions WHERE patient_id=? AND persona=? AND status!='answered'",
-                (pid, persona),
-            ).fetchone()[0]
-            qid = c.execute(
-                "INSERT INTO specialist_questions(patient_id,persona,body,estimated_minutes,created_at) VALUES(?,?,?,?,?)",
-                (
-                    pid,
-                    persona,
-                    body.strip(),
-                    PERSONAS[persona]["base_minutes"] + 15 * count,
-                    now(),
-                ),
-            ).lastrowid
-            audit(c, account(request)["id"], "question_sent", pid, qid)
-        return redirect(pid, "/contact#questions")
-
     @app.post("/patients/{pid}/questions/{qid}/reply")
-    def reply(
-        request: Request,
-        pid: int,
-        qid: int,
-        csrf: str = Form(...),
-        intent: str = Form(...),
-        body: str = Form("", max_length=3000),
-    ):
-        user = specialist(request, pid)
-        csrf_check(request, csrf)
-        with db() as c:
-            q = c.execute(
-                "SELECT * FROM specialist_questions WHERE id=? AND patient_id=?",
-                (qid, pid),
-            ).fetchone()
-            if not q:
-                raise HTTPException(404, "Вопрос не найден")
-            if intent == "read":
-                c.execute(
-                    "UPDATE specialist_questions SET status=CASE WHEN status='sent' THEN 'read' ELSE status END,read_at=coalesce(read_at,?) WHERE id=?",
-                    (now(), qid),
-                )
-            elif intent == "answer" and body.strip():
-                if q["status"] == "answered":
-                    raise HTTPException(
-                        409, "Ответ уже отправлен; продолжите разговор сообщением"
-                    )
-                c.execute(
-                    "UPDATE specialist_questions SET status='answered',read_at=coalesce(read_at,?),reply=?,responder_id=?,replied_at=? WHERE id=?",
-                    (now(), body.strip(), user["id"], now(), qid),
-                )
-            else:
-                raise HTTPException(422, "Выберите действие или напишите ответ")
-            audit(c, user["id"], "question_" + intent, pid, qid)
-        return redirect(pid, "/contact#questions")
+    def old_questions(request: Request, pid: int, qid: int | None = None):
+        access(request, pid)
+        raise HTTPException(410, "Личные вопросы закрыты. Запишитесь на консультацию.")
 
     @app.post("/patients/{pid}/appointments")
     def appointment(
@@ -367,6 +361,7 @@ def register_portal(
         timezone_label: str = Form(..., min_length=1, max_length=80),
         url: str = Form(..., max_length=2000),
         fallback: str = Form(..., min_length=1, max_length=1000),
+        booking_id: int | None = Form(None),
     ):
         user = specialist(request, pid)
         csrf_check(request, csrf)
@@ -391,6 +386,16 @@ def register_portal(
                 422, "Укажите местное время и его часовой пояс отдельно"
             )
         with db() as c:
+            if (
+                booking_id is not None
+                and not c.execute(
+                    "SELECT id FROM consultation_requests WHERE id=? AND patient_id=? AND status='requested'",
+                    (booking_id, pid),
+                ).fetchone()
+            ):
+                raise HTTPException(
+                    422, "Заявка не принадлежит пациенту или уже обработана"
+                )
             vid = c.execute(
                 "INSERT INTO appointments(patient_id,author_id,starts_at,timezone_label,url,fallback,created_at) VALUES(?,?,?,?,?,?,?)",
                 (
@@ -403,8 +408,13 @@ def register_portal(
                     now(),
                 ),
             ).lastrowid
+            if booking_id is not None:
+                c.execute(
+                    "UPDATE consultation_requests SET status='confirmed',appointment_id=? WHERE id=?",
+                    (vid, booking_id),
+                )
             audit(c, user["id"], "appointment_planned", pid, vid)
-        return redirect(pid, "/contact#video")
+        return redirect(pid, "/profile/video#video")
 
     @app.post("/patients/{pid}/appointments/{vid}/status")
     def visit_status(
@@ -441,7 +451,7 @@ def register_portal(
                 (intent, intent, now(), vid),
             )
             audit(c, user["id"], "appointment_" + intent, pid, vid)
-        return redirect(pid, "/contact#video")
+        return redirect(pid, "/profile/video#video")
 
     @app.get("/patients/{pid}/safety")
     def safety_page(request: Request, pid: int):

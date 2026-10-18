@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="section-page-heading">
+        <h1>Семейная история</h1>
+        <a href="/patients/{{ patient.id }}/profile/family">К дереву</a>
+    </div>
+    {% include 'profile_nav.html' %}
+    <section class="family-member">
+        <div class="family-member-heading">
+            <p class="eyebrow">ВЫБРАННЫЙ БЛИЗКИЙ</p>
+            <h2>{{ person.name }}</h2>
+        </div>
+        <nav class="family-member-tabs" aria-label="Сведения о близком">
+            {% for key,label in [('about','О близком'),('knowledge','Что известно'),('explanations','Пояснения')] %}
+                <a href="?tab={{ key }}"
+                   {% if tab == key %}aria-current="page"{% endif %}>{{ label }}</a>
+            {% endfor %}
+        </nav>
+        <div class="family-member-body">
+            <form action="/patients/{{ patient.id }}/family/{{ member_key }}"
+                  method="post">
+                <input name="csrf" type="hidden" value="{{ csrf }}">
+                <input name="tab" type="hidden" value="{{ tab }}">
+                {% if tab == 'about' %}
+                    <h3>О близком</h3>
+                    <label>
+                        Имя или родство
+                        <input name="name"
+                               maxlength="80"
+                               value="{{ person.name }}"
+                               {% if user == 'doctor' %}readonly{% endif %}
+                               required>
+                    </label>
+                    <label>
+                        Что хотите рассказать о близком<textarea name="about" maxlength="3000" {% if user == 'doctor' %}readonly{% endif %}>{{ details.get('about','') }}</textarea>
+                    </label>
+                {% elif tab == 'knowledge' %}
+                    <h3>Что вы помните сами?</h3>
+                    <p>Расскажите то, что известно о здоровье близкого. Точные названия знать необязательно.</p>
+                    <label>
+                        Какие заболевания или особенности здоровья вам известны?<textarea name="description" maxlength="3000" placeholder="Напишите своими словами. Можно оставить пустым." {% if user == 'doctor' %}readonly{% endif %}>{{ details.get('description','') }}</textarea>
+                    </label>
+                    <details class="family-memory">
+                        <summary>Помочь вспомнить</summary>
+                        <p>
+                            Можно вспомнить, обращался ли близкий за помощью, о каких изменениях рассказывал и что вы наблюдали сами. Если точного названия не знаете, сохраните описание. По описанию диагноз не определяется.
+                        </p>
+                    </details>
+                    <fieldset class="family-answer-kind">
+                        <legend>Какой ответ сейчас подходит?</legend>
+                        {% for key,label in kinds %}
+                            <label class="answer-option">
+                                <input type="radio"
+                                       name="answer_kind"
+                                       value="{{ key }}"
+                                       {% if details.get('answer_kind','unknown') == key %}checked{% endif %}
+                                       {% if user == 'doctor' %}disabled{% endif %}>
+                                {{ label }}
+                            </label>
+                        {% endfor %}
+                    </fieldset>
+                {% else %}
+                    <h3>Пояснения к истории</h3>
+                    <label>
+                        Что важно уточнить<textarea name="explanation" maxlength="3000" {% if user == 'doctor' %}readonly{% endif %}>{{ details.get('explanation','') }}</textarea>
+                    </label>
+                    <label class="check">
+                        <input name="discuss"
+                               type="checkbox"
+                               value="true"
+                               {% if details.get('discuss') %}checked{% endif %}
+                               {% if user == 'doctor' %}disabled{% endif %}>
+                        Хочу обсудить на консультации
+                    </label>
+                {% endif %}
+                {% if user != 'doctor' and consent %}<button>Сохранить сведения</button>{% endif %}
+                {% if request.query_params.get('saved') %}<p class="success" role="status">Сведения сохранены.</p>{% endif %}
+            </form>
+            {% if tab == 'knowledge' %}
+                <h3>Добавленные сведения</h3>
+                <p class="caption">Названия и описания хранятся со слов пользователя, без подтверждения диагноза.</p>
+                {% for condition in conditions %}
+                    <article class="family-condition">
+                        <h4>{{ condition.label }}</h4>
+                        {% if condition.description %}<p class="family-recalled">{{ condition.description }}</p>{% endif %}
+                        <p>{{ condition.age_kind }} · {{ condition.age_text or 'Не указан' }}</p>
+                        <p>
+                            Источник: {{ condition.source }}
+                            {% if condition.uncertain %}· Могу ошибаться, нужно уточнить{% endif %}
+                        </p>
+                        {% if user != 'doctor' and consent %}
+                            <form action="/patients/{{ patient.id }}/family/conditions/{{ condition.id }}/delete"
+                                  method="post">
+                                <input name="csrf" type="hidden" value="{{ csrf }}">
+                                <button class="text-button">Удалить сведения</button>
+                            </form>
+                        {% endif %}
+                    </article>
+                {% else %}
+                    <p class="empty">Отдельных записей пока нет.</p>
+                {% endfor %}
+                {% if user != 'doctor' and consent and person.get('id') %}
+                    <details class="inset">
+                        <summary>Добавить своими словами</summary>
+                        <form action="/patients/{{ patient.id }}/family/{{ person.id }}/conditions"
+                              method="post">
+                            <input name="csrf" type="hidden" value="{{ csrf }}">
+                            <label>
+                                Известное название или описание
+                                <input name="label" maxlength="200" required>
+                            </label>
+                            <label>
+                                Что вспомнили<textarea name="description" maxlength="1000"></textarea>
+                            </label>
+                            <label>
+                                Какой возраст помните?
+                                <select name="age_kind">
+                                    {% for label in age_kinds %}<option>{{ label }}</option>{% endfor %}
+                                </select>
+                            </label>
+                            <label>
+                                Примерно сколько лет?
+                                <input name="age_text" maxlength="80" placeholder="Например, около 48 лет">
+                            </label>
+                            <label>
+                                Откуда вам это известно?
+                                <select name="source">
+                                    {% for label in info_sources %}<option>{{ label }}</option>{% endfor %}
+                                </select>
+                            </label>
+                            <label class="check">
+                                <input name="uncertain" type="checkbox" value="true">
+                                Могу ошибаться, нужно уточнить
+                            </label>
+                            <button>Добавить сведения</button>
+                        </form>
+                    </details>
+                {% elif not person.get('id') and user != 'doctor' %}
+                    <p>Сначала сохраните сведения о близком.</p>
+                {% endif %}
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

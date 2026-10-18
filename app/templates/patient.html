@@ -1,82 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="dashboard-intro">
-        <div>
-            <p class="eyebrow">МОЙ МАРШРУТ · {{ patient.name }}</p>
-            <h1>
-                Маленькие шаги.
-                <br>
-                <em>В вашем темпе.</em>
-            </h1>
-            <p class="lead">«Не обязательно справляться со всем сразу. Можно начать с того, что чувствуете сегодня».</p>
-        </div>
-        <div class="privacy-pill">
-            Ваш дневник и ответы
-            <br>
-            доступны назначенному специалисту
-        </div>
+    <div class="section-page-heading">
+        <h1>Дневник</h1>
+        {% if user == 'doctor' %}<a href="/patients/{{ patient.id }}">Карточка пациента</a>{% endif %}
     </div>
-    {% include 'patient_nav.html' %}
-    {% if not assessment_data.assessments %}
-        <section class="onboarding-banner">
-            <div>
-                <p class="eyebrow">ПЕРВОЕ ЗНАКОМСТВО</p>
-                <h2>Здесь можно отвечать честно</h2>
-                <p>Нет правильных ответов. Можно задать вопрос, оставить комментарий или сделать паузу.</p>
-            </div>
-            <a class="button" href="/me/start">Начать знакомство</a>
-        </section>
+    {% if consent or user == 'doctor' %}
+        {% include 'diary_block.html' %}
+        {% include 'notes_block.html' %}
     {% else %}
-        <div class="journey-strip">
-            <span class="journey-dot"></span>
-            <p>Ваши анкеты и рекомендации собраны в личном профиле.</p>
-            <a href="/patients/{{ patient.id }}/profile#assessments">Посмотреть назначения</a>
-        </div>
-    {% endif %}
-    <div class="dashboard-grid">
-        <div>
-            {% if consent %}
-                {% include 'diary_block.html' %}
-            {% else %}
-                <section class="card">
-                    <h2>Место для ваших наблюдений</h2>
-                    <p>После знакомства с правилами можно сохранять записи о самочувствии.</p>
-                    <a class="button" href="/consent">Посмотреть условия</a>
-                </section>
-            {% endif %}
-        </div>
-        <aside>
-            <section class="card soft-card">
-                <p class="eyebrow">РЯДОМ С ВАМИ</p>
-                <h2>Замечать изменения</h2>
-                <p>Дневник помогает вспомнить, как проходили дни. Специалист может оставить комментарий к конкретной записи.</p>
-                <a href="/patients/{{ patient.id }}/results">Динамика опросников</a>
-            </section>
-            <section class="card">
-                <h2>Есть вопрос?</h2>
-                <p>Можно написать специалисту или посмотреть время видеоприёма.</p>
-                <a class="button secondary" href="/patients/{{ patient.id }}/contact">Связаться со специалистом</a>
-            </section>
-        </aside>
-    </div>
-    {% if reports %}
         <section class="card">
-            <p class="eyebrow">ОБРАТНАЯ СВЯЗЬ</p>
-            <h2>Последний отчёт специалиста</h2>
-            <h3>{{ reports[0].title }}</h3>
-            <p class="text">{{ reports[0].plan }}</p>
-            <a href="/patients/{{ patient.id }}/profile#reports">Открыть отчёты</a>
+            <p>Для сохранения записей подтвердите участие в демонстрации.</p>
+            <a class="button" href="/consent">Посмотреть условия</a>
         </section>
     {% endif %}
-    {% if assessment_data.events %}
-        <section class="notice">
-            <h2>Важно обсудить ответы</h2>
-            <p>В анкете есть сведения для уточнения специалистом. Если помощь нужна сейчас, не ждите ответа в приложении.</p>
-            <a href="/help-now">Мне нужна помощь сейчас</a>
-        </section>
-    {% endif %}
-    {% include 'resources.html' %}
-    <p class="caption">
-        <a href="/consent">Управлять участием в демонстрации</a>
-    </p>
 {% endblock %}

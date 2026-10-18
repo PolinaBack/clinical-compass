@@ -1,0 +1,20 @@
+<section class="card" id="notes">
+    <h2>Заметки к консультации</h2>
+    <p>Можно сразу записать мысль или вопрос. Специалист увидит заметки в вашем дневнике.</p>
+    {% if user != 'doctor' %}
+        <form action="/patients/{{ patient.id }}/notes" method="post">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <label>
+                Новая заметка<textarea name="body" maxlength="3000" required></textarea>
+            </label>
+            <button>Сохранить заметку</button>
+        </form>
+    {% endif %}
+    {% for note in diary_notes %}
+        <article><small>{{ note.created_at }} (UTC)</small>
+            <p class="text">{{ note.body }}</p>
+        </article>
+    {% else %}
+        <p class="empty">Заметок пока нет.</p>
+    {% endfor %}
+</section>

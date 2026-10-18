@@ -2,7 +2,7 @@
 {% block title %}{{ definition.name }} · Клинический компас{% endblock %}
 {% block content %}
     <div class="assessment-shell">
-        <a href="/patients/{{ assessment.patient_id }}/profile#assessments">Мои анкеты</a>
+        <a href="/patients/{{ assessment.patient_id }}/profile/assessments">Мои анкеты</a>
         <div class="assessment-intro">
             <p class="eyebrow">В ВАШЕМ ТЕМПЕ</p>
             <h1>{{ definition.name }}</h1>
@@ -43,7 +43,7 @@
                 <p>
                     Спасибо, что рассказали. Можно обсудить переживания со специалистом. Если помощь нужна сейчас, не ждите ответа на обычное сообщение.
                 </p>
-                <a href="/patients/{{ assessment.patient_id }}/contact#ask">Поговорить со специалистом</a>
+                <a href="/patients/{{ assessment.patient_id }}/profile/video">Записаться на консультацию</a>
             </div>
         {% endif %}
         <form action="/assessments/{{ assessment.id }}/save"
@@ -114,7 +114,7 @@
                         ! Хочу обсудить этот вопрос со специалистом
                     </label>
                     <p class="caption">
-                        Можно рассказать свою историю. {{ 'Баллы по этой форме не рассчитываются.' if assessment.scale == 'safety6' else 'Комментарий не меняет выбранный балл.' }} Обычное сообщение могут прочитать не сразу.
+                        Можно рассказать свою историю. {{ 'Баллы по этой форме не рассчитываются.' if assessment.scale == 'safety6' else 'Комментарий не меняет выбранный балл.' }} Комментарий можно обсудить на консультации.
                     </p>
                 </details>
                 <details class="question-extra">

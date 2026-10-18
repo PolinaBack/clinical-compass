@@ -24,12 +24,12 @@ def test_profile_separates_patient_history_from_doctor_records(client):
         ).status_code
         == 200
     )
-    assert "Синтетическая биография" in client.get("/patients/1/profile").text
+    assert "Синтетическая биография" in client.get("/patients/1/profile/about").text
     assert (
         post(client, "/patients/2/profile", biography="Чужие данные").status_code == 403
     )
     login(client, "doctor")
-    assert "Синтетическая биография" in client.get("/patients/1/profile").text
+    assert "Синтетическая биография" in client.get("/patients/1/profile/about").text
     assert (
         post(client, "/patients/1/profile", biography="Подмена врачом").status_code
         == 403
@@ -65,16 +65,16 @@ def test_reports_have_distinct_private_draft_and_published_states(client):
     assert post(client, "/patients/1/reports", **payload).status_code == 200
     rid = rows(client, "SELECT id FROM specialist_reports")[0]["id"]
     login(client, "patient1")
-    assert "Учебное заключение" not in client.get("/patients/1/profile").text
+    assert "Учебное заключение" not in client.get("/patients/1/results").text
     assert post(client, f"/patients/1/reports/{rid}/publish").status_code == 403
     login(client, "doctor")
     assert post(client, f"/patients/2/reports/{rid}/publish").status_code == 404
     assert post(client, f"/patients/1/reports/{rid}/publish").status_code == 200
     login(client, "patient1")
-    profile = client.get("/patients/1/profile").text
+    profile = client.get("/patients/1/results").text
     for text in payload.values():
         assert text in profile
-    assert "Учебный план" in client.get("/me").text
+    assert "Учебный план" in client.get("/patients/1/results").text
     login(client, "patient2")
     assert client.get("/patients/1/profile").status_code == 403
 
@@ -116,101 +116,25 @@ def test_diary_comment_is_linked_to_own_entry_and_visible_to_patient(client):
         == 200
     )
     login(client, "patient1")
-    assert "Учебный комментарий специалиста" in client.get("/me").text
+    assert "Учебный комментарий специалиста" in client.get("/patients/1/diary").text
     assert rows(client, "SELECT note FROM diary")[0]["note"] == "Синтетическая запись"
 
 
-def test_question_queue_read_and_answer_are_separate_and_scoped(client):
+def test_private_question_endpoints_are_retired_without_exposing_patient_data(client):
     login(client, "patient1")
-    assert (
-        post(
-            client,
-            "/patients/1/questions",
-            persona="anna",
-            body="Учебный личный вопрос",
-        ).status_code
-        == 200
-    )
-    first = rows(client, "SELECT * FROM specialist_questions")[0]
-    assert first["status"] == "sent" and first["estimated_minutes"] == 90
-    assert (
-        post(
-            client,
-            "/patients/1/questions",
-            persona="anna",
-            body="Другой учебный вопрос",
-        ).status_code
-        == 200
-    )
-    assert (
-        rows(
-            client,
-            "SELECT estimated_minutes FROM specialist_questions ORDER BY id DESC",
-        )[0]["estimated_minutes"]
-        == 105
-    )
-    assert "Учебный личный вопрос" not in client.get("/faq").text
-    assert (
-        post(
-            client, "/patients/1/questions", persona="unknown", body="Учебный вопрос"
-        ).status_code
-        == 422
-    )
-    login(client, "doctor")
-    qid = first["id"]
-    assert (
-        post(client, f"/patients/2/questions/{qid}/reply", intent="read").status_code
-        == 404
-    )
-    assert (
-        post(client, f"/patients/1/questions/{qid}/reply", intent="read").status_code
-        == 200
-    )
-    assert (
-        rows(client, "SELECT status FROM specialist_questions WHERE id=?", (qid,))[0][
-            "status"
-        ]
-        == "read"
-    )
-    assert (
-        post(
-            client,
-            f"/patients/1/questions/{qid}/reply",
-            intent="answer",
-            body="Учебный ответ специалиста",
-        ).status_code
-        == 200
-    )
-    assert (
-        post(client, f"/patients/1/questions/{qid}/reply", intent="read").status_code
-        == 200
-    )
-    assert (
-        rows(client, "SELECT status FROM specialist_questions WHERE id=?", (qid,))[0][
-            "status"
-        ]
-        == "answered"
-    )
-    assert (
-        post(
-            client,
-            f"/patients/1/questions/{qid}/reply",
-            intent="answer",
-            body="Перезапись ответа",
-        ).status_code
-        == 409
-    )
-    login(client, "patient1")
-    assert "Учебный ответ специалиста" in client.get("/patients/1/contact").text
-    assert (
-        post(
-            client,
-            f"/patients/1/questions/{qid}/reply",
-            intent="answer",
-            body="Подмена",
-        ).status_code
-        == 403
-    )
+    for endpoint in [
+        "/patients/1/messages",
+        "/patients/1/questions",
+        "/patients/1/questions/1/reply",
+    ]:
+        assert (
+            post(client, endpoint, body="Учебный вопрос", persona="anna").status_code
+            == 410
+        )
+    assert not rows(client, "SELECT * FROM messages")
+    assert not rows(client, "SELECT * FROM specialist_questions")
+    login(client, "patient2")
+    assert post(client, "/patients/1/questions", body="Чужая запись").status_code == 403
 
 
 def test_video_requires_safe_link_fallback_preparation_and_role(client):
@@ -420,7 +344,7 @@ def test_positive_ninth_answer_in_single_step_creates_event_without_final_score(
     "section,fields",
     [
         ("profile", {"biography": "Синтетическая биография"}),
-        ("questions", {"persona": "anna", "body": "Учебный вопрос"}),
+        ("notes", {"body": "Учебная заметка"}),
     ],
 )
 def test_consent_withdrawal_stops_new_patient_portal_writes(client, section, fields):
