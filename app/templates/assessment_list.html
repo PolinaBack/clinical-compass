@@ -1,0 +1,93 @@
+<section class="card" id="assessments">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">СВОЙ ТЕМП</p>
+            <h2>{{ 'Анкеты и назначения' if user == 'doctor' else 'Мои анкеты' }}</h2>
+        </div>
+        <a href="/patients/{{ patient.id }}/results">Открыть динамику →</a>
+    </div>
+    <p>Самоотчёт, безопасность и вывод специалиста — три отдельных блока. Баллы не устанавливают диагноз.</p>
+    {% for a in assessment_data.assessments %}
+        <div class="assessment-row">
+            <div>
+                <strong>{{ a.name }}</strong>
+                <p class="caption">
+                    {{ a.period_label }} · {{ a.result.answered }}/{{ a.result.count }} ответов
+                    {% if a.due_day %}· срок: {{ a.due_day }}{% endif %}
+                </p>
+                {% if a.overdue %}<span class="badge discuss">Срок назначения прошёл</span>{% endif %}
+                {% if user == 'doctor' and not a.seen_at %}<span class="badge new">Новое</span>{% endif %}
+                {% if a.topics %}<span class="badge discuss">! Обсудить: {{ a.topics }}</span>{% endif %}
+            </div>
+            <div>
+                <span class="badge">{{ {'draft':'Черновик','incomplete':'Не завершено','completed':'Отправлено'}[a.status] }}</span><a class="button secondary small" href="/assessments/{{ a.id }}">{{ 'Посмотреть ответы' if user == 'doctor' else 'Продолжить' if a.status != 'completed' else 'Мои ответы' }} →</a>
+            </div>
+        </div>
+        {% if a.scale == 'phq4' and user == 'doctor' and a.status != 'draft' %}
+            <div class="notice">
+                PHQ-2: {{ a.result.phq2 if a.result.phq2 is not none else 'неполно' }}/6 · GAD-2: {{ a.result.gad2 if a.result.gad2 is not none else 'неполно' }}/6.
+                <br>
+                {% if a.result.phq2 is not none and a.result.phq2 >= 3 %}Предложение по PHQ-2 ≥3: рассмотреть PHQ-9.{% endif %}
+                {% if a.result.gad2 is not none and a.result.gad2 >= 3 %}Предложение по GAD-2 ≥3: рассмотреть GAD-7.{% endif %}
+                Полные формы открываются после вашего назначения; порог не определяет срочность. Назначить можно независимо от порога.
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty">Здесь появятся начатая короткая анкета и формы, которые назначит специалист.</div>
+    {% endfor %}
+    {% if user != 'doctor' and consent and (not assessment_data.assessments or assessment_data.assessments|selectattr('scale','equalto','phq4')|selectattr('status','equalto','draft')|list) %}
+        <form action="/assessments/start" method="post">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button>Начать / продолжить PHQ-4 →</button>
+        </form>
+        <p class="caption">
+            Исследовательская цифровая копия предоставленной русской формы. Короткая анкета не заменяет беседу.
+        </p>
+    {% endif %}
+    {% if user == 'doctor' and assessment_data.assessments %}
+        <details class="inset">
+            <summary>Назначить дополнительную форму</summary>
+            <form action="/patients/{{ patient.id }}/assign" method="post">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <label>
+                    Оценочная сессия
+                    <select name="session_id" aria-label="Оценочная сессия">
+                        {% for a in assessment_data.assessments if a.scale == 'phq4' %}
+                            <option value="{{ a.session_id }}">№{{ a.session_id }} · {{ a.period_start }} — {{ a.period_end }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>
+                    Форма
+                    <select name="scale" aria-label="Форма">
+                        <option value="phq9">PHQ-9</option>
+                        <option value="gad7">GAD-7</option>
+                        <option value="hcl33">HCL-33 · рабочая исследовательская форма</option>
+                    </select>
+                </label>
+                <label>
+                    Срок заполнения
+                    <input name="due_day"
+                           type="date"
+                           value="{{ today }}"
+                           min="{{ today }}"
+                           required>
+                </label>
+                <button>Подтвердить назначение</button>
+            </form>
+            <p class="caption">
+                Автоматического переноса ответов из PHQ-4 нет. Повторную сессию с новым периодом назначает специалист; прежние ответы не переписываются.
+            </p>
+        </details>
+    {% endif %}
+    {% if user == 'doctor' %}
+        <form action="/patients/{{ patient.id }}/repeat" method="post">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button class="secondary">Назначить повторную PHQ-4 · новый период</button>
+        </form>
+    {% elif assessment_data.assessments %}
+        <p class="caption">
+            Повторные измерения назначает специалист. Можно продолжать незавершённые формы или обсудить следующий шаг в переписке.
+        </p>
+    {% endif %}
+</section>

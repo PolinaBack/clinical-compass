@@ -1,0 +1,56 @@
+<section class="card safety-card" id="safety">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">БЕЗОПАСНОСТЬ — ОТДЕЛЬНО</p>
+            <h2>{{ 'События и реагирование' if user == 'doctor' else 'Если важно поговорить сейчас' }}</h2>
+        </div>
+        <a class="help-link" href="/help-now">Мне нужна помощь сейчас →</a>
+    </div>
+    <p>
+        Официальная выбранная русская форма C-SSRS ещё не предоставлена. Оценка по ней не проводилась; отсутствие формы или сигнала не означает «риска нет».
+    </p>
+    {% for event in assessment_data.events %}
+        <article class="critical"><strong>Нужно клиническое уточнение</strong>
+            <p>
+                Сохранён ответ &gt;0 на пункт 9 PHQ-9. Основание не зависит от общей суммы симптомов. <a href="/assessments/{{ event.assessment_id }}">Исходный ответ →</a>
+            </p>
+            <p class="caption">
+                Создано: {{ event.created_at }}
+                <br>
+                Получено кабинетом: {{ event.delivered_at or 'ожидает' }}
+                <br>
+                Подтверждено специалистом: {{ event.acknowledged_at or 'ожидает' }}
+            </p>
+            {% if user == 'doctor' %}
+                {% if not event.acknowledged_at %}
+                    <form action="/events/{{ event.id }}/status" method="post">
+                        <input name="csrf" type="hidden" value="{{ csrf }}">
+                        <input name="intent" type="hidden" value="acknowledge">
+                        <button>Подтвердить получение события</button>
+                    </form>
+                {% endif %}
+                {% if event.acknowledged_at %}
+                    <form action="/events/{{ event.id }}/status" method="post">
+                        <input name="csrf" type="hidden" value="{{ csrf }}">
+                        <input name="intent" type="hidden" value="action">
+                        <label>
+                            Документировать действие<textarea name="action_text" maxlength="3000" required></textarea>
+                        </label>
+                        <button class="secondary">Сохранить действие специалиста</button>
+                    </form>
+                {% endif %}
+            {% endif %}
+            {% if event.action_at %}
+                <p>
+                    Действие записано: {{ event.action_at }}
+                    {% if user == 'doctor' %}· {{ event.action_text }}{% endif %}
+                </p>
+            {% endif %}
+        </article>
+    {% else %}
+        <div class="quiet-panel">Здесь нет сохранённых событий из анкет. Это не результат оценки безопасности.</div>
+    {% endfor %}
+    <p class="caption">
+        В прототипе нет дежурного и резервной службы. Создание события не означает, что человек уже получает помощь. Обычная переписка не является экстренным каналом.
+    </p>
+</section>

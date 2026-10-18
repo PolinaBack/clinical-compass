@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block content %}
+    <section class="landing-hero">
+        <div class="hero-copy">
+            <p class="eyebrow">
+                <span class="mini-star">
+                    <svg viewBox="0 0 64 64" aria-hidden="true">
+                        <path d="M32 8V56M8 32H56M15 15L49 49M49 15L15 49" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+                    </svg>
+                </span> В ВАШЕМ ТЕМПЕ. БЕЗ ОСУЖДЕНИЯ.
+            </p>
+            <h1>
+                Не обязательно
+                <br>
+                справляться
+                <br>
+                <em>в одиночку.</em>
+            </h1>
+            <p class="lead">
+                Замечайте изменения в самочувствии, рассказывайте о важном и готовьтесь к разговору со специалистом.
+            </p>
+            <div class="hero-buttons">
+                {% if user %}
+                    <a class="button" href="{{ '/doctor' if user == 'doctor' else '/me' }}">В мой кабинет →</a>
+                {% else %}
+                    <a class="button" href="/login/patient">Я пациент →</a><a class="button secondary" href="/login/specialist">Я специалист</a>
+                {% endif %}
+            </div>
+            <p class="caption">Можно начать с FAQ. Читать всё и сразу не нужно.</p>
+        </div>
+        <div class="hero-visual"
+             aria-label="Дневник, анкеты и поддержка специалиста">
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <span class="floating-star" aria-hidden="true">
+                <svg viewBox="0 0 64 64" aria-hidden="true">
+                    <path d="M32 8V56M8 32H56M15 15L49 49M49 15L15 49" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+                </svg>
+            </span>
+            <div class="visual-card visual-mood">
+                <span class="icon-tile lavender">☀</span>
+                <div>
+                    <small>ДНЕВНИК СОСТОЯНИЯ</small><strong>Сегодня можно
+                        <br>
+                    начать с малого</strong>
+                </div>
+                <div class="decorative-chart" aria-hidden="true">
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                </div>
+            </div>
+            <div class="visual-card visual-message">
+                <span class="round-icon">✦</span>
+                <div>
+                    <strong>Важное — своими словами</strong>
+                    <p>Комментарий, голос и тема для беседы</p>
+                </div>
+            </div>
+            <div class="visual-note">
+                Ваши ответы —
+                <br>
+                начало разговора,
+                <br>
+                <em>а не диагноз.</em>
+            </div>
+        </div>
+    </section>
+    <section id="how" class="how-section">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">ПОНЯТНЫЙ МАРШРУТ</p>
+                <h2>
+                    От первого вопроса —
+                    <br>
+                    к поддержке между встречами
+                </h2>
+            </div>
+            <p class="muted">
+                Пациент и специалист работают
+                <br>
+                в отдельных кабинетах.
+            </p>
+        </div>
+        <div class="steps-grid">
+            {% for n,title,text in [('01','Познакомьтесь','Узнайте, кто увидит ответы, и выберите, готовы ли вы начать.'),('02','Расскажите о себе','Заполняйте анкеты в своём темпе. Можно сделать паузу и добавить пояснение.'),('03','Обсудите со специалистом','Назначенные формы, ваши вопросы и следующий шаг — в одном месте.')] %}
+                <div class="step-card">
+                    <span>{{ n }}</span>
+                    <h3>{{ title }}</h3>
+                    <p>{{ text }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% include 'resources.html' %}
+    <section class="support-banner">
+        <div>
+            <h2>Трудно сделать первый шаг?</h2>
+            <p>Посмотрите ответы на вопросы о доверии, лечении и конфиденциальности.</p>
+        </div>
+        <a class="button secondary" href="/faq">Открыть FAQ →</a>
+    </section>
+{% endblock %}

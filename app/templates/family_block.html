@@ -1,0 +1,42 @@
+<section class="card" id="family">
+    <h2>Генограмма — семейная схема</h2>
+    <p>
+        Имена вымышленные. Стрелка обозначает связь родитель → ребёнок. Это упрощённая схема, без расчёта медицинских рисков и стандартных клинических обозначений.
+    </p>
+    <div id="genogram" data-family='{{ relatives|tojson }}'></div>
+    <ul>
+        {% for r in relatives %}
+            <li>
+                {{ r.name }} · {{ {'self':'Сам пациент','mother':'Мать','father':'Отец','sibling':'Брат/сестра','child':'Ребёнок','other':'Другой родственник'}[r.relation] }}
+                {% if r.parent_id %}· родитель №{{ r.parent_id }}{% endif %}
+            </li>
+        {% else %}
+            <li>Добавьте участников семьи.</li>
+        {% endfor %}
+    </ul>
+    {% if user != 'doctor' %}
+        <form action="/patients/{{ patient.id }}/relatives" method="post">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <label>
+                Вымышленное имя
+                <input name="name" maxlength="80" required>
+            </label>
+            <label>
+                Отношение к пациенту
+                <select name="relation">
+                    {% for key,label in [('self','Сам пациент'),('mother','Мать'),('father','Отец'),('sibling','Брат/сестра'),('child','Ребёнок'),('other','Другой родственник')] %}
+                        <option value="{{ key }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Родитель этого участника
+                <select name="parent_id">
+                    <option value="">Не указан</option>
+                    {% for r in relatives %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}
+                </select>
+            </label>
+            <button>Добавить участника</button>
+        </form>
+    {% endif %}
+</section>
