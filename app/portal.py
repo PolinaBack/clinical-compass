@@ -8,6 +8,7 @@ from fastapi.responses import RedirectResponse
 
 from .storage import now, audit
 from .scales import SCALES, OPTIONS
+from .charts import chart
 
 PROFILE_FIELDS = (
     ("biography", "Обо мне", "Учёба, работа, интересы и то, что важно знать обо мне."),
@@ -186,7 +187,20 @@ def register_portal(
 
     @app.get("/patients/{pid}/diary")
     def diary_page(request: Request, pid: int):
-        return render(request, "patient.html", **patient_context(request, pid))
+        context = patient_context(request, pid)
+        return render(
+            request,
+            "patient.html",
+            diary_graph=chart(
+                context["diary"],
+                10,
+                "Самочувствие по дневнику",
+                "diary",
+                "day",
+                "wellbeing",
+            ),
+            **context,
+        )
 
     @app.post("/patients/{pid}/notes")
     def note(

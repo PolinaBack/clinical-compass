@@ -26,12 +26,22 @@ AGE_KINDS = [
     "Не знаю",
 ]
 SOURCES = [
-    "Со слов родственника",
+    "Со слов родственников",
     "Со слов других близких",
     "Из документов",
     "Мои наблюдения",
     "Не знаю",
 ]
+CONDITION_KINDS = {
+    "known": "Знаю название заболевания",
+    "signs": "Помню признаки, диагноз не знаю",
+    "unspecified": "Сведения из прежней записи",
+}
+
+
+def canonical_source(source):
+    # Keep existing stored text intact; display and new saves use the photo's label.
+    return "Со слов родственников" if source == "Со слов родственника" else source
 
 
 def family_tree(relatives):
@@ -41,8 +51,11 @@ def family_tree(relatives):
         person = by_slot.get(key)
         filled = bool(
             person
-            and person.get("answer_kind", "unknown")
-            not in ["unknown", "deferred", "declined"]
+            and (
+                person.get("condition_count", 0)
+                or person.get("answer_kind", "unknown")
+                not in ["unknown", "deferred", "declined"]
+            )
         )
         nodes.append(
             dict(
@@ -74,14 +87,35 @@ def register_family(app, db, account, access, csrf_check, render, patient_contex
             return c.execute(
                 "SELECT * FROM relatives WHERE patient_id=? AND slot=?", (pid, key)
             ).fetchone()
-        if key.startswith("custom-") and key[7:].isdigit():
+        if key.isdigit() or (key.startswith("custom-") and key[7:].isdigit()):
             row = c.execute(
                 "SELECT * FROM relatives WHERE patient_id=? AND id=?",
-                (pid, int(key[7:])),
+                (pid, int(key if key.isdigit() else key[7:])),
             ).fetchone()
             if row:
                 return row
         raise HTTPException(404, "Родственник не найден")
+
+    @app.get("/patients/{pid}/profile/family/summary")
+    def family_summary(request: Request, pid: int):
+        context = patient_context(request, pid)
+        with db() as c:
+            conditions = [
+                dict(row)
+                for row in c.execute(
+                    "SELECT f.* FROM family_conditions f JOIN relatives r ON r.id=f.relative_id WHERE r.patient_id=? ORDER BY f.id",
+                    (pid,),
+                )
+            ]
+        return render(
+            request,
+            "family_summary.html",
+            section="family",
+            kinds=dict(KINDS),
+            conditions=conditions,
+            **family_tree(context["relatives"]),
+            **context,
+        )
 
     @app.get("/patients/{pid}/profile/family/member/{key}")
     def member_page(request: Request, pid: int, key: str, tab: str = "about"):
@@ -101,18 +135,32 @@ def register_family(app, db, account, access, csrf_check, render, patient_contex
                     (person.get("id"),),
                 )
             ]
+        for condition in conditions:
+            condition["source"] = canonical_source(condition["source"])
+        tree = family_tree(context["relatives"])
+        node = next((n for n in tree["family_nodes"] if n["key"] == key), None)
         return render(
             request,
             "family_member.html",
             section="family",
             member_key=key,
             person=person,
+            member_label=node["label"] if node else person["name"],
+            member_relation={"mother": "Мать", "father": "Отец"}.get(
+                key, node["subtitle"] if node else "Близкий"
+            ),
+            member_status=(
+                node["status"]
+                if node
+                else "Ответ добавлен" if details else "Пока не заполнено"
+            ),
             details=dict(details) if details else {},
             conditions=conditions,
             tab=tab,
             kinds=KINDS,
             age_kinds=AGE_KINDS,
             info_sources=SOURCES,
+            **tree,
             **context,
         )
 
@@ -178,31 +226,43 @@ def register_family(app, db, account, access, csrf_check, render, patient_contex
             status_code=303,
         )
 
-    @app.post("/patients/{pid}/family/{rid}/conditions")
+    @app.post("/patients/{pid}/family/{key}/conditions")
     def condition(
         request: Request,
         pid: int,
-        rid: int,
+        key: str,
         csrf: str = Form(...),
         label: str = Form(..., min_length=1, max_length=200),
         description: str = Form("", max_length=1000),
-        age_kind: str = Form(...),
+        kind: str = Form("unspecified"),
+        age_kind: str = Form("Не знаю"),
         age_text: str = Form("", max_length=80),
-        source: str = Form(...),
+        source: str = Form("Не знаю"),
         uncertain: bool = Form(False),
     ):
         access(request, pid, True)
         csrf_check(request, csrf)
-        if not label.strip() or age_kind not in AGE_KINDS or source not in SOURCES:
+        source = canonical_source(source)
+        if (
+            not label.strip()
+            or age_kind not in AGE_KINDS
+            or source not in SOURCES
+            or kind not in CONDITION_KINDS
+        ):
             raise HTTPException(422, "Проверьте описание, возраст и источник сведений")
         with db() as c:
-            row = c.execute(
-                "SELECT * FROM relatives WHERE id=? AND patient_id=?", (rid, pid)
-            ).fetchone()
+            c.execute("BEGIN IMMEDIATE")
+            row = find(c, pid, key)
             if not row:
-                raise HTTPException(404, "Родственник не найден")
+                name, subtitle, relation, x, y = SLOTS[key]
+                rid = c.execute(
+                    "INSERT INTO relatives(patient_id,name,relation,slot) VALUES(?,?,?,?)",
+                    (pid, name, relation, key),
+                ).lastrowid
+                row = c.execute("SELECT * FROM relatives WHERE id=?", (rid,)).fetchone()
+            rid = row["id"]
             c.execute(
-                "INSERT INTO family_conditions(relative_id,label,description,age_kind,age_text,source,uncertain) VALUES(?,?,?,?,?,?,?)",
+                "INSERT INTO family_conditions(relative_id,label,description,age_kind,age_text,source,uncertain,kind) VALUES(?,?,?,?,?,?,?,?)",
                 (
                     rid,
                     label.strip(),
@@ -211,12 +271,47 @@ def register_family(app, db, account, access, csrf_check, render, patient_contex
                     age_text.strip(),
                     source,
                     int(uncertain),
+                    kind,
                 ),
             )
             audit(c, account(request)["id"], "family_condition_added", pid, rid)
         key = row["slot"] or f"custom-{rid}"
         return RedirectResponse(
             f"/patients/{pid}/profile/family/member/{key}?tab=knowledge",
+            status_code=303,
+        )
+
+    @app.post("/patients/{pid}/family/conditions/{cid}/update")
+    def update_condition(
+        request: Request,
+        pid: int,
+        cid: int,
+        csrf: str = Form(...),
+        age_kind: str = Form(...),
+        age_text: str = Form("", max_length=80),
+        source: str = Form(...),
+        uncertain: bool = Form(False),
+    ):
+        access(request, pid, True)
+        csrf_check(request, csrf)
+        source = canonical_source(source)
+        if age_kind not in AGE_KINDS or source not in SOURCES:
+            raise HTTPException(422, "Проверьте возраст и источник сведений")
+        with db() as c:
+            row = c.execute(
+                "SELECT r.* FROM family_conditions f JOIN relatives r ON r.id=f.relative_id WHERE f.id=? AND r.patient_id=?",
+                (cid, pid),
+            ).fetchone()
+            if not row:
+                raise HTTPException(404, "Сведения не найдены")
+            c.execute(
+                "UPDATE family_conditions SET age_kind=?,age_text=?,source=?,uncertain=? WHERE id=?",
+                (age_kind, age_text.strip(), source, int(uncertain), cid),
+            )
+            audit(c, account(request)["id"], "family_condition_updated", pid, cid)
+        key = row["slot"] or f"custom-{row['id']}"
+        return RedirectResponse(
+            f"/patients/{pid}/profile/family/member/{key}?tab=knowledge&condition_saved=1",
             status_code=303,
         )
 

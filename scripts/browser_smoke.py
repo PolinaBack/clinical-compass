@@ -81,7 +81,12 @@ def run(
         patient.get_by_label("Пароль", exact=True).fill(patient_password)
         patient.get_by_role("button", name="Войти как пациент").click()
         expect(patient.locator(".role-badge")).to_contain_text("Пациент")
-        assert patient.url.endswith("/me/start")
+        assert patient.url.endswith("/patients/1/profile/assessments")
+        expect(
+            patient.get_by_role("heading", name="Мои анкеты", exact=True)
+        ).to_be_visible()
+        capture(patient, "questionnaires-desktop")
+        patient.get_by_role("link", name="С чего начать", exact=True).click()
         expect(
             patient.get_by_role("heading", name="Здесь можно отвечать честно")
         ).to_be_visible()
@@ -188,6 +193,8 @@ def run(
             "Синтетическая браузерная запись"
         )
         patient.get_by_role("button", name="Сохранить запись").click()
+        expect(patient.locator(".diary-chart")).to_have_count(1)
+        expect(patient.locator(".axis-label")).to_have_count(2)
         doctor.goto(url + "/patients/1")
         doctor.get_by_text("Оставить комментарий к записи", exact=True).click()
         doctor.get_by_label("Комментарий для пациента").fill(
@@ -228,7 +235,8 @@ def run(
         expect(
             patient.get_by_text("Учебное заключение специалиста", exact=True)
         ).to_be_visible()
-        expect(patient.locator(".axis-label")).to_have_count(6)
+        expect(patient.locator(".axis-label")).to_have_count(4)
+        expect(patient.locator(".diary-chart")).to_have_count(0)
         capture(patient, "dynamics-desktop")
         patient.set_viewport_size({"width": 390, "height": 844})
         capture(patient, "dynamics-mobile")
@@ -250,28 +258,52 @@ def run(
         patient.get_by_role("button", name="Сохранить сведения", exact=True).click()
         patient.get_by_role("link", name="Что известно", exact=True).click()
         patient.get_by_label(
-            "Какие заболевания или особенности здоровья вам известны?"
+            "Какие заболевания или особенности здоровья Вам известны?"
         ).fill("Учебные сведения со слов близкого")
         patient.get_by_label("Есть заболевания, могу вспомнить", exact=True).check()
         patient.get_by_role("button", name="Сохранить сведения", exact=True).click()
-        patient.get_by_text("Добавить своими словами", exact=True).click()
-        patient.get_by_label("Известное название или описание").fill(
+        add_form = patient.get_by_role("form", name="Добавить сведения о близком")
+        add_form.get_by_label("Напишите то, что помните").fill(
             "Сообщённое учебное название"
         )
-        patient.get_by_label("Примерно сколько лет?").fill("Около 48 лет")
-        patient.get_by_label("Откуда вам это известно?").select_option(
-            label="Со слов родственника"
+        add_form.get_by_text(
+            "Добавить описание, возраст и источник", exact=True
+        ).click()
+        add_form.get_by_label("Что вспомнили").fill("Учебный рассказ близкого")
+        add_form.get_by_label("Примерно сколько лет?").fill("Около 48 лет")
+        add_form.get_by_label("Откуда Вам это известно?").select_option(
+            label="Со слов родственников"
         )
-        patient.get_by_label("Могу ошибаться, нужно уточнить").check()
-        patient.get_by_role("button", name="Добавить сведения", exact=True).click()
+        add_form.get_by_label("Могу ошибаться, нужно уточнить").check()
+        add_form.get_by_role("button", name="Добавить сведения", exact=True).click()
         expect(
             patient.get_by_role("heading", name="Сообщённое учебное название")
         ).to_be_visible()
+        saved_form = patient.get_by_role(
+            "form", name="Уточнить: Сообщённое учебное название"
+        )
+        saved_form.get_by_label("Примерно сколько лет?").fill("Около 49 лет")
+        saved_form.get_by_role("button", name="Сохранить карточку").click()
+        expect(
+            patient.get_by_role(
+                "form", name="Уточнить: Сообщённое учебное название"
+            ).get_by_label("Примерно сколько лет?")
+        ).to_have_value("Около 49 лет")
         capture(patient, "family-member-desktop")
+        patient.set_viewport_size({"width": 390, "height": 844})
+        capture(patient, "family-member-mobile")
+        patient.set_viewport_size({"width": 1280, "height": 900})
         patient.get_by_role("link", name="Пояснения", exact=True).click()
         patient.get_by_label("Что важно уточнить").fill("Учебная тема к консультации")
         patient.get_by_label("Хочу обсудить на консультации").check()
         patient.get_by_role("button", name="Сохранить сведения", exact=True).click()
+        patient.get_by_role("link", name="Посмотреть сводку", exact=True).click()
+        expect(
+            patient.get_by_role("heading", name="Сводка семейной истории")
+        ).to_be_visible()
+        expect(
+            patient.get_by_text("Учебная тема к консультации", exact=True)
+        ).to_be_visible()
         patient.get_by_role("link", name="К дереву", exact=True).click()
         expect(patient.locator(".family-discuss")).to_have_count(1)
         capture(patient, "family-desktop")

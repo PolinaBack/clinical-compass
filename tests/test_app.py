@@ -30,7 +30,7 @@ def test_end_to_end_patient_doctor_patient(client):
     assert r.status_code == 200
     assert "Синтетическая запись" in r.text
     assert "пропуск назначения" in r.text
-    assert "polyline points=" in client.get("/patients/1/results").text
+    assert "polyline points=" in client.get("/patients/1/diary").text
     assert (
         post(
             client, "/patients/1/screening", tension=4, difficulty=2, note="Демоанкета"

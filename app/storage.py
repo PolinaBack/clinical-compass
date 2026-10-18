@@ -72,6 +72,13 @@ def extend_schema(c):
     """
     )
     forum_columns = {r["name"] for r in c.execute("PRAGMA table_info(forum_questions)")}
+    condition_columns = {
+        r["name"] for r in c.execute("PRAGMA table_info(family_conditions)")
+    }
+    if "kind" not in condition_columns:
+        c.execute(
+            "ALTER TABLE family_conditions ADD COLUMN kind TEXT NOT NULL DEFAULT 'unspecified'"
+        )
     if "submission_id" not in forum_columns:
         c.execute("ALTER TABLE forum_questions ADD COLUMN submission_id TEXT")
     c.execute(

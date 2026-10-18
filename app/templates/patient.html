@@ -6,6 +6,9 @@
     </div>
     {% if consent or user == 'doctor' %}
         {% include 'diary_block.html' %}
+        {% with graph=diary_graph %}
+            {% include 'chart.html' %}
+        {% endwith %}
         {% include 'notes_block.html' %}
     {% else %}
         <section class="card">

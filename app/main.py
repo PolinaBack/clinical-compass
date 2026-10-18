@@ -175,7 +175,7 @@ def create_app(db_path=None):
     @app.get("/")
     def home(request: Request):
         if request.session.get("account_id") and account(request)["role"] == "patient":
-            return RedirectResponse("/me/start", status_code=303)
+            return RedirectResponse("/me", status_code=303)
         return render(request, "home.html", **public_forum_data(db))
 
     @app.get("/login/{portal}")
@@ -244,7 +244,9 @@ def create_app(db_path=None):
         user = account(request)
         if user["role"] != "patient":
             raise HTTPException(403, "Эта страница только для пациента")
-        return RedirectResponse("/me/start", status_code=303)
+        return RedirectResponse(
+            f"/patients/{user['patient_id']}/profile/assessments", status_code=303
+        )
 
     @app.post("/logout")
     def logout(request: Request, csrf: str = Form(...)):
@@ -292,6 +294,10 @@ def create_app(db_path=None):
                 ).fetchone()
                 if details:
                     relative.update(dict(details))
+                relative["condition_count"] = c.execute(
+                    "SELECT count(*) FROM family_conditions WHERE relative_id=?",
+                    (relative["id"],),
+                ).fetchone()[0]
         ordered = sorted(data["diary"], key=lambda r: (r["day"], r["id"]))
         points = " ".join(
             f'{30+i*540/max(len(ordered)-1,1):.1f},{170-r["wellbeing"]*14}'
@@ -311,7 +317,9 @@ def create_app(db_path=None):
     def patient(request: Request, pid: int):
         role = access(request, pid)
         if role != "doctor":
-            return RedirectResponse("/me/start", status_code=303)
+            return RedirectResponse(
+                f"/patients/{pid}/profile/assessments", status_code=303
+            )
         return render(
             request, "specialist_patient.html", **patient_context(request, pid)
         )

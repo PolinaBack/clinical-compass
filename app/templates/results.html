@@ -9,9 +9,6 @@
             {% include 'chart.html' %}
         {% endfor %}
     </div>
-    {% with graph=diary_graph %}
-        {% include 'chart.html' %}
-    {% endwith %}
     {% include 'reports_block.html' %}
     {% if decisions %}
         <section class="card">

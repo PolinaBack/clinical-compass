@@ -707,13 +707,6 @@ def register_workflows(
                 chart(rows, SCALES[scale]["max"], SCALES[scale]["name"], scale)
             )
         with db() as c:
-            diary_rows = [
-                dict(r)
-                for r in c.execute(
-                    "SELECT * FROM diary WHERE patient_id=? ORDER BY day,id", (pid,)
-                )
-            ]
-        with db() as c:
             decisions = [
                 dict(r)
                 for r in c.execute(
@@ -721,9 +714,6 @@ def register_workflows(
                     (pid,),
                 )
             ]
-        diary_graph = chart(
-            diary_rows, 10, "Самочувствие по дневнику", "diary", "day", "wellbeing"
-        )
         with db() as c:
             audit(c, account(request)["id"], "results_view", pid)
         return render(
@@ -733,7 +723,6 @@ def register_workflows(
             data=data,
             summaries=summaries,
             graphs=graphs,
-            diary_graph=diary_graph,
             decisions=decisions,
             patient={"id": pid},
             **portal_data(db, pid, identity(request) == "doctor"),

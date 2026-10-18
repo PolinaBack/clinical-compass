@@ -2,7 +2,6 @@
 
 import re
 from datetime import date, timedelta
-from app.storage import connect
 from app.charts import chart
 from tests.helpers import login, token
 from tests.test_workflows import rows
@@ -15,15 +14,24 @@ def post(client, endpoint, **data):
 def test_initial_page_and_profile_sections_load_separately(client):
     login(client, "patient1")
     r = client.get("/me")
-    assert r.url.path == "/me/start"
-    assert "Не обязательно" in r.text
+    assert r.url.path == "/patients/1/profile/assessments"
+    assert 'id="assessments"' in r.text
+    for entry in ["/", "/patients/1"]:
+        assert client.get(entry).url.path == r.url.path
     nav = re.search(r'<nav class="header-nav".*?</nav>', r.text, re.S).group()
     labels = ["Личный профиль", "Дневник", "Динамика опросников", "С чего начать"]
     assert [nav.index(label) for label in labels] == sorted(
         nav.index(label) for label in labels
     )
-    assert 'aria-current="page">С чего начать' in nav
+    assert 'aria-current="page">Личный профиль' in nav
     assert "Мой специалист" not in nav
+    start = client.get("/me/start")
+    assert "Не обязательно" in start.text
+    assert 'aria-current="page">С чего начать' in start.text
+    login(client, "patient2")
+    assert client.get("/me").url.path == "/patients/2/profile/assessments"
+    assert client.get("/patients/1").status_code == 403
+    login(client, "patient1")
     index = client.get("/patients/1/profile").text
     assert 'name="biography"' not in index and 'id="family"' not in index
     assert "reports" not in index and "Полезно каждому пациенту" not in index
@@ -291,6 +299,8 @@ def test_graph_calendar_axes_and_null_gaps(client):
         sleep=8,
         adherence="none",
     )
-    html = client.get("/patients/1/results").text
+    html = client.get("/patients/1/diary").text
     assert "Дата записи" in html and "Самочувствие, 0–10" in html
+    dynamics = client.get("/patients/1/results").text
+    assert "diary-chart" not in dynamics and "Самочувствие по дневнику" not in dynamics
     assert "01.10.2026" == graph["xticks"][0]["label"]

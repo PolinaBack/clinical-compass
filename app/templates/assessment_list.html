@@ -12,8 +12,9 @@
     {% if user != 'doctor' and not assessment_data.assessments|rejectattr('scale','equalto','safety6')|list %}
         <div class="empty">
             <h3>Первый короткий опрос — PHQ-4</h3>
-            <p>Начните с знакомства и вопросов о безопасности.</p>
-            <a class="button" href="/me/start">Начать знакомство</a>
+            <p>Перед PHQ-4 — вопросы о безопасности. Вы можете выбрать другой раздел в верхнем меню.</p>
+            <a class="button"
+               href="{{ '/patients/' ~ patient.id ~ '/safety' if consent else '/consent' }}">{{ 'Перейти к анкетам' if consent else 'Посмотреть условия участия' }}</a>
         </div>
     {% endif %}
     {% for a in assessment_data.assessments %}

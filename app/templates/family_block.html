@@ -1,8 +1,8 @@
 <section class="family-panel" id="family">
     <div class="section-heading">
         <div>
-            <p class="eyebrow">ВАША СЕМЬЯ</p>
-            <h2>Семейное дерево</h2>
+            <p class="eyebrow">01 / ВАША СЕМЬЯ</p>
+            <h2>Узнаём, ветвь за ветвью</h2>
         </div>
         <div class="family-view-switch">
             <a href="?view=tree"
@@ -46,7 +46,7 @@
                     <a class="family-leaf {{ 'leaf-filled' if node.filled else 'leaf-draft' if node.person else 'leaf-empty' }} {{ 'parent-leaf' if node.key in ['mother','father'] else '' }}"
                        style="--leaf-x:{{ node.x }}%;
                               --leaf-y:{{ node.y }}%"
-                       href="/patients/{{ patient.id }}/profile/family/member/{{ node.key }}"><strong>{{ node.label }}</strong><span>{{ node.subtitle }}</span><small>{{ node.person.name if node.person and node.person.name != node.label else node.status }}</small>
+                       href="/patients/{{ patient.id }}/profile/family/member/{{ node.key }}"><strong>{{ node.label }}</strong><span>{{ node.subtitle }}</span><small>{{ node.status }}</small>
                         {% if node.person and node.person.get('discuss') %}
                             <span class="family-discuss" aria-label="Тема для обсуждения">!</span>
                         {% endif %}
@@ -56,15 +56,14 @@
                 <span class="tree-root-caption">С ВАС НАЧИНАЕТСЯ ИСТОРИЯ</span>
             </div>
         </div>
-        <p class="caption">Дерево можно прокручивать вбок или переключить на список.</p>
+        <p class="caption">Дерево можно прокручивать вбок. Или переключиться на список.</p>
     {% endif %}
-    <div class="family-progress">
-        <strong>Сведения добавлены о {{ family_filled }} из 6 родственников</strong>
-        <p>Это ориентир. Можно заполнить только то, что известно.</p>
+    <div class="family-legend" aria-label="Обозначения дерева">
+        <span><i class="legend-filled" aria-hidden="true"></i>Ответ добавлен</span>
+        <span><i class="legend-empty" aria-hidden="true"></i>Пока не заполнено</span>
+        <span><i class="legend-discuss" aria-hidden="true">!</i>Обсудить</span>
     </div>
-    <p class="family-context-note">
-        Не знаете историю биологической семьи? Так и отметьте. Других близких можно добавить отдельно как контекст вашей жизни.
-    </p>
+    {% include 'family_progress.html' %}
     {% if family_extras %}
         <h3>Другие близкие</h3>
         <div class="family-list">
