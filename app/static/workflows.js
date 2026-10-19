@@ -85,7 +85,7 @@ if (workflowAlerts) {
       const pending = data.events.filter((e) => !e.action_at);
       if (!pending.length)
         workflowAlerts.textContent =
-          "Нет незавершённых событий из анкет. Это не оценка отсутствия риска.";
+          "Нет незавершённых событий из анкет.";
       for (const item of pending) {
         const box = document.createElement("article");
         box.className = "critical";
