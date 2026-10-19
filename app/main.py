@@ -245,7 +245,7 @@ def create_app(db_path=None):
         if user["role"] != "patient":
             raise HTTPException(403, "Эта страница только для пациента")
         return RedirectResponse(
-            f"/patients/{user['patient_id']}/profile/assessments", status_code=303
+            f"me/start", status_code=303
         )
 
     @app.post("/logout")

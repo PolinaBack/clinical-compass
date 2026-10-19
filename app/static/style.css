@@ -1726,9 +1726,9 @@ li {
 .family-leaf:hover, .family-leaf:focus-visible { border-color:#9473ad; color:#503564; box-shadow:0 10px 25px #75528c18; }
 .family-leaf.parent-leaf { width:20%; border-radius:60px 17px 60px 17px; }
 .family-leaf.leaf-filled { background:#e7daf3; }
-.family-leaf.parent-leaf.leaf-filled { color:#fff; background:#705283; }
-.family-leaf.parent-leaf.leaf-filled span, .family-leaf.parent-leaf.leaf-filled small { color:#eee2f7; }
-.family-leaf.leaf-draft { border-style:dashed; background:#ebe5f1; }
+.family-leaf.parent-leaf.leaf-filled { color: #463353; background: #e7daf3; }
+.family-leaf.parent-leaf.leaf-filled span, .family-leaf.parent-leaf.leaf-filled small { color:#7d6a91; }
+
 .family-discuss { position:absolute; right:0; top:-12px; width:32px; height:32px; display:grid; place-items:center; border-radius:50%; background:#edd097; border:4px solid #fff; color:#755019!important; font-weight:bold; }
 .tree-branch-label { position:absolute; top:2%; color:#8e7a9f; letter-spacing:2px; font-size:12px; }
 .tree-branch-label.maternal { left:14%; }.tree-branch-label.paternal { right:14%; }

@@ -56,7 +56,10 @@
                 <span class="tree-root-caption">С ВАС НАЧИНАЕТСЯ ИСТОРИЯ</span>
             </div>
         </div>
-        <p class="caption">Дерево можно прокручивать вбок. Или переключиться на список.</p>
+        <p class="caption">
+    Нажмите на лист, чтобы добавить информацию о близком.
+    Дерево можно прокручивать вбок или переключиться на список.
+        </p>
     {% endif %}
     <div class="family-legend" aria-label="Обозначения дерева">
         <span><i class="legend-filled" aria-hidden="true"></i>Ответ добавлен</span>
@@ -72,34 +75,6 @@
                    href="/patients/{{ patient.id }}/profile/family/member/custom-{{ relative.id }}">{{ relative.name }}</a>
             {% endfor %}
         </div>
-    {% endif %}
-    {% if user != 'doctor' and consent %}
-        <details class="inset">
-            <summary>Добавить близкого</summary>
-            <form action="/patients/{{ patient.id }}/relatives" method="post">
-                <input name="csrf" type="hidden" value="{{ csrf }}">
-                <label>
-                    Вымышленное имя
-                    <input name="name" maxlength="80" required>
-                </label>
-                <label>
-                    Отношение к пациенту
-                    <select name="relation">
-                        {% for key,label in [('self','Сам пациент'),('mother','Мать'),('father','Отец'),('sibling','Брат/сестра'),('child','Ребёнок'),('other','Другой близкий')] %}
-                            <option value="{{ key }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label>
-                    Родитель этого участника
-                    <select name="parent_id">
-                        <option value="">Не указан</option>
-                        {% for relative in relatives %}<option value="{{ relative.id }}">{{ relative.name }}</option>{% endfor %}
-                    </select>
-                </label>
-                <button>Добавить участника</button>
-            </form>
-        </details>
     {% endif %}
     <p class="caption">
         Описательная семейная история. Диагнозы родственникам и наследственные риски автоматически не определяются.

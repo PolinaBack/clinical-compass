@@ -167,8 +167,10 @@ def register_portal(
 
     @app.get("/patients/{pid}/profile")
     def profile_page(request: Request, pid: int):
-        return render(
-            request, "profile.html", section=None, **patient_context(request, pid)
+        access(request, pid)
+        return RedirectResponse(
+            f"/patients/{pid}/profile/about",
+            status_code=303
         )
 
     @app.get("/patients/{pid}/profile/{section}")
