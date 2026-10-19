@@ -21,8 +21,7 @@
             </p>
             <div class="hero-buttons">
                 {% if patient_home %}
-                    <a class="button"
-                       href="{{ '/patients/' ~ patient.id ~ '/safety' if consent else '/consent' }}">{{ 'Перейти к анкетам' if consent else 'Посмотреть условия участия' }}</a><a class="button secondary" href="/patients/{{ patient.id }}/profile">Личный профиль</a>
+                    <a class="button" href="/patients/{{ patient.id }}/profile/assessments">Перейти к анкетам</a><a class="button secondary" href="/patients/{{ patient.id }}/profile">Личный профиль</a>
                 {% elif user %}
                     <a class="button" href="{{ '/doctor' if user == 'doctor' else '/me' }}">В мой кабинет</a>
                 {% else %}
@@ -79,14 +78,6 @@
                     <p>{{ answer }}</p>
                 </details>
             {% endfor %}
-        </section>
-        <section class="onboarding-banner">
-            <div>
-                <h2>Сначала безопасность, затем PHQ-4</h2>
-                <p>Короткие вопросы помогут подготовить разговор. Полные формы назначит специалист.</p>
-            </div>
-            <a class="button"
-               href="{{ '/patients/' ~ patient.id ~ '/safety' if consent else '/consent' }}">{{ 'Перейти к первому шагу' if consent else 'Посмотреть условия участия' }}</a>
         </section>
     {% endif %}
     <section id="how" class="how-section">

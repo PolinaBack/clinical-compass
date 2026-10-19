@@ -35,6 +35,7 @@
                 <p class="caption">{{ assessment.period_start }} — {{ assessment.period_end }}</p>
             {% endif %}
         </div>
+        {% include 'video_offer.html' %}
         {% if request.query_params.get('saved') %}
             <p class="success" role="status">Ответ сохранён на сервере. Это не означает, что специалист уже прочитал его.</p>
         {% endif %}

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Добровольная видеозапись · Клинический компас{% endblock %}
+{% block content %}
+    <div class="section-page-heading">
+        <h1>Добровольная видеозапись</h1>
+        <a href="/assessments/{{ assessment.id }}">К анкете</a>
+    </div>
+    <section class="card camera-recorder" data-camera="{{ assessment.id }}">
+        <p>
+            Оставьте это окно открытым и заполняйте анкету в основном окне. Запись продолжается при переходе между вопросами. Камера записывает только видео, без звука.
+        </p>
+        <p>
+            До отправки можно посмотреть и удалить фрагмент. После отправки его видите Вы и назначенный специалист; он хранится в локальном проекте и его резервных копиях. Удаление из приложения не меняет уже сделанные резервные копии. Автоматической оценки по видео нет.
+        </p>
+        <p class="caption">
+            До 10 минут и 25 МБ на фрагмент. Можно записать несколько фрагментов. При закрытии этого окна камера выключается, неотправленный фрагмент не сохраняется.
+        </p>
+        <label class="check">
+            <input type="checkbox" data-camera-consent>
+            Я согласен(на) на запись камерой и передачу выбранного фрагмента назначенному специалисту.
+        </label>
+        <div class="button-row">
+            <button type="button" data-camera-start disabled>Начать запись</button>
+            <button type="button" class="secondary" data-camera-stop disabled>Остановить запись</button>
+            <button type="button" class="text-button" data-camera-decline>Продолжить без видео</button>
+        </div>
+        <p class="camera-status" data-camera-status role="status">Камера выключена.</p>
+        <video data-camera-live
+               autoplay
+               muted
+               playsinline
+               hidden
+               aria-label="Предпросмотр камеры">
+        </video>
+        <video data-camera-preview
+               controls
+               playsinline
+               hidden
+               aria-label="Просмотр перед отправкой">
+        </video>
+        <div class="button-row">
+            <button type="button" data-camera-save disabled>Сохранить видеофрагмент</button>
+            <button type="button" class="text-button" data-camera-discard disabled>Удалить неотправленный фрагмент</button>
+        </div>
+    </section>
+    {% include 'video_list.html' %}
+    <script src="/static/camera.js" defer></script>
+{% endblock %}

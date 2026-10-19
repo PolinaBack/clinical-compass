@@ -1,4 +1,5 @@
 <section class="card" id="assessments">
+    {% if request.query_params.get('assigned') %}<p class="success" role="status">Назначение сохранено.</p>{% endif %}
     <div class="section-heading">
         <div>
             <p class="eyebrow">ОБСЛЕДОВАНИЕ</p>
@@ -9,12 +10,24 @@
     {% if user != 'doctor' %}
         <p>Здесь собраны рекомендованные и пройденные опросники. Они помогают подготовить разговор со специалистом.</p>
     {% endif %}
-    {% if user != 'doctor' and not assessment_data.assessments|rejectattr('scale','equalto','safety6')|list %}
-        <div class="empty">
-            <h3>Первый короткий опрос — PHQ-4</h3>
-            <p>Перед PHQ-4 — вопросы о безопасности. Вы можете выбрать другой раздел в верхнем меню.</p>
-            <a class="button"
-               href="{{ '/patients/' ~ patient.id ~ '/safety' if consent else '/consent' }}">{{ 'Перейти к анкетам' if consent else 'Посмотреть условия участия' }}</a>
+    {% if user != 'doctor' %}
+        <div class="grid two initial-assessments">
+            {% for key,name,description,endpoint in [('safety6','C-SSRS · учебная адаптация','Вопросы о безопасности. Можно оставить пояснение или сделать паузу.','/safety/start'),('phq4','PHQ-4','Короткая анкета о настроении и тревоге.','/assessments/start')] %}
+                {% if not assessment_data.assessments|selectattr('scale','equalto',key)|list %}
+                    <article class="inset initial-assessment">
+                        <h3>{{ name }}</h3>
+                        <p>{{ description }}</p>
+                        {% if consent %}
+                            <form action="{{ endpoint }}" method="post">
+                                <input type="hidden" name="csrf" value="{{ csrf }}">
+                                <button>Начать {{ name }}</button>
+                            </form>
+                        {% else %}
+                            <a class="button" href="/consent">Посмотреть условия участия</a>
+                        {% endif %}
+                    </article>
+                {% endif %}
+            {% endfor %}
         </div>
     {% endif %}
     {% for a in assessment_data.assessments %}

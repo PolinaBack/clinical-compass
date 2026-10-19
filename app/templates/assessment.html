@@ -2,7 +2,7 @@
 {% block title %}{{ definition.name }} · Клинический компас{% endblock %}
 {% block content %}
     <div class="assessment-intro">
-        <a href="{{ '/patients/' ~ assessment.patient_id ~ ('#assessments' if user == 'doctor' else '/profile/assessments') }}">{{ 'Карточка пациента' if user == 'doctor' else 'Мои анкеты' }}</a>
+        <a href="{{ '/patients/' ~ assessment.patient_id ~ ('/workspace/assessments' if user == 'doctor' else '/profile/assessments') }}">{{ 'Карточка пациента' if user == 'doctor' else 'Мои анкеты' }}</a>
         <p class="eyebrow">{{ 'ИСХОДНЫЙ САМООТЧЁТ · СПЕЦИАЛИСТ' if user == 'doctor' else 'ВАШИ СОХРАНЁННЫЕ ОТВЕТЫ' }}</p>
         <h1>{{ definition.name }}</h1>
         <span class="badge">{{ {'draft':'Черновик','incomplete':'Не завершено','completed':'Отправлено'}[assessment.status] }}</span>
@@ -36,9 +36,11 @@
             <p>
                 Спасибо, что рассказали. Эти ответы можно обсудить со специалистом. При необходимости помощи сейчас не ждите ответа в приложении.
             </p>
-            <a href="/help-now">Мне нужна помощь сейчас</a>
+            {% if user != 'doctor' %}<a href="/help-now">Мне нужна помощь сейчас</a>{% endif %}
         </div>
     {% endif %}
+    {% include 'video_offer.html' %}
+    {% include 'video_list.html' %}
     <section class="card">
         <h2>Исходные ответы</h2>
         <p>

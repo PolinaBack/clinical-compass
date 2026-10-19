@@ -4,6 +4,9 @@
         <h1>Дневник</h1>
         {% if user == 'doctor' %}<a href="/patients/{{ patient.id }}">Карточка пациента</a>{% endif %}
     </div>
+    {% if user == 'doctor' %}
+        {% include 'specialist_nav.html' %}
+    {% endif %}
     {% if consent or user == 'doctor' %}
         {% include 'diary_block.html' %}
         {% with graph=diary_graph %}

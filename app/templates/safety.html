@@ -13,6 +13,9 @@
     {% else %}
         <a href="/patients/{{ patient.id }}">Карточка пациента</a>
     {% endif %}
+    {% if user == 'doctor' %}
+        {% include 'specialist_nav.html' %}
+    {% endif %}
     <section class="card">
         <h2>C-SSRS · беседа о безопасности</h2>
         {% if safety_review %}
@@ -38,7 +41,8 @@
             </form>
         {% endif %}
         <a class="button secondary"
-           href="/patients/{{ patient.id }}/profile/video">Записаться на консультацию</a><a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>
+           href="/patients/{{ patient.id }}/profile/video">Записаться на консультацию</a>
+        {% if user != 'doctor' %}<a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>{% endif %}
     </section>
     {% if user != 'doctor' and consent %}
         <section class="card">

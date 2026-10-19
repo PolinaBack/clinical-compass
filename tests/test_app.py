@@ -50,7 +50,7 @@ def test_end_to_end_patient_doctor_patient(client):
     )
     login(client, "doctor")
     assert "1 записей" in client.get("/doctor").text
-    card = client.get("/patients/1").text
+    card = client.get("/patients/1/workspace/care").text
     assert all(text in card for text in ["Демоанкета", "Демо-событие"])
     assert "Демовопрос врачу" in client.get("/patients/1/diary").text
     alerts = client.get("/api/alerts").json()["alerts"]
@@ -76,7 +76,9 @@ def test_end_to_end_patient_doctor_patient(client):
     )
     login(client, "patient1")
     assert "Демоответ врача" in client.get("/patients/1/diary").text
-    assert "ЖЕЛАТЕЛЬНО" in client.get("/patients/1/results").text
+    assert "ЖЕЛАТЕЛЬНО" not in client.get("/patients/1/results").text
+    login(client, "doctor")
+    assert "ЖЕЛАТЕЛЬНО" in client.get("/patients/1/workspace/care").text
 
 
 @pytest.mark.parametrize("path", ["/patients/1", "/doctor", "/api/alerts"])

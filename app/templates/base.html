@@ -23,7 +23,7 @@
                 <b>компас</b></span></a>
             <nav class="header-nav" aria-label="Основная навигация">
                 {% if user == 'doctor' %}
-                    <a href="/doctor">Мои пациенты</a><a href="/clinical-tools">Библиотека анкет</a><a href="/reference/aviandr">Справочник</a><a href="/doctor/faq">FAQ-форум</a>
+                    <a href="/doctor">Мои пациенты</a><a href="/clinical-tools">Библиотека анкет</a><a href="/medicines">Библиотека лекарств</a><a href="/doctor/faq">FAQ-форум</a>
                 {% elif user %}
                     <a href="/patients/{{ session_pid }}/profile"
                        {% if '/profile' in current_page %}aria-current="page"{% endif %}>Личный профиль</a><a href="/patients/{{ session_pid }}/diary"
@@ -35,7 +35,7 @@
                 {% endif %}
             </nav>
             <div class="header-actions">
-                <a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>
+                {% if user != 'doctor' %}<a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>{% endif %}
                 {% if user %}
                     <span class="role-badge">{{ 'Специалист' if user == 'doctor' else 'Пациент' }}</span>
                     <form action="/logout" method="post">

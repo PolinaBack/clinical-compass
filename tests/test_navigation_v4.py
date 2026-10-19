@@ -14,8 +14,8 @@ def post(client, endpoint, **data):
 def test_initial_page_and_profile_sections_load_separately(client):
     login(client, "patient1")
     r = client.get("/me")
-    assert r.url.path == "/patients/1/profile/assessments"
-    assert 'id="assessments"' in r.text
+    assert r.url.path == "/me/start"
+    assert "Не обязательно" in r.text
     for entry in ["/", "/patients/1"]:
         assert client.get(entry).url.path == r.url.path
     nav = re.search(r'<nav class="header-nav".*?</nav>', r.text, re.S).group()
@@ -23,17 +23,19 @@ def test_initial_page_and_profile_sections_load_separately(client):
     assert [nav.index(label) for label in labels] == sorted(
         nav.index(label) for label in labels
     )
-    assert 'aria-current="page">Личный профиль' in nav
+    assert 'aria-current="page">С чего начать' in nav
     assert "Мой специалист" not in nav
     start = client.get("/me/start")
     assert "Не обязательно" in start.text
     assert 'aria-current="page">С чего начать' in start.text
     login(client, "patient2")
-    assert client.get("/me").url.path == "/patients/2/profile/assessments"
+    assert client.get("/me").url.path == "/me/start"
+    assert 'href="/patients/2/profile/assessments"' in client.get("/me").text
     assert client.get("/patients/1").status_code == 403
     login(client, "patient1")
     index = client.get("/patients/1/profile").text
-    assert 'name="biography"' not in index and 'id="family"' not in index
+    assert 'name="biography"' in index and 'id="family"' not in index
+    assert client.get("/patients/1/profile").url.path == "/patients/1/profile/about"
     assert "reports" not in index and "Полезно каждому пациенту" not in index
     for section, present, absent in [
         ("about", 'name="biography"', 'id="family"'),
@@ -61,7 +63,7 @@ def test_standalone_note_is_visible_to_assigned_specialist_only(client):
     assert 'name="contact"' not in page and "Полезно каждому пациенту" not in page
     assert not rows(client, "SELECT * FROM diary")
     login(client, "doctor")
-    assert "Учебный вопрос к следующей встрече" in client.get("/patients/1").text
+    assert "Учебный вопрос к следующей встрече" in client.get("/patients/1/diary").text
     assert post(client, "/patients/1/notes", body="Подмена").status_code == 403
     login(client, "patient2")
     assert client.get("/patients/1/diary").status_code == 403

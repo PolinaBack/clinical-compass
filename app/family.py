@@ -46,9 +46,11 @@ def canonical_source(source):
 
 def family_tree(relatives):
     by_slot = {r["slot"]: r for r in relatives if r.get("slot")}
+    extras = [r for r in relatives if not r.get("slot") and r["relation"] != "self"]
+    height = 760 + ((len(extras) + 3) // 4) * 160
     nodes = []
-    for key, (label, subtitle, relation, x, y) in SLOTS.items():
-        person = by_slot.get(key)
+
+    def add_node(key, label, subtitle, x, y, person):
         filled = bool(
             person
             and (
@@ -63,21 +65,57 @@ def family_tree(relatives):
                 label=label,
                 subtitle=subtitle,
                 x=x,
-                y=y,
+                y=y / height * 100,
+                art_y=y,
                 person=person,
+                filled=filled,
                 status=(
                     "Ответ добавлен"
                     if filled
                     else "Черновик" if person else "Пока не заполнено"
                 ),
-                filled=filled,
             )
         )
-    extras = [r for r in relatives if not r.get("slot") and r["relation"] != "self"]
+
+    for key, (label, subtitle, relation, x, y) in SLOTS.items():
+        add_node(key, label, subtitle, x, y * 7.6, by_slot.get(key))
+    relations = {
+        "mother": "Мать",
+        "father": "Отец",
+        "sibling": "Брат / сестра",
+        "child": "Ребёнок",
+        "other": "Близкий",
+    }
+    for index, person in enumerate(extras):
+        add_node(
+            f"custom-{person['id']}",
+            person["name"],
+            relations.get(person["relation"], "Близкий"),
+            16 + (index % 4) * 22,
+            610 + (index // 4) * 160,
+            person,
+        )
+    positions = {
+        n["person"]["id"]: (n["x"] * 11, n["art_y"]) for n in nodes if n["person"]
+    }
+    connections = []
+    for node in nodes[6:]:
+        origin = positions.get(node["person"].get("parent_id"), (550, height - 75))
+        connections.append(
+            dict(
+                x1=origin[0],
+                y1=origin[1] + 40 if origin[1] < node["art_y"] else origin[1],
+                x2=node["x"] * 11,
+                y2=node["art_y"] + 50,
+            )
+        )
     return dict(
         family_nodes=nodes,
         family_extras=extras,
-        family_filled=sum(n["filled"] for n in nodes),
+        family_filled=sum(n["filled"] for n in nodes[:6]),
+        family_height=height,
+        family_self_y=(height - 106) / height * 100,
+        family_connections=connections,
     )
 
 

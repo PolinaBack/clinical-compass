@@ -23,10 +23,18 @@
         <div class="family-tree-scroll"
              tabindex="0"
              aria-label="Семейное дерево; можно прокрутить по горизонтали">
-            <div class="family-tree" id="genogram">
-                <svg viewBox="0 0 1100 760" aria-hidden="true" class="tree-art">
+            <div class="family-tree"
+                 id="genogram"
+                 style="--tree-height:{{ family_height }}">
+                <svg viewBox="0 0 1100 {{ family_height }}"
+                     aria-hidden="true"
+                     class="tree-art">
                     <path class="tree-canopy" d="M85 465C-5 330 120 140 280 175C340 35 495 30 570 110C700 20 825 90 840 170C1040 145 1130 335 1010 480C1000 650 770 665 710 575C590 685 420 670 365 605C210 690 55 585 85 465Z" />
                     <g class="tree-branches">
+                    {% if family_height > 760 %}<path d="M550 705V{{ family_height-55 }}" />{% endif %}
+                    {% for line in family_connections %}
+                        <path d="M{{ line.x1 }} {{ line.y1 }} Q{{ line.x1 }} {{ line.y2 }} {{ line.x2 }} {{ line.y2 }}" />
+                    {% endfor %}
                     <path d="M550 705Q530 595 370 475Q260 380 198 220" />
                     <path d="M550 650Q725 550 750 470Q805 350 902 220" />
                     <path d="M370 475Q420 330 418 160" />
@@ -39,7 +47,7 @@
                     <path d="M232 380Q175 395 158 360Q190 325 232 380" />
                     <path d="M848 338Q900 355 910 310Q865 295 848 338" />
                     </g>
-                    <path d="M360 742Q550 716 740 742" class="tree-ground" />
+                    <path d="M360 {{ family_height-18 }}Q550 {{ family_height-44 }} 740 {{ family_height-18 }}" class="tree-ground" />
                 </svg>
                 <span class="tree-branch-label maternal">МАМИНА ВЕТВЬ</span><span class="tree-branch-label paternal">ПАПИНА ВЕТВЬ</span>
                 {% for node in family_nodes %}
@@ -52,13 +60,13 @@
                         {% endif %}
                     </a>
                 {% endfor %}
-                <div class="tree-self">Я</div>
+                <div class="tree-self" style="top:{{ family_self_y }}%">Я</div>
                 <span class="tree-root-caption">С ВАС НАЧИНАЕТСЯ ИСТОРИЯ</span>
             </div>
         </div>
         <p class="caption">
-    Нажмите на лист, чтобы добавить информацию о близком.
-    Дерево можно прокручивать вбок или переключиться на список.
+            Нажмите на лист, чтобы добавить информацию о близком.
+            Дерево можно прокручивать вбок или переключиться на список.
         </p>
     {% endif %}
     <div class="family-legend" aria-label="Обозначения дерева">
@@ -67,14 +75,33 @@
         <span><i class="legend-discuss" aria-hidden="true">!</i>Обсудить</span>
     </div>
     {% include 'family_progress.html' %}
-    {% if family_extras %}
-        <h3>Другие близкие</h3>
-        <div class="family-list">
-            {% for relative in family_extras %}
-                <a class="family-list-item"
-                   href="/patients/{{ patient.id }}/profile/family/member/custom-{{ relative.id }}">{{ relative.name }}</a>
-            {% endfor %}
-        </div>
+    {% if user != 'doctor' and consent %}
+        <details class="inset">
+            <summary>Добавить близкого</summary>
+            <form action="/patients/{{ patient.id }}/relatives" method="post">
+                <input name="csrf" type="hidden" value="{{ csrf }}">
+                <label>
+                    Вымышленное имя
+                    <input name="name" maxlength="80" required>
+                </label>
+                <label>
+                    Отношение к пациенту
+                    <select name="relation">
+                        {% for key,label in [('mother','Мать'),('father','Отец'),('sibling','Брат/сестра'),('child','Ребёнок'),('other','Другой близкий')] %}
+                            <option value="{{ key }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>
+                    Родитель этого участника
+                    <select name="parent_id">
+                        <option value="">Не указан</option>
+                        {% for relative in relatives %}<option value="{{ relative.id }}">{{ relative.name }}</option>{% endfor %}
+                    </select>
+                </label>
+                <button>Добавить участника</button>
+            </form>
+        </details>
     {% endif %}
     <p class="caption">
         Описательная семейная история. Диагнозы родственникам и наследственные риски автоматически не определяются.

@@ -21,6 +21,8 @@ from .workflows import register_workflows, overview
 from .portal import register_portal, portal_data
 from .community import register_community, public_forum_data
 from .family import register_family
+from .catalog import MEDICINES
+from .recordings import register_recordings
 
 ROOT = Path(__file__).resolve().parent
 
@@ -244,9 +246,7 @@ def create_app(db_path=None):
         user = account(request)
         if user["role"] != "patient":
             raise HTTPException(403, "Эта страница только для пациента")
-        return RedirectResponse(
-            f"me/start", status_code=303
-        )
+        return RedirectResponse("/me/start", status_code=303)
 
     @app.post("/logout")
     def logout(request: Request, csrf: str = Form(...)):
@@ -317,11 +317,25 @@ def create_app(db_path=None):
     def patient(request: Request, pid: int):
         role = access(request, pid)
         if role != "doctor":
-            return RedirectResponse(
-                f"/patients/{pid}/profile/assessments", status_code=303
-            )
+            return RedirectResponse("/me/start", status_code=303)
         return render(
-            request, "specialist_patient.html", **patient_context(request, pid)
+            request,
+            "specialist_patient.html",
+            section="safety",
+            **patient_context(request, pid),
+        )
+
+    @app.get("/patients/{pid}/workspace/{section}")
+    def specialist_section(request: Request, pid: int, section: str):
+        if access(request, pid) != "doctor":
+            raise HTTPException(403, "Раздел специалиста")
+        if section not in ["safety", "assessments", "care", "conversation"]:
+            raise HTTPException(404, "Раздел не найден")
+        return render(
+            request,
+            "specialist_patient.html",
+            section=section,
+            **patient_context(request, pid),
         )
 
     register_community(app, db, identity, account, csrf_check, render)
@@ -329,6 +343,7 @@ def create_app(db_path=None):
         app, db, account, identity, access, csrf_check, render, patient_context
     )
     register_family(app, db, account, access, csrf_check, render, patient_context)
+    register_recordings(app, db, account, access, csrf_check, render, has_consent)
 
     @app.post("/patients/{pid}/diary")
     def diary(
@@ -471,7 +486,7 @@ def create_app(db_path=None):
                 "INSERT INTO decisions(patient_id,day,category,body,source,confirmed) VALUES(?,?,?,?,?,1)",
                 (pid, date.today().isoformat(), category, body.strip(), source.strip()),
             )
-        return back(pid)
+        return RedirectResponse(f"/patients/{pid}/workspace/care", status_code=303)
 
     @app.get("/api/alerts")
     def alerts(request: Request):
@@ -507,16 +522,28 @@ def create_app(db_path=None):
                 "INSERT INTO acknowledgements VALUES(?,?) ON CONFLICT(patient_id) DO UPDATE SET risk_id=MAX(acknowledgements.risk_id,excluded.risk_id)",
                 (pid, last_id),
             )
-        return back(pid)
+        return RedirectResponse(f"/patients/{pid}/workspace/care", status_code=303)
 
     def doctor_reference_access(request):
         if identity(request) != "doctor":
-            raise HTTPException(403, "Справочник доступен демоврачу")
+            raise HTTPException(403, "Библиотека лекарств доступна специалисту")
+
+    @app.get("/medicines")
+    def medicine_library(request: Request):
+        doctor_reference_access(request)
+        return render(request, "medicines.html", medicines=MEDICINES)
+
+    @app.get("/medicines/{slug}")
+    def medicine_page(request: Request, slug: str):
+        doctor_reference_access(request)
+        if slug not in {m["slug"] for m in MEDICINES}:
+            raise HTTPException(404, "Лекарство не найдено")
+        return render(request, "aviandr.html")
 
     @app.get("/reference/aviandr")
     def aviandr_reference(request: Request):
         doctor_reference_access(request)
-        return render(request, "aviandr.html")
+        return RedirectResponse("/medicines/aviandr", status_code=303)
 
     @app.get("/reference/aviandr/source")
     def aviandr_source(request: Request):

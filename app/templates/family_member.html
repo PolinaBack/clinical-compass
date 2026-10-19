@@ -5,6 +5,9 @@
         <h1>Семейная история</h1>
         <a href="/patients/{{ patient.id }}/profile/family">К дереву</a>
     </div>
+    {% if user == 'doctor' %}
+        {% include 'specialist_nav.html' %}
+    {% endif %}
     {% include 'profile_nav.html' %}
     {% include 'family_progress.html' %}
     <section class="family-member">

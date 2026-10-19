@@ -1,40 +1,23 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="dashboard-intro">
-        <div>
-            <p class="eyebrow">КАБИНЕТ СПЕЦИАЛИСТА · КАРТОЧКА</p>
-            <h1>{{ patient.name }}</h1>
-            <p class="muted">Исходные ответы и клинические записи хранятся отдельно.</p>
-        </div>
-        <a class="button secondary" href="/doctor">Мои пациенты</a>
+    <div class="section-page-heading">
+        <h1>{{ patient.name }}</h1>
+        <a href="/doctor">Мои пациенты</a>
     </div>
-    <nav class="tab-nav" aria-label="Разделы карточки">
-        <a href="#safety">Безопасность</a><a href="#assessments">Анкеты и назначения</a><a href="/patients/{{ patient.id }}/results">Динамика</a><a href="/patients/{{ patient.id }}/profile">Личный профиль</a><a href="/patients/{{ patient.id }}/profile/video">Консультации и видео</a><a href="/patients/{{ patient.id }}/audit">Журнал доступа</a>
-    </nav>
-    {% include 'safety_block.html' %}
-    {% include 'assessment_list.html' %}
-    <div class="grid two">
-        {% include 'diary_block.html' %}
-        <section class="card">
-            <p class="eyebrow">НАБЛЮДЕНИЕ</p>
-            <h2>История и совместная работа</h2>
-            <p>Личный профиль, семейная история, отчёты и план наблюдения.</p>
-            <a class="button secondary" href="/patients/{{ patient.id }}/profile">Личный профиль</a>
-            <hr>
-            <a href="/clinical-tools?patient_id={{ patient.id }}">Назначить обследование из библиотеки</a>
-            <hr>
-            <a href="/patients/{{ patient.id }}/profile/video">Запланировать видеоприём</a>
-        </section>
-    </div>
-    {% include 'care.html' %}
-    {% include 'notes_block.html' %}
-    <a class="button secondary"
-       href="/patients/{{ patient.id }}/results#reports">Динамика и отчёты специалиста</a>
-    {% include 'conversation_support.html' %}
-    {% if screenings %}
-        <details class="section-fold">
-            <summary>Предыдущие демонстрационные самоотчёты</summary>
-            {% for s in screenings %}<p>{{ s.day }} · {{ s.note }}</p>{% endfor %}
-        </details>
+    {% include 'specialist_nav.html' %}
+    {% if section == 'safety' %}
+        {% include 'safety_block.html' %}
+    {% elif section == 'assessments' %}
+        {% include 'assessment_list.html' %}
+    {% elif section == 'care' %}
+        {% include 'care.html' %}
+        {% if screenings %}
+            <section class="card">
+                <h2>Прежние самоотчёты</h2>
+                {% for s in screenings %}<p>{{ s.day }} · {{ s.note }}</p>{% endfor %}
+            </section>
+        {% endif %}
+    {% elif section == 'conversation' %}
+        {% include 'conversation_support.html' %}
     {% endif %}
 {% endblock %}

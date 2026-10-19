@@ -68,6 +68,9 @@ def extend_schema(c):
     CREATE TABLE IF NOT EXISTS family_conditions(id INTEGER PRIMARY KEY, relative_id INTEGER NOT NULL REFERENCES relatives(id), label TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', age_kind TEXT NOT NULL, age_text TEXT NOT NULL DEFAULT '', source TEXT NOT NULL, uncertain INTEGER NOT NULL DEFAULT 0);
     CREATE INDEX IF NOT EXISTS diary_notes_patient ON diary_notes(patient_id);
     CREATE INDEX IF NOT EXISTS consultation_patient ON consultation_requests(patient_id);
+    CREATE TABLE IF NOT EXISTS assignment_requests(token TEXT PRIMARY KEY, account_id INTEGER NOT NULL REFERENCES accounts(id), patient_id INTEGER NOT NULL REFERENCES patients(id), session_id INTEGER NOT NULL REFERENCES assessment_sessions(id), payload TEXT NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS video_choices(assessment_id INTEGER PRIMARY KEY REFERENCES assessments(id), patient_id INTEGER NOT NULL REFERENCES patients(id), status TEXT NOT NULL, consent_version TEXT NOT NULL, consent_at TEXT, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS video_recordings(id INTEGER PRIMARY KEY, assessment_id INTEGER NOT NULL REFERENCES assessments(id), patient_id INTEGER NOT NULL REFERENCES patients(id), mime TEXT NOT NULL, duration REAL NOT NULL, consent_at TEXT NOT NULL, created_at TEXT NOT NULL, content BLOB, upload_id TEXT UNIQUE NOT NULL, deleted_at TEXT);
 
     """
     )

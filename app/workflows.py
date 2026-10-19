@@ -19,6 +19,8 @@ from .scales import (
     symptom_category,
 )
 from .storage import now, audit
+from .catalog import TOOLS, ASSIGNABLE
+from .recordings import video_data, VIDEO_SCALES
 from .charts import chart
 from .portal import portal_data
 from .safety import (
@@ -156,6 +158,8 @@ def register_workflows(
             patient=selected,
             assessment_data=data,
             today=date.today().isoformat(),
+            tools=TOOLS,
+            assignment_token=secrets.token_urlsafe(24),
         )
 
     @app.get("/consent")
@@ -343,6 +347,7 @@ def register_workflows(
             audio=audio,
             request_id=secrets.token_urlsafe(24),
             consent=has_consent(a["patient_id"]),
+            **(video_data(db, aid) if a["scale"] in VIDEO_SCALES else {}),
         )
 
     @app.post("/assessments/{aid}/save")
@@ -616,7 +621,9 @@ def register_workflows(
                     (sid, pid, VERSION, account(request)["id"]),
                 ).lastrowid
                 audit(c, account(request)["id"], "repeat_assigned", pid, aid)
-        return RedirectResponse(f"/patients/{pid}#assessments", status_code=303)
+        return RedirectResponse(
+            f"/patients/{pid}/workspace/assessments", status_code=303
+        )
 
     @app.post("/patients/{pid}/assign")
     def assign(
@@ -624,34 +631,109 @@ def register_workflows(
         pid: int,
         csrf: str = Form(...),
         scale: str = Form(...),
-        session_id: int = Form(...),
+        session_id: int = Form(..., ge=0),
         due_day: date = Form(...),
+        assignment_token: str = Form("", max_length=120),
     ):
         if access(request, pid) != "doctor":
             raise HTTPException(403, "Назначение делает специалист")
         csrf_check(request, csrf)
-        if scale not in ["phq9", "gad7", "phqads", "hcl33"] or due_day < date.today():
+        if scale not in ASSIGNABLE or due_day < date.today():
             raise HTTPException(422, "Проверьте форму и срок")
+        if session_id == 0 and len(assignment_token) < 16:
+            raise HTTPException(422, "Обновите библиотеку и повторите назначение")
+        if scale == "safety6" and session_id != 0:
+            raise HTTPException(
+                422, "Для беседы о безопасности выберите новое обследование"
+            )
+        user = account(request)
+        payload = json.dumps(
+            dict(scale=scale, session_id=session_id, due_day=due_day.isoformat()),
+            sort_keys=True,
+        )
         with db() as c:
-            if not c.execute(
-                "SELECT id FROM assessment_sessions WHERE id=? AND patient_id=?",
-                (session_id, pid),
-            ).fetchone():
-                raise HTTPException(422, "Сессия не принадлежит пациенту")
-            for assigned_scale in ["phq9", "gad7"] if scale == "phqads" else [scale]:
+            c.execute("BEGIN IMMEDIATE")
+            previous = (
+                c.execute(
+                    "SELECT * FROM assignment_requests WHERE token=?",
+                    (assignment_token,),
+                ).fetchone()
+                if assignment_token
+                else None
+            )
+            if previous:
+                if (
+                    previous["patient_id"] != pid
+                    or previous["account_id"] != user["id"]
+                    or previous["payload"] != payload
+                ):
+                    raise HTTPException(
+                        409,
+                        "Это назначение уже отправлено с другими параметрами. Обновите страницу.",
+                    )
+                return RedirectResponse(
+                    f"/patients/{pid}/workspace/assessments?assigned=1", status_code=303
+                )
+            if session_id:
+                if not c.execute(
+                    "SELECT id FROM assessment_sessions WHERE id=? AND patient_id=?",
+                    (session_id, pid),
+                ).fetchone():
+                    raise HTTPException(422, "Сессия не принадлежит пациенту")
+            else:
+                end = date.today()
+                start = end - timedelta(days=13)
+                if scale == "safety6":
+                    from calendar import monthrange
+
+                    year, month = (
+                        (end.year, end.month - 1)
+                        if end.month > 1
+                        else (end.year - 1, 12)
+                    )
+                    start = date(year, month, min(end.day, monthrange(year, month)[1]))
+                session_id = c.execute(
+                    "INSERT INTO assessment_sessions(patient_id,period_start,period_end,created_at) VALUES(?,?,?,?)",
+                    (pid, start.isoformat(), end.isoformat(), now()),
+                ).lastrowid
+            assigned_scales = ["phq9", "gad7"] if scale == "phqads" else [scale]
+            completed = [
+                c.execute(
+                    "SELECT status FROM assessments WHERE session_id=? AND scale=?",
+                    (session_id, key),
+                ).fetchone()
+                for key in assigned_scales
+            ]
+            if all(row and row["status"] == "completed" for row in completed):
+                raise HTTPException(
+                    409,
+                    "Анкета этой сессии уже пройдена. Для повторного измерения выберите новое обследование.",
+                )
+            for key in assigned_scales:
                 c.execute(
                     "INSERT OR IGNORE INTO assessments(session_id,patient_id,scale,version,assigned_by,due_day) VALUES(?,?,?,?,?,?)",
                     (
                         session_id,
                         pid,
-                        assigned_scale,
-                        VERSION,
-                        account(request)["id"],
+                        key,
+                        SAFETY_VERSION if key == "safety6" else VERSION,
+                        user["id"],
                         due_day.isoformat(),
                     ),
                 )
-            audit(c, account(request)["id"], "assessment_assigned", pid, session_id)
-        return RedirectResponse(f"/patients/{pid}#assessments", status_code=303)
+                c.execute(
+                    "UPDATE assessments SET due_day=? WHERE session_id=? AND scale=? AND status!='completed'",
+                    (due_day.isoformat(), session_id, key),
+                )
+            if assignment_token:
+                c.execute(
+                    "INSERT INTO assignment_requests(token,account_id,patient_id,session_id,payload,created_at) VALUES(?,?,?,?,?,?)",
+                    (assignment_token, user["id"], pid, session_id, payload, now()),
+                )
+            audit(c, user["id"], "assessment_assigned", pid, session_id)
+        return RedirectResponse(
+            f"/patients/{pid}/workspace/assessments?assigned=1", status_code=303
+        )
 
     @app.post("/assessments/{aid}/review")
     def review(
@@ -684,6 +766,9 @@ def register_workflows(
     def results(request: Request, pid: int):
         access(request, pid)
         data = overview(db, pid)
+        data["assessments"] = [
+            a for a in data["assessments"] if a["status"] == "completed"
+        ]
         pairs = {}
         for a in data["assessments"]:
             if a["scale"] == "safety6":
@@ -695,25 +780,19 @@ def register_workflows(
         summaries = []
         for sid, forms in pairs.items():
             total, reason = combined(forms.get("phq9"), forms.get("gad7"))
-            summaries.append({"sid": sid, "total": total, "reason": reason})
+            if total is not None:
+                summaries.append({"sid": sid, "total": total, "reason": reason})
         graphs = []
-        for scale in ["phq9", "gad7"]:
+        for scale in ["phq4", "phq9", "gad7", "hcl33"]:
             rows = [
                 dict(a, total=a["result"]["total"])
                 for a in data["assessments"]
                 if a["scale"] == scale
             ]
-            graphs.append(
-                chart(rows, SCALES[scale]["max"], SCALES[scale]["name"], scale)
-            )
-        with db() as c:
-            decisions = [
-                dict(r)
-                for r in c.execute(
-                    "SELECT * FROM decisions WHERE patient_id=? AND confirmed=1 ORDER BY id DESC",
-                    (pid,),
+            if rows:
+                graphs.append(
+                    chart(rows, SCALES[scale]["max"], SCALES[scale]["name"], scale)
                 )
-            ]
         with db() as c:
             audit(c, account(request)["id"], "results_view", pid)
         return render(
@@ -723,7 +802,6 @@ def register_workflows(
             data=data,
             summaries=summaries,
             graphs=graphs,
-            decisions=decisions,
             patient={"id": pid},
             **portal_data(db, pid, identity(request) == "doctor"),
         )
@@ -794,19 +872,8 @@ def register_workflows(
         if intent == "delivered":
             return {"status": "delivered"}
         return RedirectResponse(
-            f"/patients/{row['patient_id']}#safety", status_code=303
+            f"/patients/{row['patient_id']}/workspace/safety", status_code=303
         )
-
-    @app.get("/patients/{pid}/audit")
-    def audit_page(request: Request, pid: int):
-        if access(request, pid) != "doctor":
-            raise HTTPException(403, "Журнал доступен специалисту")
-        with db() as c:
-            rows = c.execute(
-                "SELECT action,object_id,created_at,account_id FROM audit WHERE patient_id=? ORDER BY id DESC LIMIT 100",
-                (pid,),
-            ).fetchall()
-        return render(request, "audit.html", pid=pid, rows=rows)
 
     @app.post("/assessments/{aid}/audio")
     async def audio_save(

@@ -28,7 +28,8 @@ def run(
             options["args"].append("--no-sandbox")
         browser = p.chromium.launch(**options)
         pc = browser.new_context(
-            viewport={"width": 1280, "height": 900}, permissions=["microphone"]
+            viewport={"width": 1280, "height": 900},
+            permissions=["microphone", "camera"],
         )
         dc = browser.new_context(viewport={"width": 1280, "height": 900})
         patient, doctor = pc.new_page(), dc.new_page()
@@ -81,12 +82,7 @@ def run(
         patient.get_by_label("Пароль", exact=True).fill(patient_password)
         patient.get_by_role("button", name="Войти как пациент").click()
         expect(patient.locator(".role-badge")).to_contain_text("Пациент")
-        assert patient.url.endswith("/patients/1/profile/assessments")
-        expect(
-            patient.get_by_role("heading", name="Мои анкеты", exact=True)
-        ).to_be_visible()
-        capture(patient, "questionnaires-desktop")
-        patient.get_by_role("link", name="С чего начать", exact=True).click()
+        assert patient.url.endswith("/me/start")
         expect(
             patient.get_by_role("heading", name="Здесь можно отвечать честно")
         ).to_be_visible()
@@ -104,6 +100,9 @@ def run(
             )
         ).to_be_visible()
         capture(patient, "introduction-desktop")
+        patient.get_by_role("link", name="Перейти к анкетам", exact=True).click()
+        expect(patient.locator(".initial-assessment")).to_have_count(2)
+        capture(patient, "questionnaires-desktop")
         patient.get_by_role("link", name="Посмотреть условия участия").first.click()
         patient.get_by_label("Мне 18 лет").check()
         patient.get_by_label("Я ознакомился").check()
@@ -141,7 +140,7 @@ def run(
         doctor.get_by_label("Логин", exact=True).fill(specialist_user)
         doctor.get_by_label("Пароль", exact=True).fill(specialist_password)
         doctor.get_by_role("button", name="Войти как специалист").click()
-        doctor.goto(url + "/patients/1")
+        doctor.goto(url + "/patients/1/workspace/assessments")
         expect(doctor.get_by_text("Предложение по PHQ-2", exact=False)).to_be_visible()
         doctor.goto(url + "/clinical-tools?patient_id=1")
         doctor.get_by_role("button", name="Назначить PHQ-ADS", exact=True).click()
@@ -176,6 +175,7 @@ def run(
             "Синтетическое документированное действие"
         )
         doctor.get_by_role("button", name="Сохранить действие специалиста").click()
+        doctor.get_by_role("link", name="Подготовка к беседе", exact=True).click()
         expect(doctor.locator("#conversation")).to_contain_text(
             "Спасибо, что рассказали"
         )
@@ -186,7 +186,7 @@ def run(
         ).click()
         answer_questions([0] * 7)
         patient.goto(url + "/patients/1/results")
-        expect(patient.locator(".symptom-chart")).to_have_count(2)
+        expect(patient.locator(".symptom-chart")).to_have_count(3)
 
         patient.goto(url + "/patients/1/diary")
         patient.get_by_label("Заметка", exact=True).fill(
@@ -195,7 +195,7 @@ def run(
         patient.get_by_role("button", name="Сохранить запись").click()
         expect(patient.locator(".diary-chart")).to_have_count(1)
         expect(patient.locator(".axis-label")).to_have_count(2)
-        doctor.goto(url + "/patients/1")
+        doctor.goto(url + "/patients/1/diary")
         doctor.get_by_text("Оставить комментарий к записи", exact=True).click()
         doctor.get_by_label("Комментарий для пациента").fill(
             "Учебная обратная связь специалиста"
@@ -214,7 +214,7 @@ def run(
             "Учебная заметка к следующей консультации"
         )
         patient.get_by_role("button", name="Сохранить заметку").click()
-        doctor.goto(url + "/patients/1")
+        doctor.goto(url + "/patients/1/diary")
         expect(
             doctor.get_by_text("Учебная заметка к следующей консультации", exact=True)
         ).to_be_visible()
@@ -235,15 +235,16 @@ def run(
         expect(
             patient.get_by_text("Учебное заключение специалиста", exact=True)
         ).to_be_visible()
-        expect(patient.locator(".axis-label")).to_have_count(4)
+        expect(patient.locator(".axis-label")).to_have_count(6)
         expect(patient.locator(".diary-chart")).to_have_count(0)
         capture(patient, "dynamics-desktop")
         patient.set_viewport_size({"width": 390, "height": 844})
         capture(patient, "dynamics-mobile")
         patient.set_viewport_size({"width": 1280, "height": 900})
         patient.goto(url + "/patients/1/profile")
-        expect(patient.locator(".profile-tile")).to_have_count(4)
-        assert patient.locator("textarea").count() == 0
+        expect(patient.locator(".profile-tile")).to_have_count(0)
+        assert patient.url.endswith("/profile/about")
+        expect(patient.get_by_label("Обо мне", exact=True)).to_be_visible()
         capture(patient, "profile-desktop")
         patient.goto(url + "/patients/1/profile/about")
         patient.get_by_label("Обо мне", exact=True).fill("Учебная биография")
@@ -306,11 +307,22 @@ def run(
         ).to_be_visible()
         patient.get_by_role("link", name="К дереву", exact=True).click()
         expect(patient.locator(".family-discuss")).to_have_count(1)
+        patient.get_by_text("Добавить близкого", exact=True).click()
+        patient.get_by_label("Вымышленное имя", exact=True).fill("Учебная сестра")
+        patient.get_by_label("Отношение к пациенту").select_option("sibling")
+        patient.get_by_label("Родитель этого участника").select_option(
+            label="Учебная мама"
+        )
+        patient.get_by_role("button", name="Добавить участника", exact=True).click()
+        expect(patient.locator(".family-leaf")).to_have_count(7)
+        expect(
+            patient.locator(".family-leaf").filter(has_text="Учебная сестра")
+        ).to_be_visible()
         capture(patient, "family-desktop")
         patient.set_viewport_size({"width": 390, "height": 844})
         capture(patient, "family-mobile")
         patient.get_by_role("link", name="Список", exact=True).click()
-        expect(patient.locator(".family-list-item")).to_have_count(6)
+        expect(patient.locator(".family-list-item")).to_have_count(7)
         capture(patient, "family-list-mobile")
         patient.set_viewport_size({"width": 1280, "height": 900})
         patient.goto(url + "/patients/1/profile/video")
@@ -339,6 +351,74 @@ def run(
             patient.get_by_role("link", name="Открыть видеоприём")
         ).to_have_attribute("href", "https://example.org/synthetic-video")
         capture(patient, "video-desktop")
+        doctor.goto(url + "/clinical-tools?patient_id=1")
+        expect(doctor.locator(".tool-tile")).to_have_count(9)
+        capture(doctor, "tools-desktop")
+        doctor.get_by_role("button", name="Назначить HCL-33", exact=True).click()
+        patient.goto(url + "/patients/1/profile/assessments")
+        patient.locator(".assessment-row").filter(has_text="HCL-33").get_by_role(
+            "link"
+        ).click()
+        patient.locator('input[name="answer_1"][value="0"]').check()
+        patient.get_by_role("button", name="Продолжить без видео", exact=True).click()
+        expect(patient.locator('input[name="answer_1"][value="0"]')).to_be_checked()
+        expect(
+            patient.get_by_text(
+                "Вы выбрали прохождение без видеозаписи. Решение можно изменить."
+            )
+        ).to_be_visible()
+        with patient.expect_popup() as popup:
+            patient.get_by_role("link", name="Открыть окно записи", exact=True).click()
+        camera = popup.value
+        camera.on("pageerror", lambda e: errors.append(str(e)))
+        expect(camera.locator("[data-camera-start]")).to_be_disabled()
+        camera.locator("[data-camera-consent]").check()
+        camera.locator("[data-camera-start]").click()
+        expect(camera.locator("[data-camera-status]")).to_contain_text(
+            "Идёт видеозапись"
+        )
+        patient.locator('input[name="answer_1"][value="0"]').check()
+        patient.get_by_role("button", name="Сохранить и продолжить", exact=True).click()
+        assert "item=2" in patient.url
+        expect(camera.locator("[data-camera-status]")).to_contain_text(
+            "Идёт видеозапись"
+        )
+        camera.wait_for_timeout(1700)
+        camera.locator("[data-camera-stop]").click()
+        expect(camera.locator("[data-camera-preview]")).to_be_visible()
+        camera.locator("[data-camera-save]").click()
+        expect(camera.locator(".recording-list video")).to_have_count(1)
+        camera.wait_for_function(
+            "document.querySelector('.recording-list video')?.readyState >= 1"
+        )
+        capture(camera, "camera-desktop")
+        doctor.goto(patient.url.split("?")[0])
+        expect(doctor.locator(".recording-list video")).to_have_count(1)
+        camera.get_by_role("button", name="Удалить видеофрагмент 1", exact=True).click()
+        expect(camera.locator(".recording-list video")).to_have_count(0)
+        camera.locator("[data-camera-consent]").check()
+        camera.locator("[data-camera-start]").click()
+        expect(camera.locator("[data-camera-status]")).to_contain_text(
+            "Идёт видеозапись"
+        )
+        patient.reload()
+        patient.get_by_role(
+            "button", name="Отозвать согласие на видео", exact=True
+        ).click()
+        expect(camera.locator("[data-camera-status]")).to_contain_text(
+            "Согласие отозвано", timeout=10000
+        )
+        expect(camera.locator("[data-camera-live]")).to_be_hidden()
+        expect(camera.locator("[data-camera-preview]")).to_be_hidden()
+        camera.close()
+        doctor.goto(url + "/medicines")
+        expect(
+            doctor.get_by_role("heading", name="Библиотека лекарств", exact=True)
+        ).to_be_visible()
+        expect(
+            doctor.get_by_role("link", name="Мне нужна помощь сейчас", exact=True)
+        ).to_have_count(0)
+        capture(doctor, "medicines-desktop")
         guest_context = browser.new_context(viewport={"width": 390, "height": 844})
         guest = guest_context.new_page()
         guest.on("pageerror", lambda e: errors.append(str(e)))

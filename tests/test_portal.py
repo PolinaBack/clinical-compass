@@ -297,7 +297,7 @@ def test_phqads_assignment_package_is_atomic_idempotent_and_uses_same_session(cl
     )
     assert [a["scale"] for a in assigned] == ["gad7", "phq9"]
     assert all(a["session_id"] == sid and a["assigned_by"] for a in assigned)
-    assert "пакет PHQ-ADS" in client.get("/patients/1").text
+    assert "пакет PHQ-ADS" in client.get("/patients/1/workspace/assessments").text
     login(client, "patient1")
     assert (
         post(
@@ -334,7 +334,7 @@ def test_positive_ninth_answer_in_single_step_creates_event_without_final_score(
     )
     assert len(rows(client, "SELECT * FROM assessment_events")) == 1
     login(client, "doctor")
-    card = client.get("/patients/1").text
+    card = client.get("/patients/1/workspace/conversation").text
     assert "Синтетическое пояснение" in card
     assert "Спасибо, что рассказали" in card
     assert rows(client, "SELECT value FROM answers")[0]["value"] == 1

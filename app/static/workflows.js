@@ -90,7 +90,7 @@ if (workflowAlerts) {
         const box = document.createElement("article");
         box.className = "critical";
         const link = document.createElement("a");
-        link.href = "/patients/" + item.patient_id + "#safety";
+        link.href = "/patients/" + item.patient_id + "/workspace/safety";
         link.textContent = item.name + (item.kind.startsWith("safety6_") ? " · новые ответы о безопасности" : " · нужно уточнение по пункту 9 PHQ-9");
         const status = document.createElement("p");
         status.textContent = item.acknowledged_at

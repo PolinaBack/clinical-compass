@@ -168,10 +168,7 @@ def register_portal(
     @app.get("/patients/{pid}/profile")
     def profile_page(request: Request, pid: int):
         access(request, pid)
-        return RedirectResponse(
-            f"/patients/{pid}/profile/about",
-            status_code=303
-        )
+        return RedirectResponse(f"/patients/{pid}/profile/about", status_code=303)
 
     @app.get("/patients/{pid}/profile/{section}")
     def profile_section(request: Request, pid: int, section: str, view: str = "tree"):

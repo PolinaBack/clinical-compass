@@ -1,0 +1,22 @@
+{% if video_recordings %}
+    <section class="card recording-list">
+        <h2>Сохранённые видеофрагменты</h2>
+        {% for recording in video_recordings %}
+            <article>
+                <p>{{ recording.created_at }} · {{ recording.duration|round(1) }} с</p>
+                <video controls
+                       preload="metadata"
+                       playsinline
+                       src="/recordings/{{ recording.id }}"
+                       aria-label="Видеофрагмент {{ loop.index }}">
+                </video>
+                {% if user != 'doctor' and consent %}
+                    <form action="/recordings/{{ recording.id }}/delete" method="post">
+                        <input name="csrf" type="hidden" value="{{ csrf }}">
+                        <button class="text-button">Удалить видеофрагмент {{ loop.index }}</button>
+                    </form>
+                {% endif %}
+            </article>
+        {% endfor %}
+    </section>
+{% endif %}

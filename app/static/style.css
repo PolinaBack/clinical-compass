@@ -1713,7 +1713,7 @@ li {
 .family-view-switch a { padding:8px 14px; text-decoration:none; color:#79618d; border-radius:11px; }
 .family-view-switch [aria-current="page"] { background:white; box-shadow:0 2px 5px #49355b0a; }
 .family-tree-scroll { overflow-x:auto; border-radius:20px; }
-.family-tree { position:relative; min-width:850px; aspect-ratio:1100/760; }
+.family-tree { position:relative; min-width:850px; aspect-ratio:1100/var(--tree-height,760); }
 .family-tree .tree-art { position:absolute; inset:0; width:100%; height:100%; max-height:none; }
 .tree-canopy { fill:#f1ecf7; }
 .tree-branches { fill:none; stroke:#b5a1c6; stroke-width:10; stroke-linecap:round; }
@@ -1751,3 +1751,9 @@ li {
 .family-add-condition { border-top:1px solid #e7deee; padding-top:26px; margin-top:30px; }.family-add-line { display:flex; gap:12px; margin:20px 0; }.family-add-line input { flex:1; min-width:0; margin:0; }.family-member-body .family-add-line button { width:54px; height:54px; flex-shrink:0; border-radius:12px; padding:0; font:34px 'Segoe UI',sans-serif; background:#e7dbf0; color:#8b6c9f; }.family-add-details { border:0; padding:0; background:transparent; }.family-add-details summary { color:#8b729d; font-size:14px; }.family-summary { padding:30px; }.family-summary article + article { border-top:1px solid #e8def0; margin-top:24px; padding-top:24px; }
 @media (max-width:800px) { .header-nav { flex-wrap:wrap; gap:8px 16px; }.family-panel { padding:20px; }.family-member-heading,.family-member-body { padding:24px; } }
 @media (max-width:540px) { .section-page-heading h1 { font-size:30px; }.section-page-heading { align-items:flex-start; }.profile-sections,.family-list { grid-template-columns:1fr; }.family-panel { padding:16px; }.family-panel h2 { font-size:29px; }.family-answer-kind,.family-age-fields { grid-template-columns:1fr; }.family-age-fields { gap:0; }.family-member-tabs a { font-size:12px; padding:16px 6px; }.family-member-tabs small { display:block; margin:0 0 4px; }.family-member-heading,.family-member-body { padding:20px; }.family-member-heading h2 { font-size:38px; }.member-leaf-icon { width:40px; height:48px; top:32px; right:24px; }.profile-nav { overflow:auto; flex-wrap:nowrap; }.profile-nav a { flex-shrink:0; }.family-panel .section-heading { flex-wrap:wrap; }.family-progress { flex-direction:column; align-items:flex-start; gap:16px; padding:18px; }.family-memory { padding:18px; }.family-memory summary { gap:12px; }.family-memory small { line-height:1.5; }.family-condition { padding:18px; }.family-context-note { padding:20px; } }
+
+.tool-tile { display:flex; flex-direction:column; margin:0; }.tool-tile > form { margin-top:auto; }.tool-catalog { align-items:stretch; }.specialist-nav { flex-wrap:wrap; }.family-leaf strong { overflow-wrap:anywhere; }.initial-assessment h3 { font-size:24px; }
+
+.camera-recorder video,.recording-list video { width:100%; max-width:640px; border-radius:16px; background:#241d30; }.camera-recorder video[hidden] { display:none; }.camera-status { margin:20px 0; font-weight:600; }.camera-recorder.is-recording .camera-status { color:#9b234b; }.video-offer h2 { font-size:25px; }.video-offer form { margin:0; }.recording-list article + article { margin-top:24px; }
+
+.video-offer form[hidden] { display:none; }
