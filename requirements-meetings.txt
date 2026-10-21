@@ -1,5 +1,8 @@
 # Optional local AI worker; install separately from the main app.
 -r requirements.txt
 faster-whisper==1.1.1
+# PyAV 19 removed metadata_errors, still used by Faster Whisper 1.1.1.
+# Keep the verified decoder version; its abi3 wheels support Python 3.11+.
+av==18.1.0
 # Faster Whisper 1.1.1 imports requests; recent Hugging Face Hub no longer brings it transitively.
 requests==2.32.5

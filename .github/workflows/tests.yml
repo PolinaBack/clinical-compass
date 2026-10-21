@@ -32,3 +32,18 @@ jobs:
           }
           ffprobe -version
       - run: python -m pytest -q
+  meeting-audio-runtime:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: python -m pip install -r requirements-meetings.txt
+      - run: python -m pip check
+      # Uses a generated WAV and real PyAV; no downloads of model weights.
+      - run: python -m pytest -q tests/test_meeting_audio_runtime.py
