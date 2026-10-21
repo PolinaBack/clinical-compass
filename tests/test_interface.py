@@ -3,16 +3,7 @@
 from fastapi.testclient import TestClient
 from app.main import create_app
 from app.storage import connect, now
-from app.services.interface import CARDS, read_interface
 from tests.helpers import login, token
-
-
-def interface_form(client, **changes):
-    data = dict(csrf=token(client, "/settings"), revision="0")
-    for i, (key, _) in enumerate(CARDS, 1):
-        data.update({key + "_visible": "true", key + "_position": str(i)})
-    data.update(changes)
-    return data
 
 
 def test_public_emergency_requires_no_login_or_consent(client):
@@ -35,7 +26,7 @@ def test_patient_navigation_and_new_entry_points_are_functional(client):
         page = client.get(path)
         assert page.status_code == 200, path
         assert 'aria-label="Навигация пациента"' in page.text
-        for href in ["/me/overview", "/patients/2/diary", "/patients/2/results", "/me/materials", "/patients/2/profile"]:
+        for href in ["/patients/2/diary", "/patients/2/results", "/me/materials", "/patients/2/profile"]:
             assert f'href="{href}"' in page.text
     assert client.get("/doctor/calendar").status_code == 403
     assert client.get("/doctor/tasks").status_code == 403
@@ -43,52 +34,19 @@ def test_patient_navigation_and_new_entry_points_are_functional(client):
     assert client.get("/patients/1/reports").status_code == 403
 
 
-def test_overview_reads_latest_diary_by_day_not_insert_id(client):
-    login(client, "patient1")
-    with connect(client.app.state.db_path) as c:
-        for day, value in [("2026-01-20", 8), ("2026-01-10", 2)]:
-            c.execute("INSERT INTO diary(patient_id,day,wellbeing,sleep,adherence,note,contact) VALUES(1,?,?,7.5,'taken','',0)", (day, value))
-    html = client.get("/me/overview").text
-    assert "8 из 10" in html and "2 из 10" not in html
-    assert "2026-01-20" in html and "7.5 ч" in html
-    login(client, "patient2")
-    assert "Нет данных" in client.get("/me/overview").text
-    assert "8 из 10" not in client.get("/me/overview").text
-
-
-def test_interface_preferences_persist_and_cannot_change_clinical_records(client):
-    login(client, "patient1")
-    form = interface_form(client, minimal="true", wellbeing_visible="", consultations_pinned="true",
-                          sleep_position="1", scales_position="2")
-    assert client.post("/settings/interface", data=form).status_code == 200
-    html = client.get("/me/overview").text
-    assert "minimal-ui" in html and 'data-card="wellbeing"' not in html
-    assert html.index('data-card="consultations"') < html.index('data-card="sleep"') < html.index('data-card="scales"')
-    assert 'href="/patients/1/diary"' in html and 'href="/help-now"' in html
-    with connect(client.app.state.db_path) as c:
-        assert c.execute("SELECT count(*) FROM consent_events").fetchone()[0] == 0
-        assert c.execute("SELECT count(*) FROM assessment_events").fetchone()[0] == 0
+def test_interface_preferences_only_control_decoration_and_keep_legacy_data(client):
+    login(client, 'patient1')
+    form = dict(csrf=token(client, '/settings'), revision='0', minimal='true')
+    assert client.post('/settings/interface', data=form).status_code == 200
+    assert client.post('/settings/interface', data=form).status_code == 409
+    assert client.post('/settings/interface', data={**form, 'revision':'1', 'wellbeing_visible':''}).status_code == 403
     with TestClient(create_app(client.app.state.db_path)) as restarted:
-        login(restarted, "patient1", consent=False)
-        assert 'data-card="wellbeing"' not in restarted.get("/me/overview").text
-        assert "minimal-ui" in restarted.get("/settings").text
-    login(client, "patient2")
-    html = client.get("/me/overview").text
-    assert 'data-card="wellbeing"' in html and " minimal-ui" not in html
-
-
-def test_interface_rejects_csrf_invalid_input_and_stale_tabs_atomically(client):
-    login(client, "patient1")
-    form = interface_form(client)
-    assert client.post("/settings/interface", data={**form, "csrf": "wrong"}).status_code == 403
-    assert client.post("/settings/interface", data={**form, "sleep_position": "0"}).status_code == 422
-    assert client.post("/settings/interface", data={**form, "minimal": "yes"}).status_code == 422
-    assert client.post("/settings/interface", data={**form, "minimal": "true"}).status_code == 200
-    assert client.post("/settings/interface", data=form).status_code == 409
-    with connect(client.app.state.db_path) as c:
-        uid = c.execute("SELECT id FROM accounts WHERE username='patient1'").fetchone()[0]
-        state = read_interface(c, uid)
-        assert state["minimal"] and state["revision"] == 1
+        login(restarted, 'patient1')
+        html = restarted.get('/patients/1/diary').text
+        assert 'minimal-ui' in html and 'wellbeing-dialog' in html
+        assert 'Карточки на главной' not in restarted.get('/settings').text
+    login(client, 'patient2')
+    assert ' minimal-ui' not in client.get('/settings').text
 
 
 def test_doctor_calendar_and_tasks_use_existing_assigned_records(client):

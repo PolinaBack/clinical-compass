@@ -22,6 +22,8 @@ from .migrations import apply_migrations
 from .routes.settings import register_settings
 from .routes.interface import register_interface
 from .services.interface import read_interface
+from .services.diary import read_diary_extras, parse_metric_values, sleep_rating
+from .routes.diary import register_diary
 from .portal import register_portal, portal_data
 from .community import register_community, public_forum_data
 from .family import register_family
@@ -262,7 +264,7 @@ def create_app(db_path=None):
         user = account(request)
         if user["role"] != "patient":
             raise HTTPException(403, "Эта страница только для пациента")
-        return RedirectResponse("/me/start", status_code=303)
+        return RedirectResponse(f"/patients/{user['patient_id']}/diary", status_code=303)
 
     @app.post("/logout")
     def logout(request: Request, csrf: str = Form(...)):
@@ -319,12 +321,16 @@ def create_app(db_path=None):
             f'{30+i*540/max(len(ordered)-1,1):.1f},{170-r["wellbeing"]*14}'
             for i, r in enumerate(ordered)
         )
+        with db() as c:
+            extras = read_diary_extras(c, pid)
         return dict(
             patient=p,
             today=date.today().isoformat(),
             points=points,
             consent=has_consent(pid),
             assessment_data=overview(db, pid),
+            latest_diary=max(data['diary'], key=lambda r: (r['day'], r['id']), default=None),
+            **extras,
             **portal_data(db, pid, identity(request) == "doctor"),
             **data,
         )
@@ -333,7 +339,7 @@ def create_app(db_path=None):
     def patient(request: Request, pid: int):
         role = access(request, pid)
         if role != "doctor":
-            return RedirectResponse("/me/start", status_code=303)
+            return RedirectResponse(f"/patients/{pid}/diary", status_code=303)
         return render(
             request,
             "specialist_patient.html",
@@ -356,6 +362,7 @@ def create_app(db_path=None):
 
     register_community(app, db, identity, account, csrf_check, render)
     register_interface(app, db, account, render, patient_context)
+    register_diary(app, db, account, access, csrf_check)
     register_portal(
         app, db, account, identity, access, csrf_check, render, patient_context
     )
@@ -363,13 +370,14 @@ def create_app(db_path=None):
     register_recordings(app, db, account, access, csrf_check, render, has_consent)
 
     @app.post("/patients/{pid}/diary")
-    def diary(
+    async def diary(
         request: Request,
         pid: int,
         csrf: str = Form(...),
         day: date = Form(...),
         wellbeing: int = Form(..., ge=0, le=10),
         sleep: float = Form(..., ge=0, le=24),
+        sleep_quality: str | None = Form(None, max_length=32),
         adherence: str = Form(...),
         note: str = Form("", max_length=3000),
         contact: bool = Form(False),
@@ -378,11 +386,16 @@ def create_app(db_path=None):
         csrf_check(request, csrf)
         if day > date.today() or adherence not in ["taken", "missed", "none"]:
             raise HTTPException(422, "Проверьте дату и отметку выполнения назначения")
+        quality = sleep_rating(sleep_quality)
         with db() as c:
-            c.execute(
-                "INSERT INTO diary(patient_id,day,wellbeing,sleep,adherence,note,contact) VALUES(?,?,?,?,?,?,?)",
-                (pid, day.isoformat(), wellbeing, sleep, adherence, note, int(contact)),
-            )
+            c.execute('BEGIN IMMEDIATE')
+            extra_values = parse_metric_values(c, pid, await request.form())
+            did = c.execute(
+                "INSERT INTO diary(patient_id,day,wellbeing,sleep,adherence,note,contact,sleep_quality) VALUES(?,?,?,?,?,?,?,?)",
+                (pid, day.isoformat(), wellbeing, sleep, adherence, note, int(contact), quality),
+            ).lastrowid
+            c.executemany('INSERT INTO diary_metric_values(diary_id,metric_id,value) VALUES(?,?,?)',
+                          [(did, mid, value) for mid, value in extra_values])
         return RedirectResponse(f"/patients/{pid}/diary", status_code=303)
 
     @app.post("/patients/{pid}/screening")

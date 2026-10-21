@@ -33,6 +33,9 @@ def run(
         )
         dc = browser.new_context(viewport={"width": 1280, "height": 900})
         patient, doctor = pc.new_page(), dc.new_page()
+        # Allow for slow cold starts in shared CI/cloud environments.
+        patient.set_default_timeout(60000)
+        doctor.set_default_timeout(60000)
         errors = []
         for page in [patient, doctor]:
             page.on("pageerror", lambda e: errors.append(str(e)))
@@ -82,7 +85,8 @@ def run(
         patient.get_by_label("Пароль", exact=True).fill(patient_password)
         patient.get_by_role("button", name="Войти как пациент").click()
         expect(patient.locator(".role-badge")).to_contain_text("Пациент")
-        assert patient.url.endswith("/me/start")
+        assert patient.url.endswith("/patients/1/diary")
+        patient.goto(url + "/me/start")
         expect(
             patient.get_by_role("heading", name="Здесь можно отвечать честно")
         ).to_be_visible()
@@ -190,6 +194,12 @@ def run(
         expect(patient.locator(".symptom-chart")).to_have_count(3)
 
         patient.goto(url + "/patients/1/diary")
+        patient.locator('[data-open="wellbeing-dialog"]').click()
+        patient.get_by_label('Самочувствие, 0–10',exact=True).fill('6')
+        patient.get_by_role('button',name='Применить оценку',exact=True).click()
+        patient.locator('[data-open="sleep-dialog"]').click()
+        patient.get_by_label('Продолжительность сна, часы',exact=True).fill('7.5')
+        patient.get_by_role('button',name='Применить сон',exact=True).click()
         patient.get_by_label("Заметка", exact=True).fill(
             "Синтетическая браузерная запись"
         )
@@ -449,6 +459,8 @@ def run(
         doctor.set_viewport_size({"width": 390, "height": 844})
         capture(doctor, "specialist-mobile")
         assert not errors, errors
+        from scripts.browser_diary import check_diary
+        check_diary(patient, doctor, url)
         from scripts.browser_e02 import check_interface
         check_interface(patient, doctor, url)
         browser.close()

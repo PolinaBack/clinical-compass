@@ -1,0 +1,74 @@
+{% from 'icons.html' import icon %}
+<form method="post" action="/patients/{{ patient.id }}/diary" id="diary-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Дата<input type="date" name="day" value="{{ today }}" max="{{ today }}" required></label>
+    <p class="muted">Откройте карточку, отметьте состояние и нажмите «Сохранить запись».</p>
+    <div class="diary-cards" aria-label="Показатели дневника">
+        <button type="button" class="diary-card category-emotions" data-open="wellbeing-dialog">
+            {{ icon('emotions') }}<strong>Настроение и самочувствие</strong>
+            <span>Общее самочувствие · 0–10</span><output id="wellbeing-preview">Выбрать оценку</output>
+            <small>Последняя запись: {{ (latest_diary.wellbeing ~ '/10 · ' ~ latest_diary.day) if latest_diary else 'нет данных' }}</small>
+        </button>
+        <button type="button" class="diary-card category-sleep" data-open="sleep-dialog">
+            {{ icon('sleep') }}<strong>Сон и восстановление</strong><span>Качество и длительность сна</span>
+            <output id="sleep-preview">Отметить сон</output><small>Последняя запись: {% if latest_diary %}{{ latest_diary.sleep }} ч{% if latest_diary.sleep_quality is not none %} · качество {{ latest_diary.sleep_quality }}/10{% endif %} · {{ latest_diary.day }}{% else %}нет данных{% endif %}</small>
+        </button>
+        <button type="button" class="diary-card category-medication" data-open="treatment-dialog">
+            {{ icon('medication') }}<strong>Лечение</strong><span>Выполнение назначения</span>
+            <output id="treatment-preview">Отметить лечение</output><small>Последняя запись: {% if latest_diary %}{{ {'none':'Не применимо','taken':'Выполнено','missed':'Был пропуск'}[latest_diary.adherence] }} · {{ latest_diary.day }}{% else %}нет данных{% endif %}</small>
+        </button>
+        {% for metric in diary_metrics %}
+            <button type="button" class="diary-card category-specialized" data-open="metric-dialog-{{ metric.id }}">
+                {{ icon('specialized') }}<strong>{{ metric.title }}</strong><span>Добавлено специалистом</span>
+                <output id="metric-preview-{{ metric.id }}">Заполнить</output>
+                {% set previous = diary_metric_latest.get(metric.id) %}
+                <small>{{ (previous.display ~ ' ' ~ metric.unit ~ ' · ' ~ previous.day) if previous else 'Нет данных' }}</small>
+            </button>
+        {% endfor %}
+    </div>
+    <dialog id="wellbeing-dialog" class="diary-dialog" aria-labelledby="wellbeing-heading" data-preview="wellbeing-preview">
+        <h3 id="wellbeing-heading">Общее самочувствие</h3><p>Как вы себя чувствуете сейчас? 0 — очень плохо, 10 — отлично.</p>
+        <div class="wellbeing-compass diary-visual" aria-hidden="true">
+            <svg viewBox="0 0 240 240"><circle cx="120" cy="120" r="92" class="compass-ring"/><g class="compass-ticks"></g><g class="compass-needle"><path d="M120 38L131 120L120 139L109 120Z"/><circle cx="120" cy="120" r="7"/></g></svg>
+        </div>
+        <label class="diary-slider-label">Выбрать самочувствие на компасе<input type="range" min="0" max="10" step="1" value="5" data-sync="wellbeing-value"></label>
+        <label>Самочувствие, 0–10<input id="wellbeing-value" type="number" name="wellbeing" min="0" max="10" step="1" required inputmode="numeric" data-value></label>
+        <p class="caption">Можно двигать стрелку мышью или пальцем, использовать ползунок, стрелки клавиатуры или ввести число.</p>
+        <div class="dialog-actions"><button type="button" data-apply>Применить оценку</button><button type="button" class="secondary" data-cancel>Отмена</button></div>
+        <p><a href="/help-now">Экстренная помощь</a></p>
+    </dialog>
+    <dialog id="sleep-dialog" class="diary-dialog" aria-labelledby="sleep-heading" data-preview="sleep-preview">
+        <h3 id="sleep-heading">Сон и восстановление</h3><p>Оцените качество сна: 0 — совсем не удалось отдохнуть, 10 — отлично выспались.</p>
+        <div class="sleep-scene diary-visual" aria-hidden="true">
+            <svg viewBox="0 0 300 160"><path class="bed-frame" d="M35 55V140M35 110H265V140M265 83V120"/><rect class="sleep-pillow" x="47" y="73" width="49" height="25" rx="12"/><g class="sleep-breath"><circle class="sleep-head" cx="84" cy="76" r="19"/><path class="sleep-eye" d="M74 75q5 5 10 0"/><path class="sleep-blanket" d="M109 67Q169 48 244 82L255 106H98Z"/></g><text class="sleep-z" x="208" y="34">z</text><text class="sleep-z second" x="235" y="20">z</text></svg>
+        </div>
+        <label class="diary-slider-label">Качество сна, 0–10<input type="range" min="0" max="10" step="1" value="5" data-sync="sleep-quality"></label>
+        <label>Оценка качества сна, 0–10<input id="sleep-quality" type="number" name="sleep_quality" min="0" max="10" step="1" inputmode="numeric" data-value></label>
+        <label>Продолжительность сна, часы<input type="number" name="sleep" min="0" max="24" step="0.5" required inputmode="decimal" data-value></label>
+        <div class="dialog-actions"><button type="button" data-apply>Применить сон</button><button type="button" class="secondary" data-cancel>Отмена</button></div>
+        <p><a href="/help-now">Экстренная помощь</a></p>
+    </dialog>
+    <dialog id="treatment-dialog" class="diary-dialog" aria-labelledby="treatment-heading" data-preview="treatment-preview">
+        <h3 id="treatment-heading">Лечение</h3><p>Отметьте выполнение назначенной схемы. Изменение лечения обсудите со специалистом.</p>
+        <label for="diary-adherence">Выполнение назначения врача</label><select id="diary-adherence" name="adherence" data-value><option value="none">Нет назначения / не применимо</option><option value="taken">Выполнено</option><option value="missed">Был пропуск</option></select>
+        <div class="dialog-actions"><button type="button" data-apply>Применить отметку</button><button type="button" class="secondary" data-cancel>Отмена</button></div>
+        <p><a href="/help-now">Экстренная помощь</a></p>
+    </dialog>
+    {% for metric in diary_metrics %}
+        <dialog id="metric-dialog-{{ metric.id }}" class="diary-dialog" aria-labelledby="metric-heading-{{ metric.id }}" data-preview="metric-preview-{{ metric.id }}">
+            <h3 id="metric-heading-{{ metric.id }}">{{ metric.title }}</h3><p>Показатель добавлен вашим специалистом.</p>
+            <label>{{ metric.title }}{% if metric.unit %}, {{ metric.unit }}{% endif %}
+                {% if metric.kind == 'boolean' %}<select name="metric_{{ metric.id }}" aria-label="{{ metric.title }}" data-value><option value="">Не отмечено</option><option value="true">Да</option><option value="false">Нет</option></select>
+                {% elif metric.kind == 'text' %}<textarea name="metric_{{ metric.id }}" maxlength="1000" data-value></textarea>
+                {% else %}<input type="number" name="metric_{{ metric.id }}" {% if metric.minimum is not none %}min="{{ metric.minimum }}"{% endif %} {% if metric.maximum is not none %}max="{{ metric.maximum }}"{% endif %} step="{{ '1' if metric.kind == 'scale' else 'any' }}" data-value>{% endif %}
+            </label>
+            <div class="dialog-actions"><button type="button" data-apply>Применить показатель</button><button type="button" class="secondary" data-cancel>Отмена</button></div>
+            <p><a href="/help-now">Экстренная помощь</a></p>
+    </dialog>
+    {% endfor %}
+    <label>Заметка<textarea id="diary-note" name="note" maxlength="3000"></textarea></label>
+    <button type="button" class="secondary voice" data-target="diary-note">🎙 Голосовой ввод</button>
+    <button type="submit">Сохранить запись</button>
+    <p class="caption" id="diary-save-hint">Отметки в карточках сохранятся вместе с записью после нажатия «Сохранить запись».</p>
+    <p class="diary-status" role="status" aria-live="polite"></p>
+</form>

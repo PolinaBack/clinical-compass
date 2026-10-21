@@ -1,0 +1,20 @@
+<section class="card" id="assigned-metrics">
+    <h2>Показатели дневника</h2>
+    <p>Базовые карточки: самочувствие, сон и лечение. Дополнительные показатели добавляете вы для этого пациента.</p>
+    {% for metric in diary_metrics %}
+        <p><strong>{{ metric.title }}</strong> · {{ {'scale':'Шкала 0–10','number':'Число','boolean':'Да / нет','text':'Текст'}[metric.kind] }}{% if metric.unit %} · {{ metric.unit }}{% endif %}</p>
+    {% else %}<p class="muted">Дополнительные показатели пока не добавлены.</p>{% endfor %}
+    <details><summary>Добавить новую метрику</summary>
+        <form action="/patients/{{ patient.id }}/diary/metrics" method="post">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <label>Название показателя<input name="title" maxlength="100" required></label>
+            <label>Формат ответа<select name="kind" aria-label="Формат ответа"><option value="scale">Шкала 0–10</option><option value="number">Число</option><option value="boolean">Да / нет</option><option value="text">Текст</option></select></label>
+            <label>Единица измерения · только для числа<input name="unit" maxlength="24" placeholder="Например, кг"></label>
+            <p class="caption">Для шкалы границы всегда 0 и 10. Для числа при необходимости укажите границы ниже.</p>
+            <label>Минимум · для числа<input type="number" name="minimum" step="any"></label>
+            <label>Максимум · для числа<input type="number" name="maximum" step="any"></label>
+            <p class="caption">Диапазон ограничивает ввод. Автоматическая оценка новых показателей пока не подключена.</p>
+            <button>Добавить показатель пациенту</button>
+        </form>
+    </details>
+</section>

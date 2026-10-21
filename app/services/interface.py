@@ -40,16 +40,10 @@ def save_interface(c, user, form):
         return value == "true"
 
     minimal = checked("minimal")
-    cards = []
-    if user["role"] == "patient":
-        for key, _ in CARDS:
-            rank = str(form.get(key + "_position", ""))
-            if not rank.isascii() or not rank.isdigit() or not 1 <= int(rank) <= len(CARDS):
-                raise HTTPException(422, "Порядок карточек — число от 1 до 6")
-            cards.append(dict(key=key, position=int(rank), visible=checked(key + "_visible"),
-                              pinned=checked(key + "_pinned")))
-    else:
-        cards = [{k: v for k, v in item.items() if k != "title"} for item in current["cards"]]
+    if any(key.endswith(('_position', '_visible', '_pinned')) for key in form):
+        raise HTTPException(403, 'Состав дневника определяет ведущий специалист')
+    # Retain earlier presentation preferences as history; they no longer control the diary.
+    cards = [{k: v for k, v in item.items() if k != 'title'} for item in current['cards']]
     c.execute(
         """INSERT INTO interface_preferences(account_id,minimal,cards_json,revision,updated_at)
            VALUES(?,?,?,?,?) ON CONFLICT(account_id) DO UPDATE SET

@@ -9,6 +9,8 @@
         </title>
         <link rel="stylesheet" href="/static/style.css">
         <link rel="stylesheet" href="/static/interface.css">
+        <link rel="stylesheet" href="/static/diary.css">
+        <script src="/static/diary.js" defer></script>
         <script src="/static/app.js" defer></script><script src="/static/workflows.js" defer></script>
     </head>
     <body class="portal-shell {{ 'signed-in' if user else '' }} {{ 'specialist-space' if user == 'doctor' else 'patient-space' }} {{ 'minimal-ui' if interface_prefs and interface_prefs.minimal else '' }}">

@@ -1,6 +1,7 @@
+{% from 'icons.html' import icon %}
 <nav class="tab-nav profile-nav" aria-label="Разделы личного профиля">
-    {% for key,label in [('about','Обо мне'),('assessments','Анкеты'),('family','Семейная история'),('video','Консультации и видеосвязь')] %}
+    {% for key,label,symbol in [('about','Обо мне','anthropometry'),('assessments','Анкеты','scales'),('family','Семейная история','people'),('video','Консультации и видеосвязь','consultation')] %}
         <a href="/patients/{{ patient.id }}/profile/{{ key }}"
-           {% if section == key %}aria-current="page"{% endif %}>{{ label }}</a>
+           {% if section == key %}aria-current="page"{% endif %}>{{ icon(symbol) }}<span>{{ label }}</span></a>
     {% endfor %}
 </nav>

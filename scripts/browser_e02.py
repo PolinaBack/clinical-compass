@@ -13,19 +13,14 @@ def check_interface(patient, doctor, url):
     expect(patient.locator('form[action="/settings/consultations"] input:checked')).to_have_count(0)
     form = patient.locator('form[action="/settings/interface"]')
     form.get_by_label("Без декора:", exact=False).check()
-    form.get_by_label("Показывать «Общее самочувствие»", exact=True).uncheck()
-    form.get_by_label("Закрепить «Консультации»", exact=True).check()
     form.get_by_role("button", name="Сохранить оформление", exact=True).click()
-    patient.goto(url + "/me/overview")
+    patient.goto(url + "/patients/1/diary")
     expect(patient.locator("body")).to_have_class(re.compile(r".*minimal-ui.*"))
-    expect(patient.locator('[data-card="wellbeing"]')).to_have_count(0)
-    assert patient.locator('[data-card]').first.get_attribute('data-card') == 'consultations'
+    expect(patient.locator('[data-open="wellbeing-dialog"]')).to_have_count(1)
     expect(patient.get_by_role("link", name="Экстренная помощь", exact=True)).to_be_visible()
     patient.goto(url + "/settings")
     form = patient.locator('form[action="/settings/interface"]')
     form.get_by_label("Без декора:", exact=False).uncheck()
-    form.get_by_label("Показывать «Общее самочувствие»", exact=True).check()
-    form.get_by_label("Закрепить «Консультации»", exact=True).uncheck()
     form.get_by_role("button", name="Сохранить оформление", exact=True).click()
 
     def tab_to(page, selector):
@@ -35,8 +30,8 @@ def check_interface(patient, doctor, url):
                 return
         raise AssertionError('Keyboard could not reach ' + selector)
 
-    # A complete keyboard path: main page → settings → decoration preference → save.
-    patient.goto(url + '/me/overview')
+    # A complete keyboard path: diary → settings → decoration preference → save.
+    patient.goto(url + '/patients/1/diary')
     tab_to(patient, 'a.settings-link')
     patient.keyboard.press('Enter')
     expect(patient.get_by_role('heading', name='Настройки и конфиденциальность', exact=True)).to_be_visible()
@@ -51,7 +46,7 @@ def check_interface(patient, doctor, url):
     patient.get_by_role('button', name='Сохранить оформление', exact=True).click()
 
     pages = [
-        (patient, ["/me/overview", "/patients/1/diary", "/patients/1/results", "/me/materials",
+        (patient, ["/patients/1/diary", "/patients/1/results", "/me/materials",
                    "/patients/1/profile", "/patients/1/profile/family", "/patients/1/reports", "/settings", "/help-now"]),
         (doctor, ["/doctor", "/doctor/calendar", "/doctor/tasks", "/doctor/library",
                   "/patients/1", "/patients/1/reports", "/settings"]),
@@ -84,9 +79,9 @@ def check_interface(patient, doctor, url):
                     })).violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))""")
                     audits.append(dict(path=path, width=width, violations=results))
                     Path('artifacts/e02-accessibility.json').write_text(json.dumps(audits, ensure_ascii=False, indent=2))
-                if path in ('/me/overview', '/doctor'):
+                if path in ('/patients/1/diary', '/doctor'):
                     page.screenshot(path=f"artifacts/e02-{'patient' if page == patient else 'doctor'}-{width}.png", full_page=True)
-        page.goto(url + ("/me/overview" if page == patient else "/doctor"))
+        page.goto(url + ("/patients/1/diary" if page == patient else "/doctor"))
         # Start the route with the keyboard and use its skip link.
         page.keyboard.press('Tab')
         assert page.evaluate("document.activeElement.classList.contains('skip-link')")

@@ -1,7 +1,7 @@
 """Working entry points over existing records, scoped to the signed-in account."""
 
 from fastapi import Request, HTTPException
-from app.services.interface import read_interface
+from fastapi.responses import RedirectResponse
 
 
 def register_interface(app, db, account, render, patient_context):
@@ -16,37 +16,7 @@ def register_interface(app, db, account, render, patient_context):
         user = account(request)
         if user["role"] != "patient":
             raise HTTPException(403, "Это раздел пациента")
-        pid = user["patient_id"]
-        context = patient_context(request, pid)
-        diary = max(context["diary"], key=lambda r: (r["day"], r["id"]), default=None)
-        assessments = context["assessment_data"]["assessments"]
-        completed = [a for a in assessments if a["status"] == "completed"]
-        last = max(completed, key=lambda a: (a["completed_at"] or "", a["id"]), default=None)
-        visits = context["appointments"]
-        latest_visit = visits[0] if visits else None
-        definitions = {
-            "wellbeing": dict(category="wellbeing", href=f"/patients/{pid}/diary",
-                              value=f"{diary['wellbeing']} из 10" if diary else "Нет данных", day=diary["day"] if diary else ""),
-            "sleep": dict(category="sleep", href=f"/patients/{pid}/diary",
-                          value=f"{diary['sleep']:g} ч" if diary else "Нет данных", day=diary["day"] if diary else ""),
-            "treatment": dict(category="medication", href=f"/patients/{pid}/diary",
-                              value={"taken": "Приём отмечен", "missed": "Отмечен пропуск", "none": "Нет назначения"}[diary["adherence"]] if diary else "Нет данных",
-                              day=diary["day"] if diary else ""),
-            "scales": dict(category="scales", href=f"/patients/{pid}/profile/assessments",
-                           value=f"{len(completed)} завершено · {len(assessments)-len(completed)} в работе",
-                           day=last["completed_at"] if last else ""),
-            "materials": dict(category="materials", href="/me/materials", value="Полезные материалы", day=""),
-            "consultations": dict(category="consultation", href=f"/patients/{pid}/profile/video",
-                                  value=latest_visit["starts_at"] if latest_visit else "Нет назначенных встреч",
-                                  day=latest_visit["timezone_label"] if latest_visit else ""),
-        }
-        with db() as c:
-            preferences = read_interface(c, user["id"])
-        cards = [dict(item, **definitions[item["key"]]) for item in preferences["cards"] if item["visible"]]
-        cards.sort(key=lambda item: (not item["pinned"], item["position"]))
-        response = render(request, "overview.html", cards=cards, **context)
-        response.headers["Cache-Control"] = "no-store"
-        return response
+        return RedirectResponse(f"/patients/{user['patient_id']}/diary", status_code=303)
 
     @app.get("/me/materials")
     def materials(request: Request):

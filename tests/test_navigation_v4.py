@@ -13,26 +13,21 @@ def post(client, endpoint, **data):
 
 def test_initial_page_and_profile_sections_load_separately(client):
     login(client, "patient1")
-    r = client.get("/me")
-    assert r.url.path == "/me/start"
-    assert "Не обязательно" in r.text
-    for entry in ["/", "/patients/1"]:
+    r = client.get('/me')
+    assert r.url.path == '/patients/1/diary'
+    for entry in ['/', '/patients/1', '/me/overview']:
         assert client.get(entry).url.path == r.url.path
     nav = re.search(r'<nav class="header-nav".*?</nav>', r.text, re.S).group()
-    labels = ["Анкеты", "Специалист", "Семейная история", "Отчёты", "С чего начать"]
-    assert [nav.index(label) for label in labels] == sorted(
-        nav.index(label) for label in labels
-    )
-    assert 'aria-current="page">С чего начать' in nav
-    assert "Мой специалист" not in nav
-    start = client.get("/me/start")
-    assert "Не обязательно" in start.text
+    labels = ['Анкеты', 'Специалист', 'Семейная история', 'Отчёты', 'С чего начать']
+    assert [nav.index(label) for label in labels] == sorted(nav.index(label) for label in labels)
+    assert 'Главная' not in r.text
+    start = client.get('/me/start')
+    assert 'Не обязательно' in start.text
     assert 'aria-current="page">С чего начать' in start.text
-    login(client, "patient2")
-    assert client.get("/me").url.path == "/me/start"
-    assert 'href="/patients/2/profile/assessments"' in client.get("/me").text
-    assert client.get("/patients/1").status_code == 403
-    login(client, "patient1")
+    login(client, 'patient2')
+    assert client.get('/me').url.path == '/patients/2/diary'
+    assert client.get('/patients/1').status_code == 403
+    login(client, 'patient1')
     index = client.get("/patients/1/profile").text
     assert 'name="biography"' in index and 'id="family"' not in index
     assert client.get("/patients/1/profile").url.path == "/patients/1/profile/about"

@@ -175,25 +175,12 @@
             с подтверждением на форме отправки. Они не являются записью консультации и не передаются внешнему ИИ.</p>
     </section>
     <section class="card" id="interface">
-        <h2>Оформление и главная страница</h2>
+        <h2>Оформление</h2>
         <form action="/settings/interface" method="post">
             <input type="hidden" name="csrf" value="{{ csrf }}">
             <input type="hidden" name="revision" value="{{ interface_prefs.revision }}">
             <label class="check"><input type="checkbox" name="minimal" value="true" {% if interface_prefs.minimal %}checked{% endif %}>Без декора: нейтральные карточки и минимум украшений</label>
             <p class="caption">Движение также отключается по настройке «Уменьшение движения» вашей системы. Предупреждения и подсказки сохраняются в обоих режимах.</p>
-            {% if account_info.role == 'patient' %}
-                <h3>Карточки на главной</h3>
-                <p>Выберите видимые карточки и порядок: 1 — выше, 6 — ниже. Закреплённые идут первыми. При одинаковом номере сохраняется порядок списка ниже.</p>
-                <p class="notice">Скрытие карточки меняет только главную страницу. Записи, назначения специалиста и клинические алерты продолжают работать. Все разделы доступны через меню.</p>
-                {% for card in interface_prefs.cards %}
-                    <fieldset class="card-preference"><legend>{{ card.title }}</legend>
-                        <label class="check"><input type="checkbox" name="{{ card.key }}_visible" value="true" {% if card.visible %}checked{% endif %}>Показывать «{{ card.title }}»</label>
-                        <label class="check"><input type="checkbox" name="{{ card.key }}_pinned" value="true" {% if card.pinned %}checked{% endif %}>Закрепить «{{ card.title }}»</label>
-                        <label>Порядок «{{ card.title }}»<input type="number" name="{{ card.key }}_position" min="1" max="6" value="{{ card.position }}" required></label>
-                    </fieldset>
-                {% endfor %}
-                <p><a href="/me/overview">Открыть главную страницу</a></p>
-            {% endif %}
             <button>Сохранить оформление</button>
         </form>
     </section>

@@ -8,6 +8,7 @@
         {% include 'specialist_nav.html' %}
     {% endif %}
     {% if consent or user == 'doctor' %}
+        {% if user == 'doctor' %}{% include 'diary_metrics.html' %}{% endif %}
         {% include 'diary_block.html' %}
         {% with graph=diary_graph %}
             {% include 'chart.html' %}

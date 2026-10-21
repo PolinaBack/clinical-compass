@@ -2,7 +2,7 @@
     {% if user == 'doctor' %}
         {% set links = [('/doctor','Пациенты','people'),('/doctor/calendar','Календарь','calendar'),('/doctor/tasks','Задачи','check'),('/doctor/library','Библиотека','materials'),('/settings','Настройки','settings')] %}
     {% else %}
-        {% set links = [('/me/overview','Главная','home'),('/patients/' ~ session_pid ~ '/diary','Дневник','wellbeing'),('/patients/' ~ session_pid ~ '/results','Статистика','chart'),('/me/materials','Материалы','materials'),('/patients/' ~ session_pid ~ '/profile','Профиль','anthropometry')] %}
+        {% set links = [('/patients/' ~ session_pid ~ '/diary','Дневник','wellbeing'),('/patients/' ~ session_pid ~ '/results','Статистика','chart'),('/me/materials','Материалы','materials'),('/patients/' ~ session_pid ~ '/profile','Профиль','anthropometry')] %}
     {% endif %}
     {% from 'icons.html' import icon %}
     {% for href,label,symbol in links %}
