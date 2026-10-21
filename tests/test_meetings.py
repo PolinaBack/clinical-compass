@@ -3,6 +3,7 @@
 import io
 import json
 import sqlite3
+import subprocess
 import wave
 from datetime import datetime, timedelta, timezone
 
@@ -253,6 +254,79 @@ def test_real_wav_upload_dedup_range_and_format(client, meeting):
     assert queue(client, rid, "transcript").status_code == 403
 
 
+@pytest.mark.parametrize("kind", ["audio", "video"])
+def test_original_media_is_doctor_only_even_with_patient_consent(
+    client, meeting, tmp_path, kind
+):
+    mid, context, _ = meeting
+    grants(client, context, [kind + "_recording"])
+    content, filename, mime = audio(), "synthetic.wav", "audio/wav"
+    if kind == "video":
+        path = tmp_path / "synthetic.mp4"
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-nostdin",
+                "-v",
+                "error",
+                "-f",
+                "lavfi",
+                "-i",
+                "color=c=blue:s=160x120:d=1",
+                "-f",
+                "lavfi",
+                "-i",
+                "anullsrc=r=16000:cl=mono",
+                "-t",
+                "1",
+                "-c:v",
+                "mpeg4",
+                "-c:a",
+                "aac",
+                "-shortest",
+                str(path),
+            ],
+            check=True,
+            capture_output=True,
+            timeout=25,
+        )
+        content, filename, mime = path.read_bytes(), path.name, "video/mp4"
+    assert (
+        client.post(
+            f"/meetings/{mid}/recordings",
+            data={"csrf": token(client), "media_kind": kind},
+            files={"file": (filename, content, mime)},
+            follow_redirects=False,
+        ).status_code
+        == 303
+    )
+    rid = recording_id(client)
+    endpoint = f"/meeting-recordings/{rid}/media"
+    assert client.get(endpoint).content == content
+    assert client.get(endpoint, headers={"Range": "bytes=0-43"}).status_code == 206
+    assert f"<{kind} " in client.get(f"/meetings/{mid}").text
+
+    login(client, "patient1")
+    html = client.get(f"/meetings/{mid}").text
+    assert 'type="file"' not in html
+    assert "<video " not in html and "<audio " not in html
+    assert endpoint not in html and filename not in html
+    assert client.get(endpoint).status_code == 403
+    assert client.get(endpoint, headers={"Range": "bytes=0-43"}).status_code == 403
+    assert upload(client, mid, content, media_kind=kind).status_code == 403
+    login(client, "patient2")
+    assert client.get(endpoint).status_code == 403
+    client.cookies.clear()
+    assert client.get(endpoint).status_code == 401
+    with connect(client.app.state.db_path) as c:
+        assert (
+            c.execute(
+                "SELECT content FROM meeting_recordings WHERE id=?", (rid,)
+            ).fetchone()[0]
+            == content
+        )
+
+
 def test_persistent_queue_sources_review_and_patient_publication(client, meeting):
     rid = processed(client, meeting)
     assert not service.process_one(client.app.state.db_path, SyntheticModels())
@@ -266,7 +340,9 @@ def test_persistent_queue_sources_review_and_patient_publication(client, meeting
     assert "Обсуждался сон." not in html and "Уточнить детали сна." not in html
     assert client.get(f"/meeting-recordings/{rid}/export").status_code == 403
     assert queue(client, rid, "summary").status_code == 403
+    assert client.get(f"/meeting-recordings/{rid}/media").status_code == 403
     login(client, "doctor")
+    assert client.get(f"/meeting-recordings/{rid}/export").json()["segments"]
     data = summary_form(client, rid)
     assert (
         client.post(
@@ -281,11 +357,16 @@ def test_persistent_queue_sources_review_and_patient_publication(client, meeting
         client.post(f"/meeting-recordings/{rid}/summary", data=data).status_code == 409
     )
     login(client, "patient1")
-    assert "Обсуждался сон." in client.get(f"/meetings/{meeting[0]}").text
+    html = client.get(f"/meetings/{meeting[0]}").text
+    assert "Обсуждался сон." in html
+    assert "meeting-transcript" not in html and "data-meeting-seek" not in html
+    assert "<audio " not in html and "<video " not in html
+    assert client.get(f"/meeting-recordings/{rid}/media").status_code == 403
     result = client.get(f"/meeting-recordings/{rid}/export").json()
     assert (
         "clarifications" not in result["summary"]
-        and result["segments"][0]["start"] == 0
+        and result["segments"] == []
+        and result["transcript_version"] is None
     )
     login(client, "doctor")
     assert (

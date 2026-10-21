@@ -1,7 +1,7 @@
 <section class="card" id="video">
     <p class="eyebrow">ЛИЧНАЯ ВСТРЕЧА</p>
     <h2>Видеоприём</h2>
-    <p><a href="/patients/{{ patient.id }}/meetings">Записи встреч, расшифровки и проверенные итоги</a></p>
+    <p><a href="/patients/{{ patient.id }}/meetings">{{ 'Записи встреч, расшифровки и проверенные итоги' if user == 'doctor' else 'Согласия и проверенные итоги встреч' }}</a></p>
     {% for visit in appointments %}
         <article>
             <div class="section-heading">

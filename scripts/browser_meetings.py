@@ -1,11 +1,11 @@
 """Synthetic acceptance: callback processes only the disposable test database."""
 
-import io
 import json
 import os
 from pathlib import Path
 import re
-import wave
+import subprocess
+from tempfile import TemporaryDirectory
 from playwright.sync_api import expect
 
 
@@ -31,7 +31,7 @@ def check_meetings(patient, doctor, url, run_job):
 
     def give(page):
         page.goto(url + meeting_path)
-        for purpose in ("audio_recording", "ai_transcription", "ai_summary"):
+        for purpose in ("video_recording", "ai_transcription", "ai_summary"):
             details = (
                 page.locator("details")
                 .filter(
@@ -50,22 +50,55 @@ def check_meetings(patient, doctor, url, run_job):
     give(doctor)
     give(patient)
     doctor.goto(url + meeting_path)
-    data = io.BytesIO()
-    with wave.open(data, "wb") as audio:
-        audio.setnchannels(1)
-        audio.setsampwidth(2)
-        audio.setframerate(16000)
-        audio.writeframes(b"\0\0" * 16000)
+    with TemporaryDirectory(prefix="compass-browser-video-") as folder:
+        path = Path(folder) / "synthetic.mp4"
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-nostdin",
+                "-v",
+                "error",
+                "-f",
+                "lavfi",
+                "-i",
+                "color=c=blue:s=160x120:d=1",
+                "-f",
+                "lavfi",
+                "-i",
+                "anullsrc=r=16000:cl=mono",
+                "-t",
+                "1",
+                "-c:v",
+                "libx264",
+                "-pix_fmt",
+                "yuv420p",
+                "-c:a",
+                "aac",
+                "-movflags",
+                "+faststart",
+                "-shortest",
+                str(path),
+            ],
+            check=True,
+            capture_output=True,
+            timeout=25,
+        )
+        content = path.read_bytes()
+    doctor.get_by_label("Вид записи", exact=True).select_option("video")
     doctor.get_by_label("Файл записи", exact=True).set_input_files(
         {
-            "name": "synthetic-silence.wav",
-            "mimeType": "audio/wav",
-            "buffer": data.getvalue(),
+            "name": "synthetic-silence.mp4",
+            "mimeType": "video/mp4",
+            "buffer": content,
         }
     )
     doctor.get_by_role(
         "button", name="Загрузить с проверкой согласий", exact=True
     ).click()
+    doctor.locator("video").evaluate(
+        "async el => {el.muted=true; await el.play(); el.pause();}"
+    )
+    media_path = doctor.locator("video").get_attribute("src")
     doctor.get_by_role("button", name="Расшифровать запись", exact=True).click()
     run_job()
     doctor.reload()
@@ -86,6 +119,8 @@ def check_meetings(patient, doctor, url, run_job):
     doctor.reload()
     patient.goto(url + meeting_path)
     expect(patient.get_by_text("Обсуждался сон.", exact=True)).to_have_count(0)
+    expect(patient.locator('input[type="file"],video,audio')).to_have_count(0)
+    assert patient.request.get(url + media_path).status == 403
     doctor.get_by_label(
         "Я проверил(а) смысл каждого оставленного пункта", exact=False
     ).check()
@@ -98,8 +133,19 @@ def check_meetings(patient, doctor, url, run_job):
     patient.reload()
     expect(patient.get_by_text("Обсуждался сон.", exact=True)).to_be_visible()
     expect(patient.get_by_text("Уточнить детали сна.", exact=True)).to_have_count(0)
-    patient.get_by_role("button", name="00:00 · фрагмент 2", exact=True).click()
-    expect(patient.locator("audio")).to_have_js_property("currentTime", 0.45)
+    expect(
+        patient.locator('input[type="file"],video,audio,[data-meeting-seek]')
+    ).to_have_count(0)
+    expect(patient.locator(".meeting-transcript")).to_have_count(0)
+    assert (
+        patient.request.get(url + media_path, headers={"Range": "bytes=0-43"}).status
+        == 403
+    )
+    doctor.locator("video").evaluate(
+        "async el => {el.muted=true; await el.play(); el.pause();}"
+    )
+    doctor.get_by_role("button", name="00:00 · фрагмент 2", exact=True).click()
+    expect(doctor.locator("video")).to_have_js_property("currentTime", 0.45)
     audits = []
     axe = os.getenv("COMPASS_AXE_PATH")
     Path("artifacts").mkdir(exist_ok=True)
@@ -131,5 +177,5 @@ def check_meetings(patient, doctor, url, run_job):
     if axe:
         assert not any(a["violations"] for a in audits), audits
     print(
-        "PASS meetings UI: scoped consent, real WAV/playback/seek, synthetic worker, corrections, cited draft, clinician review/withdrawal, patient privacy, four widths."
+        "PASS meetings UI: scoped consent, real MP4/doctor playback/seek, synthetic worker, corrections, cited draft, clinician review/withdrawal, patient denied upload/player/direct media/full transcript, four widths."
     )

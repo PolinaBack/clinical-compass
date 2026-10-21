@@ -132,11 +132,6 @@ def register_meetings(app, db, account, access, csrf_check, render):
                     else visible
                 )
                 item["published_id"] = visible["id"] if visible else None
-                if user["role"] == "patient" and visible:
-                    item["transcript"] = c.execute(
-                        "SELECT * FROM meeting_artifacts WHERE id=?",
-                        (visible["source_id"],),
-                    ).fetchone()
                 for key in ("transcript", "summary"):
                     if item[key]:
                         item[key] = {
@@ -270,6 +265,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
     @app.get("/meeting-recordings/{rid}/media")
     def media(request: Request, rid: int):
         user = account(request)
+        clinician(user)
         with db() as c:
             row = service.recording(c, rid, user["id"])
             size = row["size"]
@@ -454,10 +450,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
             transcript = (
                 service.latest(c, rid, "transcript")
                 if user["role"] == "doctor"
-                else c.execute(
-                    "SELECT * FROM meeting_artifacts WHERE id=?",
-                    (summary["source_id"],),
-                ).fetchone()
+                else None
             )
             result = {
                 "recording": rid,
@@ -466,7 +459,11 @@ def register_meetings(app, db, account, access, csrf_check, render):
                     json.loads(transcript["payload"])["segments"] if transcript else []
                 ),
                 "summary": json.loads(summary["payload"]) if summary else None,
-                "warning": "Проверяйте названия лекарств и текст по исходной записи. Это не назначение лечения.",
+                "warning": (
+                    "Проверяйте названия лекарств и текст по исходной записи. Это не назначение лечения."
+                    if user["role"] == "doctor"
+                    else "Проверенные врачом итоги разговора. Это не назначение лечения."
+                ),
             }
             if user["role"] == "patient":
                 result["summary"] = {
