@@ -1,54 +1,68 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="page-intro">
-        <p class="eyebrow">ТОЛЬКО ДЛЯ СПЕЦИАЛИСТА</p>
-        <h1>Клинические инструменты</h1>
-        <p class="lead">Самоотчёт пациента, безопасность и врачебная оценка не подменяют друг друга.</p>
-    </div>
-    <div class="grid two">
-        <section class="card">
-            <span class="badge">Нужна официальная форма</span>
-            <h2>C-SSRS</h2>
-            <p>
-                В материалах есть схема ветвления, но нет выбранной полной официальной русской шестипунктовой формы с проверенными правами. Самостоятельный перевод не выдаётся за валидированный инструмент.
-            </p>
-            <p>
-                Контракт ветвления сохранён в расчётном модуле и тестах: вопрос 2 «нет» → 3–5 не заданы по правилу, вопрос 6 предусмотрен всем. Отсутствие ответа на 2 не считается «нет».
-            </p>
-            <a href="/help-now">Маршрут помощи остаётся доступным →</a>
-        </section>
-        <section class="card">
-            <span class="badge">Рабочая исследовательская копия</span>
-            <h2>HCL-33</h2>
-            <p>
-                Назначается из карточки пациента. 33 симптомных ответа, контекст отдельно. Сумма 0–33 без автоматического порога БАР. Исходные ответы доступны специалисту.
-            </p>
-            <p class="caption">Brief, стр.10–12; Доп, стр.25. Ключ и права требуют сверки.</p>
-        </section>
-        <section class="card">
-            <span class="badge">Нужны точные критерии</span>
-            <h2>MADRS · 10 врачебных пунктов</h2>
-            <p>
-                В PDF есть карта содержания, но отсутствуют полные клинические якоря выбранной русской версии. Поэтому выставление баллов и итог 0–60 пока недоступны. PHQ-9 не преобразуется в MADRS.
-            </p>
-            <p>
-                После получения критериев каждый пункт должен начинаться пустым, хранить обоснование и подтверждение. Изменение снимает подтверждение; итог — только после всех 10 подтверждений.
-            </p>
-        </section>
-        <section class="card">
-            <span class="badge">Нужны точные критерии</span>
-            <h2>HDRS-17 · отдельная форма</h2>
-            <p>
-                17 пунктов с разными диапазонами 0–2 и 0–4. Нельзя копировать шкалу MADRS 0–6. Без выбранных критериев и версии оценивание и итог недоступны.
-            </p>
-            <p>Не выставляется автоматически по тексту, голосу или лицу пациента.</p>
-        </section>
+    <div class="section-page-heading">
+        <h1>Библиотека анкет</h1>
     </div>
     <section class="card">
-        <h2>Видеоприём — по необходимости</h2>
-        <p>
-            Собственная видеоплатформа не включена. Медицинский партнёр должен согласовать сервис, идентификацию, приватность, местонахождение пациента и резерв при обрыве связи. Пока партнёр и ссылка не настроены, приложение не показывает фиктивный «приём» и не обещает работающий канал.
-        </p>
-        <a href="/reference/aviandr">Справка по «Авиандру» и оригинальный листок-вкладыш →</a>
+        <form method="get" action="/clinical-tools">
+            <label>
+                Пациент
+                <select name="patient_id" required>
+                    <option value="">Выберите пациента</option>
+                    {% for p in patients %}
+                        <option value="{{ p.id }}"
+                                {% if patient and patient.id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button class="secondary">Открыть назначения</button>
+        </form>
+        {% if patient %}
+            <p>
+                <a href="/patients/{{ patient.id }}/workspace/assessments">Анкеты: {{ patient.name }}</a>
+            </p>
+        {% endif %}
     </section>
+    <div class="grid two tool-catalog">
+        {% for tool in tools %}
+            <section class="card tool-tile" data-tool="{{ tool.key }}">
+                <span class="badge">{{ 'Учебная адаптация' if tool.key == 'safety6' else 'По назначению специалиста' if tool.active else 'Требуется исходная форма' }}</span>
+                <h2>{{ tool.name }}</h2>
+                <p>{{ tool.description }}</p>
+                {% if not tool.active %}
+                    <button disabled>Назначение пока недоступно</button>
+                {% elif patient %}
+                    <form action="/patients/{{ patient.id }}/assign" method="post">
+                        <input type="hidden" name="csrf" value="{{ csrf }}">
+                        <input type="hidden" name="scale" value="{{ tool.key }}">
+                        <input type="hidden"
+                               name="assignment_token"
+                               value="{{ assignment_token }}-{{ tool.key }}">
+                        <label>
+                            Оценочная сессия
+                            <select name="session_id" required>
+                                <option value="0">Новое обследование</option>
+                                {% if tool.key != 'safety6' %}
+                                    {% for a in assessment_data.assessments if a.scale == 'phq4' %}
+                                        <option value="{{ a.session_id }}">{{ a.period_start }} — {{ a.period_end }} · сессия №{{ a.session_id }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                        </label>
+                        <label>
+                            Срок заполнения
+                            <input name="due_day"
+                                   type="date"
+                                   min="{{ today }}"
+                                   value="{{ today }}"
+                                   required>
+                        </label>
+                        <button>Назначить {{ tool.name }}</button>
+                    </form>
+                {% else %}
+                    <p class="caption">Для назначения выберите пациента выше.</p>
+                {% endif %}
+            </section>
+        {% endfor %}
+    </div>
 {% endblock %}

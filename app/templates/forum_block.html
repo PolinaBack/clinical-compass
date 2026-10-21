@@ -1,0 +1,35 @@
+<section class="card faq-forum" id="forum">
+    <h2>Остались вопросы? Напишите нам</h2>
+    <p>Можно анонимно задать общий вопрос. Вопрос и проверенный ответ появятся здесь, как в обсуждении на форуме.</p>
+    <p class="caption">
+        Имя и вход не нужны. Не указывайте ФИО, контакты и личную медицинскую историю: опубликованные вопросы и ответы доступны всем. Для срочной помощи используйте отдельную кнопку помощи.
+    </p>
+    <form action="/faq/questions" method="post">
+        <input name="csrf" type="hidden" value="{{ csrf }}">
+        <input name="form_id" type="hidden" value="{{ form_id }}">
+        <label>
+            Ваш вопрос<textarea name="body" maxlength="2000" required></textarea>
+        </label>
+        <label class="check">
+            <input name="public_consent" type="checkbox" value="true" required>
+            Понимаю, что вопрос и ответ будут опубликованы после проверки.
+        </label>
+        <button>Задать анонимный вопрос</button>
+    </form>
+    <div class="forum-threads">
+        {% for question in public_questions %}
+        <article><span class="badge">Анонимный вопрос</span>
+        <h3>
+            <a href="/faq/questions/{{ question.public_id }}">{{ question.body }}</a>
+        </h3>
+        <div class="forum-answer">
+            <strong>Ответ команды</strong>
+            <p class="text">{{ question.reply }}</p>
+            <small>{{ question.replied_at }} (UTC)</small>
+        </div>
+    </article>
+{% else %}
+    <p class="empty">Здесь появятся вопросы с ответами команды.</p>
+{% endfor %}
+</div>
+</section>

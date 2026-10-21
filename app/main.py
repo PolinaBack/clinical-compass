@@ -20,6 +20,11 @@ from .storage import extend_schema, audit, now
 from .workflows import register_workflows, overview
 from .migrations import apply_migrations
 from .routes.settings import register_settings
+from .portal import register_portal, portal_data
+from .community import register_community, public_forum_data
+from .family import register_family
+from .catalog import MEDICINES
+from .recordings import register_recordings
 
 ROOT = Path(__file__).resolve().parent
 
@@ -60,6 +65,7 @@ def create_app(db_path=None):
             """
             )
             extend_schema(c)
+        with db() as c:
             apply_migrations(c)
         yield
 
@@ -174,7 +180,9 @@ def create_app(db_path=None):
 
     @app.get("/")
     def home(request: Request):
-        return render(request, "home.html")
+        if request.session.get("account_id") and account(request)["role"] == "patient":
+            return RedirectResponse("/me", status_code=303)
+        return render(request, "home.html", **public_forum_data(db))
 
     @app.get("/login/{portal}")
     def login_page(request: Request, portal: str):
@@ -242,7 +250,7 @@ def create_app(db_path=None):
         user = account(request)
         if user["role"] != "patient":
             raise HTTPException(403, "Эта страница только для пациента")
-        return RedirectResponse(f"/patients/{user['patient_id']}", status_code=303)
+        return RedirectResponse("/me/start", status_code=303)
 
     @app.post("/logout")
     def logout(request: Request, csrf: str = Form(...)):
@@ -256,13 +264,12 @@ def create_app(db_path=None):
             raise HTTPException(403, "Только для врача")
         with db() as c:
             patients = c.execute(
-                """SELECT p.*, (SELECT count(*) FROM diary d WHERE d.patient_id=p.id AND (d.adherence='missed' OR d.contact=1)) alerts FROM patients p WHERE p.doctor_id=?""",
+                """SELECT p.*, (SELECT count(*) FROM diary d WHERE d.patient_id=p.id AND (d.adherence='missed' OR d.contact=1)) alerts, (SELECT count(*) FROM consultation_requests q WHERE q.patient_id=p.id AND q.status='requested') pending_consultations FROM patients p WHERE p.doctor_id=?""",
                 (account(request)["doctor_id"],),
             ).fetchall()
         return render(request, "doctor.html", patients=patients)
 
-    @app.get("/patients/{pid}")
-    def patient(request: Request, pid: int):
+    def patient_context(request, pid):
         access(request, pid)
         with db() as c:
             p = c.execute("SELECT * FROM patients WHERE id=?", (pid,)).fetchone()
@@ -283,25 +290,64 @@ def create_app(db_path=None):
                     "decisions",
                 ]
             }
+        with db() as c:
+            for relative in data["relatives"]:
+                details = c.execute(
+                    "SELECT * FROM family_details WHERE relative_id=?",
+                    (relative["id"],),
+                ).fetchone()
+                if details:
+                    relative.update(dict(details))
+                relative["condition_count"] = c.execute(
+                    "SELECT count(*) FROM family_conditions WHERE relative_id=?",
+                    (relative["id"],),
+                ).fetchone()[0]
         ordered = sorted(data["diary"], key=lambda r: (r["day"], r["id"]))
         points = " ".join(
             f'{30+i*540/max(len(ordered)-1,1):.1f},{170-r["wellbeing"]*14}'
             for i, r in enumerate(ordered)
         )
-        return render(
-            request,
-            (
-                "specialist_patient.html"
-                if identity(request) == "doctor"
-                else "patient.html"
-            ),
+        return dict(
             patient=p,
             today=date.today().isoformat(),
             points=points,
             consent=has_consent(pid),
             assessment_data=overview(db, pid),
+            **portal_data(db, pid, identity(request) == "doctor"),
             **data,
         )
+
+    @app.get("/patients/{pid}")
+    def patient(request: Request, pid: int):
+        role = access(request, pid)
+        if role != "doctor":
+            return RedirectResponse("/me/start", status_code=303)
+        return render(
+            request,
+            "specialist_patient.html",
+            section="safety",
+            **patient_context(request, pid),
+        )
+
+    @app.get("/patients/{pid}/workspace/{section}")
+    def specialist_section(request: Request, pid: int, section: str):
+        if access(request, pid) != "doctor":
+            raise HTTPException(403, "Раздел специалиста")
+        if section not in ["safety", "assessments", "care", "conversation"]:
+            raise HTTPException(404, "Раздел не найден")
+        return render(
+            request,
+            "specialist_patient.html",
+            section=section,
+            **patient_context(request, pid),
+        )
+
+    register_community(app, db, identity, account, csrf_check, render)
+    register_portal(
+        app, db, account, identity, access, csrf_check, render, patient_context
+    )
+    register_family(app, db, account, access, csrf_check, render, patient_context)
+    register_recordings(app, db, account, access, csrf_check, render, has_consent)
 
     @app.post("/patients/{pid}/diary")
     def diary(
@@ -324,7 +370,7 @@ def create_app(db_path=None):
                 "INSERT INTO diary(patient_id,day,wellbeing,sleep,adherence,note,contact) VALUES(?,?,?,?,?,?,?)",
                 (pid, day.isoformat(), wellbeing, sleep, adherence, note, int(contact)),
             )
-        return back(pid)
+        return RedirectResponse(f"/patients/{pid}/diary", status_code=303)
 
     @app.post("/patients/{pid}/screening")
     def screening(
@@ -345,29 +391,12 @@ def create_app(db_path=None):
         return back(pid)
 
     @app.post("/patients/{pid}/messages")
-    def message(
-        request: Request,
-        pid: int,
-        csrf: str = Form(...),
-        body: str = Form(..., min_length=1, max_length=3000),
-    ):
-        user = access(request, pid)
-        if user != "doctor" and not has_consent(pid):
-            raise HTTPException(403, "Нужно согласие на демонстрацию")
-        csrf_check(request, csrf)
-        if not body.strip():
-            raise HTTPException(422, "Введите сообщение")
-        with db() as c:
-            c.execute(
-                "INSERT INTO messages(patient_id,author,body,day) VALUES(?,?,?,?)",
-                (
-                    pid,
-                    "Врач" if user == "doctor" else "Пациент",
-                    body.strip(),
-                    date.today().isoformat(),
-                ),
-            )
-        return back(pid)
+    async def retired_messages(request: Request, pid: int):
+        access(request, pid)
+        raise HTTPException(
+            410,
+            "Переписка закрыта. Используйте заметки в дневнике или запись на консультацию.",
+        )
 
     @app.post("/patients/{pid}/relatives")
     def relative(
@@ -401,11 +430,20 @@ def create_app(db_path=None):
                 ):
                     raise HTTPException(422, "Родитель должен принадлежать этой семье")
                 parent = int(parent_id)
-            c.execute(
-                "INSERT INTO relatives(patient_id,name,relation,parent_id) VALUES(?,?,?,?)",
-                (pid, name.strip(), relation, parent),
+            slot = (
+                relation
+                if relation in ["mother", "father"]
+                and not c.execute(
+                    "SELECT id FROM relatives WHERE patient_id=? AND slot=?",
+                    (pid, relation),
+                ).fetchone()
+                else None
             )
-        return back(pid)
+            c.execute(
+                "INSERT INTO relatives(patient_id,name,relation,parent_id,slot) VALUES(?,?,?,?,?)",
+                (pid, name.strip(), relation, parent, slot),
+            )
+        return RedirectResponse(f"/patients/{pid}/profile/family", status_code=303)
 
     @app.post("/patients/{pid}/risks")
     def risk(
@@ -452,7 +490,7 @@ def create_app(db_path=None):
                 "INSERT INTO decisions(patient_id,day,category,body,source,confirmed) VALUES(?,?,?,?,?,1)",
                 (pid, date.today().isoformat(), category, body.strip(), source.strip()),
             )
-        return back(pid)
+        return RedirectResponse(f"/patients/{pid}/workspace/care", status_code=303)
 
     @app.get("/api/alerts")
     def alerts(request: Request):
@@ -488,16 +526,28 @@ def create_app(db_path=None):
                 "INSERT INTO acknowledgements VALUES(?,?) ON CONFLICT(patient_id) DO UPDATE SET risk_id=MAX(acknowledgements.risk_id,excluded.risk_id)",
                 (pid, last_id),
             )
-        return back(pid)
+        return RedirectResponse(f"/patients/{pid}/workspace/care", status_code=303)
 
     def doctor_reference_access(request):
         if identity(request) != "doctor":
-            raise HTTPException(403, "Справочник доступен демоврачу")
+            raise HTTPException(403, "Библиотека лекарств доступна специалисту")
+
+    @app.get("/medicines")
+    def medicine_library(request: Request):
+        doctor_reference_access(request)
+        return render(request, "medicines.html", medicines=MEDICINES)
+
+    @app.get("/medicines/{slug}")
+    def medicine_page(request: Request, slug: str):
+        doctor_reference_access(request)
+        if slug not in {m["slug"] for m in MEDICINES}:
+            raise HTTPException(404, "Лекарство не найдено")
+        return render(request, "aviandr.html")
 
     @app.get("/reference/aviandr")
     def aviandr_reference(request: Request):
         doctor_reference_access(request)
-        return render(request, "aviandr.html")
+        return RedirectResponse("/medicines/aviandr", status_code=303)
 
     @app.get("/reference/aviandr/source")
     def aviandr_source(request: Request):
@@ -507,10 +557,6 @@ def create_app(db_path=None):
             media_type="application/pdf",
             filename="aviandr_patient_leaflet.pdf",
         )
-
-    @app.get("/sources")
-    def sources(request: Request):
-        return render(request, "sources.html")
 
     register_workflows(
         app, db, account, identity, access, csrf_check, render, has_consent

@@ -10,7 +10,6 @@
             </h1>
             <p class="muted">Только пациенты, закреплённые за вашей учётной записью.</p>
         </div>
-        <a class="button secondary" href="/clinical-tools">Клинические инструменты →</a>
     </div>
     <section class="card safety-card">
         <div class="section-heading">
@@ -22,9 +21,6 @@
         </div>
         <div id="workflow-alerts" data-csrf="{{ csrf }}" aria-live="polite">Проверяем события…</div>
         <div id="live-alerts" aria-live="polite">Проверяем сообщения о самочувствии…</div>
-        <p class="caption">
-            Показ события, подтверждение получения и документированное действие — разные статусы. Дежурная и резервная служба клиники не подключены.
-        </p>
     </section>
     <div class="section-heading">
         <div>
@@ -42,7 +38,12 @@
                 <p class="{{ 'warning' if p.alerts else 'quiet-panel' }}">
                     {{ p.alerts }} записей с пропуском назначения или запросом связи
                 </p>
-                <a class="button full" href="/patients/{{ p.id }}">Карточка пациента →</a>
+                {% if p.pending_consultations %}
+                    <p>
+                        <a class="badge new" href="/patients/{{ p.id }}/profile/video#booking">Заявки на консультацию: {{ p.pending_consultations }}</a>
+                    </p>
+                {% endif %}
+                <a class="button full" href="/patients/{{ p.id }}">Карточка пациента</a>
             </section>
         {% else %}
             <section class="card">

@@ -1,0 +1,45 @@
+<section class="card" id="booking">
+    <h2>Запись на консультацию</h2>
+    {% if user != 'doctor' and consent %}
+        <p>Выберите удобное время. Запись появится здесь после подтверждения специалистом.</p>
+        <form action="/patients/{{ patient.id }}/consultations" method="post">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <label>
+                Желаемая дата
+                <input name="preferred_day"
+                       type="date"
+                       min="{{ today }}"
+                       value="{{ today }}"
+                       required>
+            </label>
+            <label>
+                Удобное время
+                <input name="time_window"
+                       placeholder="Например, с 14:00 до 17:00"
+                       maxlength="100"
+                       required>
+            </label>
+            <label>
+                Часовой пояс
+                <input name="timezone_label" value="Москва (UTC+3)" maxlength="80" required>
+            </label>
+            <button>Записаться на консультацию</button>
+        </form>
+    {% endif %}
+    {% for booking in bookings %}
+        <article><strong>{{ booking.preferred_day }} · {{ booking.time_window }} · {{ booking.timezone_label }}</strong>
+            <p>
+                <span class="badge">{{ 'Ожидает подтверждения времени' if booking.status == 'requested' else 'Время подтверждено' }}</span>
+            </p>
+            {% if booking.status == 'confirmed' %}
+                <p>Подтверждённые дата и время указаны в карточке видеовстречи ниже.</p>
+            {% endif %}
+            {% if user == 'doctor' and booking.status == 'requested' %}
+                <p>Подтвердите заявку, назначив видеоприём ниже.</p>
+            {% endif %}
+        </article>
+    {% else %}
+        <p class="empty">Заявок на консультацию пока нет.</p>
+    {% endfor %}
+    {% if not consent and user != 'doctor' %}<a href="/consent">Посмотреть условия участия</a>{% endif %}
+</section>

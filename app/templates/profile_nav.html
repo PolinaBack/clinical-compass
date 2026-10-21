@@ -1,0 +1,6 @@
+<nav class="tab-nav profile-nav" aria-label="Разделы личного профиля">
+    {% for key,label in [('about','Обо мне'),('assessments','Анкеты'),('family','Семейная история'),('video','Консультации и видеосвязь')] %}
+        <a href="/patients/{{ patient.id }}/profile/{{ key }}"
+           {% if section == key %}aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
+</nav>

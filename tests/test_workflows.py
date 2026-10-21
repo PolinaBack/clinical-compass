@@ -72,7 +72,7 @@ def test_case_patient_specialist_patient_and_safety_lifecycle(client):
         "session_id"
     ]
     login(client, "doctor")
-    card = client.get("/patients/1").text
+    card = client.get("/patients/1/workspace/assessments").text
     assert "Предложение по PHQ-2" in card and "Предложение по GAD-2" in card
     q9 = assign(client, sid, "phq9")
     g7 = assign(client, sid, "gad7")
@@ -108,8 +108,8 @@ def test_case_patient_specialist_patient_and_safety_lifecycle(client):
     assert save(client, g7, [0] * 7).status_code == 200
     assert len(rows(client, "SELECT * FROM assessment_events")) == 1
     assert (
-        "Исследовательское" in client.get("/patients/1/results").text
-        or "исследовательское" in client.get("/patients/1/results").text
+        "PHQ-ADS" in client.get("/patients/1/results").text
+        or "PHQ-ADS" in client.get("/patients/1/results").text
     )
     login(client, "doctor")
     eid = event["id"]
@@ -127,7 +127,8 @@ def test_case_patient_specialist_patient_and_safety_lifecycle(client):
         assert response.status_code == 200
     event = rows(client, "SELECT * FROM assessment_events")[0]
     assert event["delivered_at"] and event["acknowledged_at"] and event["action_at"]
-    assert "assessment_assigned" in client.get("/patients/1/audit").text
+    assert client.get("/patients/1/audit").status_code == 404
+    assert rows(client, "SELECT * FROM audit WHERE action='assessment_assigned'")
 
 
 def test_login_cannot_select_or_switch_privilege(client):
@@ -259,7 +260,7 @@ def test_assignment_and_raw_answers_role_boundary(client):
     login(client, "patient2")
     assert client.get(f"/assessments/{aid}").status_code == 403
     assert client.get("/patients/1/results").status_code == 403
-    assert client.get("/patients/1/audit").status_code == 403
+    assert client.get("/patients/1/audit").status_code == 404
 
 
 def test_local_audio_keeps_original_separate_and_enforces_access(client):
@@ -398,7 +399,7 @@ def test_public_materials_available_without_consent_or_account(client):
         response = client.get("/project-sources/" + slug)
         assert response.status_code == 200 and response.content.startswith(b"%PDF")
     assert client.get("/project-sources/unknown").status_code == 404
-    for url in ["/faq", "/privacy", "/help-now", "/sources"]:
+    for url in ["/faq", "/privacy", "/help-now"]:
         assert client.get(url).status_code == 200
 
 

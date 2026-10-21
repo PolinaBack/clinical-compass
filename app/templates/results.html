@@ -1,42 +1,20 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="page-intro">
-        <a href="/patients/{{ pid }}">← {{ 'Карточка пациента' if user == 'doctor' else 'Мой кабинет' }}</a>
-        <p class="eyebrow">СРАВНИВАТЬ СОПОСТАВИМОЕ</p>
-        <h1>Динамика по отдельным шкалам</h1>
-        <p class="lead">
-            Каждая точка — завершённая анкета. Выше — больше выраженность симптомов по опроснику, а не диагноз. Неполные формы не становятся точками 0.
-        </p>
+    <div class="section-page-heading">
+        <h1>Динамика опросников</h1>
+        {% if user == 'doctor' %}<a href="/patients/{{ pid }}">Карточка пациента</a>{% endif %}
     </div>
+    {% if user == 'doctor' %}
+        {% include 'specialist_nav.html' %}
+    {% endif %}
     <div class="grid two">
         {% for graph in graphs %}
-            <section class="card">
-                <h2>{{ graph.name }}</h2>
-                <p class="caption">
-                    Диапазон 0–{{ graph.max }} · расстояние между точками соответствует порядку сессий, не календарной длительности.
-                </p>
-                {% if graph.points %}
-                    <svg class="symptom-chart"
-                         viewBox="0 0 600 210"
-                         role="img"
-                         aria-label="Динамика {{ graph.name }}">
-                        <path d="M35 25V170H575" stroke="#d4d3e1" fill="none" />
-                        <text x="0" y="35">{{ graph.max }}</text><text x="15" y="172">0</text>
-                        {% for segment in graph.segments %}
-                            <polyline points="{{ segment }}" fill="none" stroke="{{ '#8173bc' if graph.scale == 'phq9' else '#4d978b' }}" stroke-width="3" />
-                        {% endfor %}
-                        {% for p in graph.points %}
-                            <a href="/assessments/{{ p.assessment.id }}"><circle cx="{{ p.x }}" cy="{{ p.y }}" r="6" fill="{{ '#8173bc' if graph.scale == 'phq9' else '#4d978b' }}" /><title>{{ p.assessment.period_end }}: {{ p.total }}; открыть исходные ответы</title><text x="{{ p.x }}" y="{{ p.y - 12 }}" text-anchor="middle">{{ p.total }}</text></a>
-                        {% endfor %}
-                    </svg>
-                {% else %}
-                    <div class="empty">Пока нет завершённых {{ graph.name }}. Форму назначает специалист.</div>
-                {% endif %}
-            </section>
+            {% include 'chart.html' %}
         {% endfor %}
     </div>
+    {% include 'reports_block.html' %}
     <section class="card">
-        <h2>Исходные результаты</h2>
+        <h2>Результаты пройденных опросников</h2>
         <div class="table-scroll">
             <table>
                 <thead>
@@ -57,33 +35,30 @@
                             <td>{{ a.period_label }}</td>
                             <td>{{ a.result.answered }}/{{ a.result.count }} · {{ a.status }}</td>
                             <td>
-                                {{ a.result.total if a.result.total is not none else 'Не сформирована' }}
+                                {{ 'Не применяется' if a.scale == 'safety6' else a.result.total if a.result.total is not none else 'Не сформирована' }}
                                 {% if a.category %}<small>{{ a.category }} · не диагноз</small>{% endif %}
                             </td>
                             <td>
-                                <a href="/assessments/{{ a.id }}">Открыть →</a>
+                                <a href="/assessments/{{ a.id }}">Открыть</a>
                             </td>
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="5">Анкет пока нет.</td>
+                            <td colspan="5">Пройденных опросников пока нет.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </section>
-    <section class="card">
-        <h2>PHQ-ADS · исследовательское дополнение</h2>
-        <p>
-            PHQ-9 + GAD-7, 0–48. Только две полные формы одной сессии, версии и периода. C-SSRS сюда не входит. Сумма не заменяет отдельные линии и оценку безопасности.
-        </p>
-        {% for s in summaries %}
-            <p>
-                Сессия №{{ s.sid }}: <strong>{{ s.total if s.total is not none else 'Не рассчитывается' }}</strong> · {{ s.reason }}
-            </p>
-        {% else %}
-            <p>Оценочных сессий пока нет.</p>
-        {% endfor %}
-    </section>
+    {% if summaries %}
+        <section class="card">
+            <h2>PHQ-ADS</h2>
+            {% for s in summaries %}
+                <p>
+                    Сессия №{{ s.sid }}: <strong>{{ s.total }}/48</strong> · PHQ-9 + GAD-7 одной сессии.
+                </p>
+            {% endfor %}
+        </section>
+    {% endif %}
 {% endblock %}

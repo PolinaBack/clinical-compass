@@ -23,16 +23,20 @@
                 <b>компас</b></span></a>
             <nav class="header-nav" aria-label="Основная навигация">
                 {% if user == 'doctor' %}
-                    <a href="/doctor">Мои пациенты</a><a href="/clinical-tools">Инструменты</a><a href="/reference/aviandr">Справочник</a>
+                    <a href="/doctor">Мои пациенты</a><a href="/clinical-tools">Библиотека анкет</a><a href="/medicines">Библиотека лекарств</a><a href="/doctor/faq">FAQ-форум</a>
                 {% elif user %}
-                    <a href="/me">Мой кабинет</a><a href="/patients/{{ session_pid }}/results">Моя динамика</a><a href="/faq">Вопросы и ответы</a>
+                    <a href="/patients/{{ session_pid }}/profile"
+                       {% if '/profile' in current_page %}aria-current="page"{% endif %}>Личный профиль</a><a href="/patients/{{ session_pid }}/diary"
+   {% if '/diary' in current_page %}aria-current="page"{% endif %}>Дневник</a><a href="/patients/{{ session_pid }}/results"
+   {% if '/results' in current_page %}aria-current="page"{% endif %}>Динамика опросников</a><a href="/me/start"
+   {% if current_page == '/me/start' %}aria-current="page"{% endif %}>С чего начать</a>
                 {% else %}
                     <a href="/#how">Как это работает</a><a href="/faq">Вопросы и ответы</a><a href="/#resources">Полезные материалы</a>
                 {% endif %}
             </nav>
             <div class="header-actions">
                 {% if user %}<a class="settings-link" href="/settings">Настройки</a>{% endif %}
-                <a class="help-link" href="/help-now">Мне нужна помощь сейчас →</a>
+                {% if user != 'doctor' %}<a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>{% endif %}
                 {% if user %}
                     <span class="role-badge">{{ 'Специалист' if user == 'doctor' else 'Пациент' }}</span>
                     <form action="/logout" method="post">
@@ -59,7 +63,7 @@
             Диагноз и лечение определяет специалист.
         </p>
         <div>
-            <a href="/privacy">Конфиденциальность</a><a href="/sources">Источники и ограничения</a><a href="/faq">FAQ</a>
+            <a href="/privacy">Конфиденциальность</a><a href="/faq">FAQ</a>
         </div>
         <small>Локальный учебный проект. Не вводите реальные медицинские данные.</small>
     </footer>

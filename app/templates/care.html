@@ -1,8 +1,6 @@
 <section class="card" id="care">
     <h2>Риски, нежелательные явления и решения врача</h2>
-    <p>
-        <a href="/sources">Источники и ограничения клинических функций</a>. Причинная связь с лечением автоматически не устанавливается.
-    </p>
+    <p>Причинная связь с лечением автоматически не устанавливается.</p>
     {% if user != 'doctor' %}
         <form action="/patients/{{ patient.id }}/risks" method="post">
             <input type="hidden" name="csrf" value="{{ csrf }}">

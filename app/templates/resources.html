@@ -1,3 +1,8 @@
+{% macro card_content(number,title,body) %}
+    <span class="resource-number">{{ number }}</span>
+    <h3>{{ title }}</h3>
+    <p>{{ body }}</p>
+{% endmacro %}
 <section id="resources" class="resources-section">
     <div class="section-heading">
         <div>
@@ -9,12 +14,12 @@
                     class="circle-button"
                     data-scroll="-1"
                     aria-label="Предыдущие полезные материалы"
-                    aria-controls="resource-track">←</button>
+                    aria-controls="resource-track">Назад</button>
             <button type="button"
                     class="circle-button"
                     data-scroll="1"
                     aria-label="Следующие полезные материалы"
-                    aria-controls="resource-track">→</button>
+                    aria-controls="resource-track">Далее</button>
         </div>
     </div>
     <div id="resource-track"
@@ -23,11 +28,14 @@
          role="region"
          aria-label="Полезные материалы, горизонтальная прокрутка">
         {% for number,title,body,url,color in resources %}
-        <a class="resource-card {{ color }}" href="{{ url }}"><span class="resource-number">{{ number }} <span aria-hidden="true">→</span></span>
-        <h3>{{ title }}</h3>
-        <p>{{ body }}</p>
-        <span class="resource-read">Читать материал →</span></a>
-{% endfor %}
-</div>
-<p class="muted caption">Листайте стрелками, свайпом или клавишами ← →. Материалы доступны без прохождения анкет.</p>
+            {% if url %}
+                <a class="resource-card {{ color }}" href="{{ url }}">
+                    {{ card_content(number,title,body) }}
+                    <span class="resource-read">Читать материал</span>
+                </a>
+            {% else %}
+                <article class="resource-card {{ color }}">{{ card_content(number,title,body) }}</article>
+            {% endif %}
+        {% endfor %}
+    </div>
 </section>

@@ -28,3 +28,112 @@ def test_additive_upgrade_preserves_existing_v1_diary_and_creates_no_default_pas
             )
             assert c.execute("SELECT COUNT(*) FROM accounts").fetchone()[0] == 0
             assert c.execute("PRAGMA foreign_key_check").fetchall() == []
+
+
+def test_upgrade_v2_preserves_accounts_assessments_and_adds_care_sections(tmp_path):
+    from app.storage import connect
+    from tests.helpers import login
+    from tests.test_workflows import start, save
+
+    path = tmp_path / "v2.db"
+    with TestClient(create_app(path)) as client:
+        login(client, "patient1")
+        aid = start(client)
+        assert save(client, aid, [1, 2, 1, 2]).status_code == 200
+    # Reconstruct the previously shipped database: new tables had not existed.
+    with connect(path) as c:
+        old_password_hash = c.execute(
+            "SELECT password_hash FROM accounts WHERE username='patient1'"
+        ).fetchone()[0]
+        for table in [
+            "patient_profiles",
+            "diary_comments",
+            "specialist_reports",
+            "specialist_questions",
+            "appointments",
+            "safety_reviews",
+        ]:
+            c.execute(f"DROP TABLE {table}")
+    for _ in range(2):
+        with TestClient(create_app(path)) as client:
+            login(client, "patient1")
+            assert client.get("/patients/1/profile").status_code == 200
+            assert client.get("/patients/1/contact").status_code == 200
+        with connect(path) as c:
+            assert (
+                c.execute(
+                    "SELECT password_hash FROM accounts WHERE username='patient1'"
+                ).fetchone()[0]
+                == old_password_hash
+            )
+            assert (
+                c.execute(
+                    "SELECT count(*) FROM answers WHERE assessment_id=?", (aid,)
+                ).fetchone()[0]
+                == 4
+            )
+            assert (
+                c.execute(
+                    "SELECT status FROM assessments WHERE id=?", (aid,)
+                ).fetchone()[0]
+                == "completed"
+            )
+            assert c.execute("PRAGMA foreign_key_check").fetchall() == []
+
+
+def test_v3_upgrade_keeps_private_history_and_adds_family_slots_without_duplicates(
+    tmp_path,
+):
+    from app.storage import connect
+    from tests.helpers import login, token
+
+    path = tmp_path / "v3.db"
+    with TestClient(create_app(path)) as client:
+        login(client, "patient1")
+    with connect(path) as c:
+        c.execute(
+            "INSERT INTO relatives(patient_id,name,relation) VALUES(1,'Учебная мама из прежней версии','mother')"
+        )
+        c.execute(
+            "INSERT INTO messages(patient_id,author,body,day) VALUES(1,'Пациент','Сохранённая старая запись','2026-10-01')"
+        )
+        c.execute(
+            "INSERT INTO specialist_questions(patient_id,persona,body,estimated_minutes,created_at) VALUES(1,'anna','Старый учебный вопрос',90,'2026-10-01')"
+        )
+        for table in [
+            "family_conditions",
+            "family_details",
+            "consultation_requests",
+            "diary_notes",
+            "forum_questions",
+        ]:
+            c.execute(f"DROP TABLE {table}")
+        c.execute("DROP INDEX relative_slot")
+        c.execute("ALTER TABLE relatives DROP COLUMN slot")
+    for _ in range(2):
+        with TestClient(create_app(path)) as client:
+            login(client, "patient1")
+            assert (
+                "Учебная мама из прежней версии"
+                in client.get("/patients/1/profile/family").text
+            )
+            assert (
+                client.post(
+                    "/patients/1/messages",
+                    data={"csrf": token(client), "body": "Новый вопрос"},
+                ).status_code
+                == 410
+            )
+        with connect(path) as c:
+            assert (
+                c.execute(
+                    "SELECT count(*) FROM relatives WHERE slot='mother'"
+                ).fetchone()[0]
+                == 1
+            )
+            assert c.execute("SELECT count(*) FROM messages").fetchone()[0] == 1
+            assert (
+                c.execute("SELECT count(*) FROM specialist_questions").fetchone()[0]
+                == 1
+            )
+            assert c.execute("PRAGMA foreign_key_check").fetchall() == []

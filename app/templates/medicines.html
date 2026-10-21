@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="section-page-heading">
+        <h1>Библиотека лекарств</h1>
+    </div>
+    <div class="grid two medicine-catalog">
+        {% for medicine in medicines %}
+            <a class="card profile-tile" href="/medicines/{{ medicine.slug }}">
+                <h2>{{ medicine.name }}</h2>
+                <p>{{ medicine.description }}</p>
+                <span>Информация о лекарстве</span></a>
+        {% else %}
+            <p>В библиотеке пока нет лекарств.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

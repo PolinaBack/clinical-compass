@@ -2,219 +2,83 @@
 {% block title %}{{ definition.name }} · Клинический компас{% endblock %}
 {% block content %}
     <div class="assessment-intro">
-        <a href="/patients/{{ assessment.patient_id }}#assessments">← {{ 'Карточка пациента' if user == 'doctor' else 'Мои анкеты' }}</a>
-        <p class="eyebrow">{{ 'ИСХОДНЫЙ САМООТЧЁТ · СПЕЦИАЛИСТ' if user == 'doctor' else 'В ВАШЕМ ТЕМПЕ' }}</p>
+        <a href="{{ '/patients/' ~ assessment.patient_id ~ ('/workspace/assessments' if user == 'doctor' else '/profile/assessments') }}">{{ 'Карточка пациента' if user == 'doctor' else 'Мои анкеты' }}</a>
+        <p class="eyebrow">{{ 'ИСХОДНЫЙ САМООТЧЁТ · СПЕЦИАЛИСТ' if user == 'doctor' else 'ВАШИ СОХРАНЁННЫЕ ОТВЕТЫ' }}</p>
         <h1>{{ definition.name }}</h1>
         <span class="badge">{{ {'draft':'Черновик','incomplete':'Не завершено','completed':'Отправлено'}[assessment.status] }}</span>
-        <p class="lead">
-            {% if assessment.scale == 'hcl33' %}
-                Попробуйте припомнить состояние «подъема». Как Вы себя тогда чувствовали? Ответьте вне зависимости от Вашего нынешнего состояния.
-            {% else %}
-                {{ instruction }}
-            {% endif %}
-        </p>
-        <p class="caption">
-            Версия: {{ assessment.version }} · {{ 'Период состояний подъёма: по инструкции каждого вопроса' if assessment.scale == 'hcl33' else 'Период: ' ~ assessment.period_start ~ ' — ' ~ assessment.period_end }} · {{ result.answered }}/{{ result.count }} стандартных ответов
-        </p>
-        <div class="notice">
-            Исследовательская цифровая копия предоставленного текста. {{ definition.validation }} Диагноз и план помощи определяет специалист. <a href="/sources">Источники и ограничения</a>.
-        </div>
+        <p class="caption">Версия {{ assessment.version }} · {{ result.answered }}/{{ result.count }} ответов</p>
+        {% if assessment.scale == 'safety6' %}
+            <p class="notice">
+                Учебная адаптация по предоставленной статье. Это не официальная самостоятельная форма C-SSRS. Баллы и категории риска не рассчитываются.
+            </p>
+            <p>
+                Вопросы 1–5: {{ assessment.period_start }} — {{ assessment.period_end }}; вопрос о поведении — за жизнь, уточнение — за последние 3 месяца.
+            </p>
+        {% elif assessment.scale == 'hcl33' %}
+            <p>Периоды состояний подъёма — по инструкции вопросов.</p>
+        {% else %}
+            <p class="lead">{{ instruction }}</p>
+            <p class="caption">Период: {{ assessment.period_start }} — {{ assessment.period_end }}</p>
+        {% endif %}
     </div>
     {% if request.query_params.get('saved') %}
         <div class="success" role="status">
-            Сохранено на сервере. {{ 'Черновик можно продолжить.' if assessment.status == 'draft' else 'Ответы доступны назначенному специалисту.' }} Это не означает, что специалист уже прочитал их.
-        </div>
-    {% endif %}
-    {% if assessment.scale == 'phq9' %}
-        <div class="safety-hint">
-            Ответ на пункт 9 рассматривается отдельно от суммы. Если нужна помощь сейчас, <a href="/help-now">не ждите завершения анкеты</a>.
+            Сохранено на сервере. Ответы доступны назначенному специалисту. Это не означает, что он уже прочитал их.
         </div>
     {% endif %}
     {% if user != 'doctor' and consent %}
-        <form action="/assessments/{{ assessment.id }}/save"
-              method="post"
-              class="questionnaire"
-              id="assessment-form">
-            <input type="hidden" name="csrf" value="{{ csrf }}">
-            <input type="hidden" name="revision" value="{{ assessment.revision }}">
-            <input type="hidden" name="request_id" value="{{ request_id }}">
-            {% if assessment.scale != 'hcl33' and assessment.period_end < today %}
-                <div class="warning">
+        <p>
+            <a class="button secondary" href="/assessments/{{ assessment.id }}">Вернуться к ответам и дополнить</a>
+        </p>
+    {% endif %}
+    {% if assessment.scale == 'safety6' and result.positive_items %}
+        <div class="notice">
+            <p>
+                Спасибо, что рассказали. Эти ответы можно обсудить со специалистом. При необходимости помощи сейчас не ждите ответа в приложении.
+            </p>
+            {% if user != 'doctor' %}<a href="/help-now">Мне нужна помощь сейчас</a>{% endif %}
+        </div>
+    {% endif %}
+    {% include 'video_offer.html' %}
+    {% include 'video_list.html' %}
+    <section class="card">
+        <h2>Исходные ответы</h2>
+        <p>
+            {% if assessment.scale == 'safety6' %}
+                {{ 'Предусмотренные вопросы заполнены' if result.complete and assessment.status == 'completed' else 'Беседа не завершена' }}. Это не заключение об отсутствии риска.
+            {% elif assessment.status == 'draft' %}
+                Черновик: стандартный итог не сформирован
+            {% elif result.total is none %}
+                Оценка не завершена: стандартный итог не сформирован
+            {% else %}
+                Сумма симптомных ответов: {{ result.total }}/{{ definition.max }}
+            {% endif %}
+        </p>
+        {% for question in definition['items'] %}
+            {% set key = loop.index|string %}{% set answer = answers.get(key,{}) %}
+            {% if user == 'doctor' or answer.get('state') != 'not_asked_by_rule' %}
+                <article id="item-{{ key }}"><strong>{{ '6а' if assessment.scale == 'safety6' and key == '7' else key }}. {{ question }}</strong>
                     <p>
-                        Вы возобновляете анкету с прежним периодом. Новые переживания нельзя молча записать в старый интервал. Для новых данных попросите специалиста назначить отдельную сессию.
+                        {% if answer.get('state') == 'answered' %}
+                            Ответ: {{ (['Нет','Да'][answer.value] if assessment.scale in ['hcl33','safety6'] else options[answer.value][1]) }}
+                        {% else %}
+                            {{ {'unanswered':'Не отвечено','deferred':'Отложено','declined':'Не готов(а) отвечать','not_asked_by_rule':'Не задано по правилу'}.get(answer.get('state'),'Не отвечено') }} · значение отсутствует
+                        {% endif %}
                     </p>
-                    <label class="check">
-                        <input type="checkbox" name="period_ack" value="true" required>
-                        Подтверждаю: ответы относятся к указанному периоду.
-                    </label>
-                </div>
-            {% endif %}
-            {% if assessment.scale == 'hcl33' %}
-                <section class="card">
-                    <h2>Перед вопросами о состоянии подъёма</h2>
-                    {% with context_rows=hcl_context[:2] %}
-                        {% include 'hcl_context.html' %}
-                    {% endwith %}
-                </section>
-            {% endif %}
-            {% for question in definition['items'] %}
-                {% set key = loop.index|string %}{% set answer = answers.get(key,{}) %}
-                <fieldset class="question-card" id="item-{{ key }}">
-                    <legend>
-                        <span class="question-number">{{ loop.index }}</span>{{ question }}
-                    </legend>
-                    <div class="answer-options"
-                         {% if assessment.scale == 'phq9' and loop.index == 9 %}data-safety-answer{% endif %}>
-                        {% for value,label in ([(0,'Нет'),(1,'Да')] if assessment.scale == 'hcl33' else options) %}
-                            <label class="answer-option">
-                                <input type="radio"
-                                       name="answer_{{ key }}"
-                                       value="{{ value }}"
-                                       {% if answer.get('state') == 'answered' and answer.get('value') == value %}checked{% endif %}>
-                                <span>{{ label }}</span>
-                            </label>
-                        {% endfor %}
-                    </div>
-                    <details class="question-extra">
-                        <summary>Комментарий, пропуск или тема для беседы</summary>
-                        <div class="skip-options">
-                            {% for state,label in [('unanswered','Пока без ответа'),('deferred','Отложить'),('declined','Не готов(а) отвечать')] %}
-                                <label>
-                                    <input type="radio"
-                                           name="answer_{{ key }}"
-                                           value="{{ state }}"
-                                           {% if answer.get('state','unanswered') == state %}checked{% endif %}>
-                                    {{ label }}
-                                </label>
-                            {% endfor %}
-                        </div>
-                        <label>
-                            Комментарий к вопросу {{ key }}<textarea name="comment_{{ key }}" maxlength="3000">{{ answer.get('comment','') }}</textarea>
-                        </label>
-                        <label class="check">
-                            <input type="checkbox"
-                                   name="discuss_{{ key }}"
-                                   value="true"
-                                   {% if answer.get('discuss') %}checked{% endif %}>
-                            ! Хочу обсудить этот ответ со специалистом
-                        </label>
-                        <p class="caption">Комментарий и отметка не меняют балл. «! Обсудить» не является экстренным сигналом.</p>
-                    </details>
-                </fieldset>
-            {% endfor %}
-            {% if assessment.scale == 'hcl33' %}
-                <section class="card">
-                    <h2>Контекст состояний подъёма</h2>
-                    <p>Эти вопросы сохраняются отдельно и не прибавляются к сумме 33 симптомных пунктов.</p>
-                    {% with context_rows=hcl_context[2:] %}
-                        {% include 'hcl_context.html' %}
-                    {% endwith %}
-                </section>
-            {% endif %}
-            <div class="save-bar">
-                <p id="save-state" role="status">
-                    Изменения отправляются только при сохранении. Локальный ввод не уведомляет специалиста.
-                </p>
-                <div>
-                    <button name="intent" value="draft" class="secondary">Сохранить и сделать паузу</button>
-                    <button name="intent" value="submit">Завершить и отправить →</button>
-                </div>
-                <a href="/help-now">Мне нужна помощь сейчас</a>
-            </div>
-        </form>
-        <section class="card" id="audio">
-            <h2>Голосовое пояснение · до 60 секунд</h2>
-            <p>
-                Необязательно. Запись хранится в локальной базе, не отправляется внешнему ИИ и не меняет ответы. Можно прослушать её перед отправкой. После записи проверьте поле «Расшифровка» самостоятельно — автоматического распознавания этого аудио нет.
-            </p>
-            <form action="/assessments/{{ assessment.id }}/audio"
-                  method="post"
-                  enctype="multipart/form-data"
-                  id="audio-form">
-                <input name="csrf" type="hidden" value="{{ csrf }}">
-                <label>
-                    К какому вопросу
-                    <select name="item">
-                        {% for q in definition['items'] %}<option value="{{ loop.index }}">{{ loop.index }}. {{ q }}</option>{% endfor %}
-                    </select>
-                </label>
-                <label class="check">
-                    <input name="consent"
-                           type="checkbox"
-                           value="true"
-                           id="audio-consent"
-                           required>
-                    Согласен(на) сохранить синтетическую аудиозапись в локальной базе и предоставить доступ назначенному специалисту.
-                </label>
-                <div class="audio-controls">
-                    <button type="button" id="record-start" class="secondary">Начать запись</button>
-                    <button type="button" id="record-stop" class="secondary" disabled>Остановить</button>
-                </div>
-                <audio id="audio-preview" controls hidden></audio>
-                <label>
-                    Аудиофайл WebM, Ogg или MP4
-                    <input type="file"
-                           name="recording"
-                           accept="audio/webm,audio/ogg,audio/mp4"
-                           id="recording-file"
-                           required>
-                </label>
-                <label>
-                    Длительность, секунды
-                    <input name="duration"
-                           id="recording-duration"
-                           type="number"
-                           min="0.1"
-                           max="60"
-                           step="0.1"
-                           required>
-                </label>
-                <label>
-                    Расшифровка / проверенный текст, если есть<textarea name="transcript" maxlength="3000"></textarea>
-                </label>
-                <label class="check">
-                    <input name="transcript_reviewed" type="checkbox" value="true">
-                    Я проверил(а) введённый текст; он хранится отдельно от исходной записи.
-                </label>
-                <p id="audio-status" role="status"></p>
-                <button>Сохранить голосовое пояснение</button>
-            </form>
-        </section>
-    {% else %}
-        <section class="card">
-            <h2>Исходные ответы</h2>
-            <p>
-                {{ result.answered }}/{{ result.count }} ·
-                {% if assessment.status == 'draft' %}
-                    Черновик: стандартный итог не сформирован
-                {% elif result.total is none %}
-                    Оценка не завершена: стандартный итог не сформирован
-                {% else %}
-                    Сумма симптомных ответов: {{ result.total }}/{{ definition.max }}
-                {% endif %}
-            </p>
-            {% for question in definition['items'] %}
-                {% set key = loop.index|string %}{% set answer = answers.get(key,{}) %}<article id="item-{{ key }}"><strong>{{ key }}. {{ question }}</strong>
-                <p>
-                    {% if answer.get('state') == 'answered' %}
-                        Ответ: {{ answer.value }} · {{ (['Нет','Да'][answer.value] if assessment.scale == 'hcl33' else options[answer.value][1]) }}
-                    {% else %}
-                        {{ {'unanswered':'Не отвечено','deferred':'Отложено','declined':'Не готов(а) отвечать','not_asked_by_rule':'Не задано по правилу'}.get(answer.get('state'),'Не отвечено') }} · значение отсутствует
+                    {% if answer.get('comment') %}<p class="text">Комментарий: {{ answer.comment }}</p>{% endif %}
+                    {% if answer.get('discuss') %}
+                        <span class="badge discuss">{{ 'Обсуждено' if answer.get("discussed") else '! Обсудить' }}</span>
+                        {% if user == 'doctor' and not answer.get('discussed') %}
+                            <form action="/assessments/{{ assessment.id }}/review" method="post">
+                                <input type="hidden" name="csrf" value="{{ csrf }}">
+                                <input type="hidden" name="intent" value="discussed">
+                                <input type="hidden" name="item" value="{{ key }}">
+                                <button class="secondary small">Отметить тему обсуждённой</button>
+                            </form>
+                        {% endif %}
                     {% endif %}
-                </p>
-                {% if answer.get('comment') %}<p class="text">Комментарий: {{ answer.comment }}</p>{% endif %}
-                {% if answer.get('discuss') %}
-                    <span class="badge discuss">{{ '✓ Обсуждено' if answer.get("discussed") else '! Обсудить' }}</span>
-                    {% if user == 'doctor' and not answer.get('discussed') %}
-                        <form action="/assessments/{{ assessment.id }}/review" method="post">
-                            <input type="hidden" name="csrf" value="{{ csrf }}">
-                            <input type="hidden" name="intent" value="discussed">
-                            <input type="hidden" name="item" value="{{ key }}">
-                            <button class="secondary small">Отметить тему обсуждённой</button>
-                        </form>
-                    {% endif %}
-                {% endif %}
-            </article>
+                </article>
+            {% endif %}
         {% endfor %}
         {% if assessment.scale == 'hcl33' %}
             <h3>Контекст отдельно от суммы</h3>
@@ -225,7 +89,7 @@
                     {% if answer.get('state') == 'answered' %}
                         {{ choices[answer.value] if choices else answer.value }}
                     {% else %}
-                        {{ answer.get('state', 'unanswered') }}
+                        {{ {'unanswered':'Не отвечено','deferred':'Отложено','declined':'Не готов(а) отвечать','not_asked_by_rule':'Не задано по правилу'}.get(answer.get('state'),'Не отвечено') }}
                     {% endif %}
                 </p>
             {% endfor %}
@@ -239,30 +103,44 @@
             <p class="caption">Прочтение снимает «Новое», но не закрывает «! Обсудить».</p>
         {% endif %}
     </section>
-{% endif %}
-{% if audio %}
-    <section class="card">
-        <h2>Сохранённые голосовые пояснения</h2>
-        {% for note in audio %}
-        <article><strong>Вопрос {{ note.item }} · {{ note.duration }} с</strong><audio controls preload="none" src="/audio/{{ note.id }}"></audio>
-        <p>{{ note.transcript if note.transcript else 'Без расшифровки: исходная запись доступна.' }}</p>
-        <p class="caption">
-            Статус текста: {{ 'проверен пациентом' if note.transcript_status == 'reviewed_patient' else 'не распознан' }}. Баллы не меняются.
-        </p>
-        {% if user != 'doctor' and consent %}
-            <form action="/audio/{{ note.id }}/delete" method="post">
-                <input name="csrf" type="hidden" value="{{ csrf }}">
-                <button class="secondary">Удалить эту запись из активной карточки</button>
-            </form>
-        {% endif %}
-    </article>
-{% endfor %}
+    {% if assessment.scale == 'safety6' and user != 'doctor' and consent %}
+        <section class="card">
+            <h2>Далее — короткая PHQ-4</h2>
+            <p>Вопросы о настроении и тревоге за две недели. Они не заменяют беседу о безопасности.</p>
+            {% if follow_up %}
+                <a class="button" href="/assessments/{{ follow_up.id }}">Перейти к PHQ-4</a>
+            {% else %}
+                <form action="/assessments/start" method="post">
+                    <input type="hidden" name="csrf" value="{{ csrf }}">
+                    <button>Продолжить с PHQ-4</button>
+                </form>
+            {% endif %}
+            <a href="/patients/{{ assessment.patient_id }}/profile/video">Записаться на консультацию</a>
+        </section>
+    {% endif %}
+    {% if audio %}
+        <section class="card">
+            <h2>Сохранённые голосовые пояснения</h2>
+            {% for note in audio %}
+            <article><strong>Вопрос {{ note.item }} · {{ note.duration }} с</strong><audio controls preload="none" src="/audio/{{ note.id }}"></audio>
+            <p class="text">{{ note.transcript or 'Без расшифровки: исходная запись доступна.' }}</p>
+            <p class="caption">
+                {{ 'Текст проверен пациентом' if note.transcript_status == 'reviewed_patient' else 'Без автоматического распознавания' }}
+            </p>
+            {% if user != 'doctor' and consent %}
+                <form action="/audio/{{ note.id }}/delete" method="post">
+                    <input name="csrf" type="hidden" value="{{ csrf }}">
+                    <button class="secondary">Удалить эту запись из активной карточки</button>
+                </form>
+            {% endif %}
+        </article>
+    {% endfor %}
 </section>
 {% endif %}
-<p class="caption">
-    Источник формы: {{ definition.source }}. При изменении ответа прежняя версия остаётся в истории; специалист не редактирует исходный самоотчёт.
-</p>
-<p>
-    <a href="/assessments/{{ assessment.id }}/history">История изменений ответов →</a>
-</p>
+<details class="provenance">
+    <summary>О форме и истории ответов</summary>
+    <p>{{ definition.source }}</p>
+    <p>{{ definition.validation }}</p>
+    <a href="/assessments/{{ assessment.id }}/history">История изменений ответов</a>
+</details>
 {% endblock %}

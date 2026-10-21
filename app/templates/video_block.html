@@ -1,0 +1,83 @@
+<section class="card" id="video">
+    <p class="eyebrow">ЛИЧНАЯ ВСТРЕЧА</p>
+    <h2>Видеоприём</h2>
+    {% for visit in appointments %}
+        <article>
+            <div class="section-heading">
+                <h3>{{ visit.starts_at|replace('T', ' · ') }} · {{ visit.timezone_label }}</h3>
+                <span class="badge">{{ {'planned':'Запланирован','ready':'Подготовка подтверждена','completed':'Завершён','cancelled':'Отменён'}[visit.status] }}</span>
+            </div>
+            {% if visit.status in ['planned','ready'] %}
+                <p>
+                    Вы перейдёте в сервис видеосвязи, который выбрал специалист. Камера и микрофон в «Компасе» не включаются, запись звонка не ведётся.
+                </p>
+                <a class="button"
+                   href="{{ visit.url }}"
+                   target="_blank"
+                   rel="noopener noreferrer">Открыть видеоприём</a>
+            {% endif %}
+            <p class="text">
+                <strong>Если связь прервётся:</strong> {{ visit.fallback }}
+            </p>
+            {% if user == 'doctor' and visit.status in ['planned','ready'] %}
+                <details class="inset">
+                    <summary>Подготовка и завершение приёма</summary>
+                    <form action="/patients/{{ patient.id }}/appointments/{{ visit.id }}/status"
+                          method="post">
+                        <input type="hidden" name="csrf" value="{{ csrf }}">
+                        {% for key,label in [('identity_checked','Личность пациента подтверждена'),('location_checked','Текущее местонахождение уточнено'),('privacy_checked','Условия приватности и подходящий формат обсуждены'),('fallback_checked','План при обрыве связи согласован')] %}
+                            <label class="check">
+                                <input type="checkbox" name="{{ key }}" value="true">
+                                {{ label }}
+                            </label>
+                        {% endfor %}
+                        <div class="button-row">
+                            <button name="intent" value="ready">Подтвердить подготовку</button>
+                            <button name="intent" value="completed" class="secondary">Завершить приём</button>
+                            <button name="intent" value="cancelled" class="secondary">Отменить приём</button>
+                        </div>
+                    </form>
+                </details>
+            {% endif %}
+        </article>
+    {% else %}
+        <p class="empty">Видеовстреча пока не назначена. Выберите удобное время в форме записи на консультацию.</p>
+    {% endfor %}
+    {% if user == 'doctor' %}
+        <details class="inset">
+            <summary>Назначить видеоприём</summary>
+            <form action="/patients/{{ patient.id }}/appointments" method="post">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <label>
+                    Заявка пациента
+                    <select name="booking_id">
+                        <option value="">Без заявки</option>
+                        {% for booking in bookings if booking.status == 'requested' %}
+                            <option value="{{ booking.id }}">{{ booking.preferred_day }} · {{ booking.time_window }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>
+                    Дата и время
+                    <input type="datetime-local" name="starts_at" required>
+                </label>
+                <label>
+                    Часовой пояс
+                    <input name="timezone_label" value="Москва (UTC+3)" maxlength="80" required>
+                </label>
+                <label>
+                    HTTPS-ссылка согласованного сервиса
+                    <input name="url"
+                           type="url"
+                           placeholder="https://…"
+                           maxlength="2000"
+                           required>
+                </label>
+                <label>
+                    Как связаться при обрыве<textarea name="fallback" maxlength="1000" required></textarea>
+                </label>
+                <button>Сохранить видеоприём</button>
+            </form>
+        </details>
+    {% endif %}
+</section>

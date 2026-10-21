@@ -1,0 +1,32 @@
+<section class="card" id="conversation">
+    <p class="eyebrow">ПОДГОТОВКА К БЕСЕДЕ</p>
+    <h2>Помочь подобрать слова</h2>
+    <p>
+        Варианты начала разговора с опорой на исходные ответы. Выбирайте и адаптируйте их в беседе; сообщения автоматически не отправляются.
+    </p>
+    {% for topic in conversation_topics %}
+    <article><a href="/assessments/{{ topic.assessment_id }}#item-{{ topic.item }}">{{ topic.scale }} · вопрос {{ topic.item }}</a>
+    <p class="text">{{ topic.question }}</p>
+    <p>Исходный ответ: {{ topic.answer_label }}</p>
+    {% if topic.comment %}
+        <blockquote class="text">
+            {{ topic.comment }}
+        </blockquote>
+    {% endif %}
+    <p class="clinician-comment">«{{ topic.prompt }}»</p>
+</article>
+{% else %}
+<p class="clinician-comment">
+    «Есть ли что-то, о чём было трудно ответить в анкете и что вам хотелось бы обсудить лично?»
+</p>
+{% endfor %}
+<details>
+    <summary>Короткая памятка специалисту</summary>
+    <p>
+        Спокойно объясните цель вопросов и пределы конфиденциальности. При сведениях о суицидальных мыслях уточните актуальность переживаний, намерение, поведение, поддержку и возможность получить помощь. Исходный ответ и свой вывод сохраняйте отдельно. Не обещайте заранее отсутствие госпитализации.
+    </p>
+    <p class="caption">
+        Шаблоны коммуникации по SpecificationV2, стр.7 и16. Памятка не заменяет подготовку специалиста или клинический протокол.
+    </p>
+</details>
+</section>

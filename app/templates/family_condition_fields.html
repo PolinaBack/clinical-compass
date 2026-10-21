@@ -1,0 +1,33 @@
+<div class="family-age-fields">
+    <label>
+        Какой возраст помните?
+        <select name="age_kind" {% if not can_edit %}disabled{% endif %}>
+            {% for label in age_kinds %}
+                <option {% if condition.get('age_kind') == label %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>
+        Примерно сколько лет?
+        <input name="age_text"
+               maxlength="80"
+               value="{{ condition.get('age_text', '') }}"
+               {% if not can_edit %}readonly{% endif %}>
+    </label>
+</div>
+<label>
+    Откуда Вам это известно?
+    <select name="source" {% if not can_edit %}disabled{% endif %}>
+        {% for label in info_sources %}
+            <option {% if condition.get('source') == label %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</label>
+<label class="check">
+    <input name="uncertain"
+           type="checkbox"
+           value="true"
+           {% if condition.get('uncertain') %}checked{% endif %}
+           {% if not can_edit %}disabled{% endif %}>
+    Могу ошибаться, нужно уточнить
+</label>

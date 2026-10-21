@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="section-page-heading">
+        <h1>Сводка семейной истории</h1>
+        <a href="/patients/{{ patient.id }}/profile/family">К дереву</a>
+    </div>
+    {% if user == 'doctor' %}
+        {% include 'specialist_nav.html' %}
+    {% endif %}
+    {% include 'profile_nav.html' %}
+    {% include 'family_progress.html' %}
+    <section class="family-member family-summary">
+        {% for relative in relatives if relative.relation != 'self' %}
+            <article>
+                <h2>{{ relative.name }}</h2>
+                <a href="/patients/{{ patient.id }}/profile/family/member/{{ relative.slot or 'custom-' ~ relative.id }}?tab=knowledge">Открыть сведения</a>
+                <p>{{ kinds.get(relative.get('answer_kind','unknown') ,'Не знаю') }}</p>
+                {% if relative.get('about') %}<p class="text">{{ relative.about }}</p>{% endif %}
+                {% if relative.get('description') %}<p class="text">{{ relative.description }}</p>{% endif %}
+                {% for condition in conditions if condition.relative_id == relative.id %}
+                    <div class="family-condition">
+                        <h3>{{ condition.label }}</h3>
+                        {% if condition.description %}<p class="text">{{ condition.description }}</p>{% endif %}
+                        <p>{{ condition.age_kind }} · {{ condition.age_text or 'Не указан' }}</p>
+                        <p>
+                            {{ condition.source }}
+                            {% if condition.uncertain %}· Могу ошибаться, нужно уточнить{% endif %}
+                        </p>
+                    </div>
+                {% endfor %}
+                {% if relative.get('explanation') %}<p class="text">{{ relative.explanation }}</p>{% endif %}
+                {% if relative.get('discuss') %}<span class="badge discuss">Обсудить на консультации</span>{% endif %}
+            </article>
+        {% else %}
+            <p>Сведения о близких пока не добавлены.</p>
+        {% endfor %}
+    </section>
+{% endblock %}

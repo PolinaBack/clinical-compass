@@ -1,0 +1,30 @@
+{% if assessment.scale in ['hcl33','hads'] and user != 'doctor' and consent %}
+    <section class="card video-offer" aria-label="Добровольная видеозапись">
+        <h2>Записать себя на видео во время анкеты?</h2>
+        <p>
+            Это необязательно и не влияет на ответы и баллы. Камера включается только в отдельном окне после Вашего согласия и нажатия «Начать запись».
+        </p>
+        {% if video_choice == 'declined' %}
+            <p class="caption">Вы выбрали прохождение без видеозаписи. Решение можно изменить.</p>
+        {% endif %}
+        <div class="button-row">
+            <a class="button secondary"
+               href="/assessments/{{ assessment.id }}/video"
+               target="_blank"
+               rel="noopener">Открыть окно записи</a>
+            {% if video_choice != 'declined' %}
+                <form data-video-choice
+                      action="/assessments/{{ assessment.id }}/video/choice"
+                      method="post">
+                    <input name="csrf" type="hidden" value="{{ csrf }}">
+                    <input name="intent" type="hidden" value="decline">
+                    <input name="return_item" type="hidden" value="{{ step|default(1) }}">
+                    <button class="text-button">
+                        {{ 'Отозвать согласие на видео' if video_choice == 'accepted' else 'Продолжить без видео' }}
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </section>
+    <script src="/static/video_choice.js" defer></script>
+{% endif %}

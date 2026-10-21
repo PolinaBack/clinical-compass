@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block content %}
+    {% set can_edit = user != 'doctor' and consent %}
+    <div class="section-page-heading">
+        <h1>Семейная история</h1>
+        <a href="/patients/{{ patient.id }}/profile/family">К дереву</a>
+    </div>
+    {% if user == 'doctor' %}
+        {% include 'specialist_nav.html' %}
+    {% endif %}
+    {% include 'profile_nav.html' %}
+    {% include 'family_progress.html' %}
+    <section class="family-member">
+        <div class="family-member-heading">
+            <p class="eyebrow">02 / ВЫБРАННЫЙ ЛИСТ</p>
+            <h2>{{ member_label }}</h2>
+            <p>{{ member_relation }} · {{ member_status }}</p>
+            <span class="member-leaf-icon" aria-hidden="true"></span>
+        </div>
+        <nav class="family-member-tabs" aria-label="Сведения о близком">
+            {% for key,label in [('about','О близком'),('knowledge','Что известно'),('explanations','Пояснения')] %}
+                <a href="?tab={{ key }}"
+                   aria-label="{{ label }}"
+                   {% if tab == key %}aria-current="page"{% endif %}><small>0{{ loop.index }}</small> {{ label }}</a>
+            {% endfor %}
+        </nav>
+        <div class="family-member-body">
+            <form action="/patients/{{ patient.id }}/family/{{ member_key }}"
+                  method="post">
+                <input name="csrf" type="hidden" value="{{ csrf }}">
+                <input name="tab" type="hidden" value="{{ tab }}">
+                {% if tab == 'about' %}
+                    <h3>О близком</h3>
+                    <label>
+                        Имя или родство
+                        <input name="name"
+                               maxlength="80"
+                               value="{{ person.name }}"
+                               {% if not can_edit %}readonly{% endif %}
+                               required>
+                    </label>
+                    <label>
+                        Что хотите рассказать о близком<textarea name="about" maxlength="3000" {% if not can_edit %}readonly{% endif %}>{{ details.get('about','') }}</textarea>
+                    </label>
+                {% elif tab == 'knowledge' %}
+                    <p class="eyebrow">02 / ВСПОМИНАЕМ ВМЕСТЕ</p>
+                    <h3>Что вы помните сами?</h3>
+                    <p>Расскажите то, что известно о здоровье близкого. Точные названия знать необязательно.</p>
+                    <label>
+                        Какие заболевания или особенности здоровья Вам известны?<textarea name="description" maxlength="3000" placeholder="Напишите своими словами. Можно оставить пустым." {% if not can_edit %}readonly{% endif %}>{{ details.get('description','') }}</textarea>
+                    </label>
+                    <details class="family-memory">
+                        <summary>
+                            <svg viewBox="0 0 48 48" aria-hidden="true">
+                                <path d="M24 41S5 30 5 17C5 6 19 4 24 13C29 4 43 6 43 17C43 30 24 41 24 41ZM7 23H16L20 16L25 31L30 23H41" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" />
+                            </svg>
+                            <span><strong>Помочь вспомнить</strong><small>Органы, простые объяснения и знакомые фразы</small></span>
+                        </summary>
+                        <p>
+                            Можно вспомнить, о чём близкий рассказывал сам: сердце и сосуды, дыхание, пищеварение, сон или настроение. Запишите знакомые слова, даже если названия заболевания не знаете. Можно обратиться к рассказам близких или известным Вам документам. Описание не превращается в диагноз.
+                        </p>
+                    </details>
+                    <fieldset class="family-answer-kind">
+                        <legend>Какой ответ сейчас подходит?</legend>
+                        {% for key,label in kinds %}
+                            <label class="answer-option">
+                                <input type="radio"
+                                       name="answer_kind"
+                                       value="{{ key }}"
+                                       {% if details.get('answer_kind','unknown') == key %}checked{% endif %}
+                                       {% if not can_edit %}disabled{% endif %}>
+                                {{ label }}
+                            </label>
+                        {% endfor %}
+                    </fieldset>
+                {% else %}
+                    <h3>Пояснения к истории</h3>
+                    <label>
+                        Что важно уточнить<textarea name="explanation" maxlength="3000" {% if not can_edit %}readonly{% endif %}>{{ details.get('explanation','') }}</textarea>
+                    </label>
+                    <label class="check">
+                        <input name="discuss"
+                               type="checkbox"
+                               value="true"
+                               {% if details.get('discuss') %}checked{% endif %}
+                               {% if not can_edit %}disabled{% endif %}>
+                        Хочу обсудить на консультации
+                    </label>
+                {% endif %}
+                {% if can_edit %}<button>Сохранить сведения</button>{% endif %}
+                {% if request.query_params.get('saved') %}<p class="success" role="status">Сведения сохранены.</p>{% endif %}
+            </form>
+            {% if tab == 'knowledge' %}
+                <div class="family-added-heading">
+                    <h3>Добавленные сведения</h3>
+                    <p>Названия и описания могут храниться рядом. Специалист увидит, что именно Вам известно.</p>
+                </div>
+                {% if request.query_params.get('condition_saved') %}
+                    <p class="success" role="status">Карточка сохранена.</p>
+                {% endif %}
+                {% for condition in conditions %}
+                    <article class="family-condition" aria-label="{{ condition.label }}">
+                        <div class="family-condition-heading">
+                            <div>
+                                <h4>{{ condition.label }}</h4>
+                                <p>
+                                    {{ 'Известное название со слов пользователя' if condition.kind == 'known' else 'Описание признаков со слов пользователя' if condition.kind == 'signs' else 'Сведения со слов пользователя' }}
+                                </p>
+                            </div>
+                            {% if can_edit %}
+                                <form action="/patients/{{ patient.id }}/family/conditions/{{ condition.id }}/delete"
+                                      method="post">
+                                    <input name="csrf" type="hidden" value="{{ csrf }}">
+                                    <button class="text-button condition-delete"
+                                            aria-label="Удалить сведения: {{ condition.label }}">×</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                        {% if condition.description %}<p class="family-recalled">Вспомнили: «{{ condition.description }}»</p>{% endif %}
+                        <form action="/patients/{{ patient.id }}/family/conditions/{{ condition.id }}/update"
+                              method="post"
+                              aria-label="Уточнить: {{ condition.label }}">
+                            <input name="csrf" type="hidden" value="{{ csrf }}">
+                            {% include 'family_condition_fields.html' %}
+                            {% if can_edit %}<button class="secondary small">Сохранить карточку</button>{% endif %}
+                        </form>
+                    </article>
+                {% else %}
+                    <p class="empty">Отдельных записей пока нет.</p>
+                {% endfor %}
+                {% if can_edit %}
+                    <section class="family-add-condition">
+                        <h3>Добавить своими словами</h3>
+                        <form action="/patients/{{ patient.id }}/family/{{ member_key }}/conditions"
+                              method="post"
+                              aria-label="Добавить сведения о близком">
+                            <input name="csrf" type="hidden" value="{{ csrf }}">
+                            <select name="kind" aria-label="Что хотите добавить">
+                                <option value="known">Знаю название заболевания</option>
+                                <option value="signs">Помню признаки, диагноз не знаю</option>
+                            </select>
+                            <div class="family-add-line">
+                                <input name="label"
+                                       maxlength="200"
+                                       required
+                                       placeholder="Напишите то, что помните"
+                                       aria-label="Напишите то, что помните">
+                                <button aria-label="Добавить сведения" title="Добавить сведения">+</button>
+                            </div>
+                            <details class="family-add-details">
+                                <summary>Добавить описание, возраст и источник</summary>
+                                <label>
+                                    Что вспомнили<textarea name="description"
+          maxlength="1000"
+          placeholder="Можно оставить пустым."></textarea>
+                                </label>
+                                {% with condition={'age_kind':'Не знаю','source':'Не знаю'} %}
+                                    {% include 'family_condition_fields.html' %}
+                                {% endwith %}
+                            </details>
+                        </form>
+                    </section>
+                {% endif %}
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

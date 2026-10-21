@@ -1,0 +1,35 @@
+<section class="card">
+    <h2>{{ graph.name }}</h2>
+    {% if graph.points %}
+        <div class="chart-scroll" tabindex="0">
+            <svg class="{{ 'diary-chart' if graph.scale == 'diary' else 'symptom-chart' }}"
+                 viewBox="0 0 660 280"
+                 role="img"
+                 aria-label="{{ graph.name }}; по горизонтали — {{ graph.x_label }}, по вертикали — {{ graph.y_label }}">
+                <path d="M80 40V205H610" stroke="#aca6b5" fill="none" />
+                {% for tick in graph.yticks %}
+                    <path d="M80 {{ tick.y }}H610" stroke="#e9e5ed" fill="none" />
+                    <text x="68" y="{{ tick.y+4 }}" text-anchor="end">{{ tick.label }}</text>
+                {% endfor %}
+                {% for tick in graph.xticks %}
+                    <path d="M{{ tick.x }} 200V208" stroke="#aca6b5" />
+                    <text x="{{ tick.x }}" y="226" text-anchor="middle">{{ tick.label }}</text>
+                {% endfor %}
+                <text class="axis-label" x="340" y="260" text-anchor="middle">{{ graph.x_label }}</text><text class="axis-label" transform="translate(22 125) rotate(-90)" text-anchor="middle">{{ graph.y_label }}</text>
+                {% for segment in graph.segments %}
+                    <polyline points="{{ segment }}" fill="none" stroke="{{ '#63826e' if graph.scale == 'diary' else '#8173bc' if graph.scale == 'phq9' else '#4d978b' }}" stroke-width="3" />
+                {% endfor %}
+                {% for point in graph.points %}
+                    {% if graph.scale != 'diary' %}<a href="/assessments/{{ point.assessment.id }}?review=1">{% endif %}
+                        <circle cx="{{ point.x }}" cy="{{ point.y }}" r="5" fill="{{ '#63826e' if graph.scale == 'diary' else '#8173bc' if graph.scale == 'phq9' else '#4d978b' }}" /><text x="{{ point.x }}" y="{{ point.y-12 }}" text-anchor="middle">{{ point.total }}</text><title>{{ point.date }}: {{ point.total }}</title>
+                        {% if graph.scale != 'diary' %}</a>{% endif %}
+                {% endfor %}
+            </svg>
+        </div>
+    {% else %}
+        <p class="empty">Пока нет завершённых записей для этого графика.</p>
+    {% endif %}
+    <p class="caption">
+        {{ 'Самочувствие: выше — субъективно лучше. Это отдельный показатель дневника.' if graph.scale == 'diary' else 'Выше — больше симптомов по опроснику. Пропуски не равны нулю.' }}
+    </p>
+</section>
