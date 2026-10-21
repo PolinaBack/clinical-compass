@@ -4,7 +4,7 @@
             <p class="eyebrow">БЕЗОПАСНОСТЬ — ОТДЕЛЬНО</p>
             <h2>{{ 'События и реагирование' if user == 'doctor' else 'Если важно поговорить сейчас' }}</h2>
         </div>
-        {% if user != 'doctor' %}<a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>{% endif %}
+        {% if user != 'doctor' %}<a class="help-link" href="/help-now">Экстренная помощь</a>{% endif %}
     </div>
     <p>
         {{ 'Последняя беседа о безопасности: ' ~ safety_review.created_at if safety_review else 'Официальная самостоятельная C-SSRS не подключена. Учебные ответы показаны отдельно.' }} Отсутствие сигнала не означает отсутствия риска.

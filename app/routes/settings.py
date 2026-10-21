@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 
 from app.storage import audit
 from app.services.account_settings import read_settings, save_settings
+from app.services.interface import save_interface
 from app.services.consent import (
     MEDIA_PURPOSES, documents, latest_event, is_granted, context_access, record_consent,
 )
@@ -75,7 +76,11 @@ def register_settings(app, db, account, csrf_check, render, has_consent):
         form = await request.form()
         csrf_check(request, str(form.get("csrf", "")))
         with db() as c:
-            save_settings(c, user, section, form)
+            if section == "interface":
+                c.execute("BEGIN IMMEDIATE")
+                save_interface(c, user, form)
+            else:
+                save_settings(c, user, section, form)
         return RedirectResponse(f"/settings?saved={section}#{section}", status_code=303)
 
     @app.post("/settings/consents/{purpose}")

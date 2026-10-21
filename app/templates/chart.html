@@ -4,7 +4,7 @@
         <div class="chart-scroll" tabindex="0">
             <svg class="{{ 'diary-chart' if graph.scale == 'diary' else 'symptom-chart' }}"
                  viewBox="0 0 660 280"
-                 role="img"
+                 role="group"
                  aria-label="{{ graph.name }}; по горизонтали — {{ graph.x_label }}, по вертикали — {{ graph.y_label }}">
                 <path d="M80 40V205H610" stroke="#aca6b5" fill="none" />
                 {% for tick in graph.yticks %}
@@ -20,7 +20,7 @@
                     <polyline points="{{ segment }}" fill="none" stroke="{{ '#63826e' if graph.scale == 'diary' else '#8173bc' if graph.scale == 'phq9' else '#4d978b' }}" stroke-width="3" />
                 {% endfor %}
                 {% for point in graph.points %}
-                    {% if graph.scale != 'diary' %}<a href="/assessments/{{ point.assessment.id }}?review=1">{% endif %}
+                    {% if graph.scale != 'diary' %}<a href="/assessments/{{ point.assessment.id }}?review=1" aria-label="{{ graph.name }} · {{ point.date }}: {{ point.total }} · открыть ответы">{% endif %}
                         <circle cx="{{ point.x }}" cy="{{ point.y }}" r="5" fill="{{ '#63826e' if graph.scale == 'diary' else '#8173bc' if graph.scale == 'phq9' else '#4d978b' }}" /><text x="{{ point.x }}" y="{{ point.y-12 }}" text-anchor="middle">{{ point.total }}</text><title>{{ point.date }}: {{ point.total }}</title>
                         {% if graph.scale != 'diary' %}</a>{% endif %}
                 {% endfor %}

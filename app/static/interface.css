@@ -1,0 +1,139 @@
+/* Diary source, page 24: all 18 category pairs. Accent is decorative; text uses dark ink. */
+:root {
+  --category-wellbeing-bg: #EEE9FC; --category-wellbeing-accent: #8572D2;
+  --category-emotions-bg: #FDE8F0; --category-emotions-accent: #DF679B;
+  --category-sleep-bg: #E8F2FF; --category-sleep-accent: #5C91D1;
+  --category-activity-bg: #E8F7EF; --category-activity-accent: #4AA885;
+  --category-cognitive-bg: #F3EDFD; --category-cognitive-accent: #8B78B7;
+  --category-medication-bg: #FFF0E5; --category-medication-accent: #D48751;
+  --category-anthropometry-bg: #F0EBFE; --category-anthropometry-accent: #8571BA;
+  --category-physiology-bg: #E6F5F7; --category-physiology-accent: #4B9FA3;
+  --category-nutrition-bg: #FFF5D9; --category-nutrition-accent: #D3A536;
+  --category-somatic-bg: #E8F7F8; --category-somatic-accent: #55A5A5;
+  --category-psychotherapy-bg: #E6F6F1; --category-psychotherapy-accent: #6C9D91;
+  --category-menstrual-bg: #FCE4EE; --category-menstrual-accent: #D96C9F;
+  --category-vitamins-bg: #F7F0DB; --category-vitamins-accent: #BF974A;
+  --category-goals-bg: #E8F7EF; --category-goals-accent: #389C80;
+  --category-scales-bg: #EEF1FC; --category-scales-accent: #607FC1;
+  --category-materials-bg: #E6F0FF; --category-materials-accent: #6593CB;
+  --category-consultation-bg: #E6F6F1; --category-consultation-accent: #74A48A;
+  --category-specialized-bg: #F1EBF6; --category-specialized-accent: #9D79AE;
+  --chart-mood: #4B8BE8; --chart-anxiety: #47A96B; --chart-sleep: #9671C9;
+}
+.category-wellbeing { --category-bg: var(--category-wellbeing-bg); --category-accent: var(--category-wellbeing-accent); background: var(--category-bg); }
+.category-emotions { --category-bg: var(--category-emotions-bg); --category-accent: var(--category-emotions-accent); background: var(--category-bg); }
+.category-sleep { --category-bg: var(--category-sleep-bg); --category-accent: var(--category-sleep-accent); background: var(--category-bg); }
+.category-activity { --category-bg: var(--category-activity-bg); --category-accent: var(--category-activity-accent); background: var(--category-bg); }
+.category-cognitive { --category-bg: var(--category-cognitive-bg); --category-accent: var(--category-cognitive-accent); background: var(--category-bg); }
+.category-medication { --category-bg: var(--category-medication-bg); --category-accent: var(--category-medication-accent); background: var(--category-bg); }
+.category-anthropometry { --category-bg: var(--category-anthropometry-bg); --category-accent: var(--category-anthropometry-accent); background: var(--category-bg); }
+.category-physiology { --category-bg: var(--category-physiology-bg); --category-accent: var(--category-physiology-accent); background: var(--category-bg); }
+.category-nutrition { --category-bg: var(--category-nutrition-bg); --category-accent: var(--category-nutrition-accent); background: var(--category-bg); }
+.category-somatic { --category-bg: var(--category-somatic-bg); --category-accent: var(--category-somatic-accent); background: var(--category-bg); }
+.category-psychotherapy { --category-bg: var(--category-psychotherapy-bg); --category-accent: var(--category-psychotherapy-accent); background: var(--category-bg); }
+.category-menstrual { --category-bg: var(--category-menstrual-bg); --category-accent: var(--category-menstrual-accent); background: var(--category-bg); }
+.category-vitamins { --category-bg: var(--category-vitamins-bg); --category-accent: var(--category-vitamins-accent); background: var(--category-bg); }
+.category-goals { --category-bg: var(--category-goals-bg); --category-accent: var(--category-goals-accent); background: var(--category-bg); }
+.category-scales { --category-bg: var(--category-scales-bg); --category-accent: var(--category-scales-accent); background: var(--category-bg); }
+.category-materials { --category-bg: var(--category-materials-bg); --category-accent: var(--category-materials-accent); background: var(--category-bg); }
+.category-consultation { --category-bg: var(--category-consultation-bg); --category-accent: var(--category-consultation-accent); background: var(--category-bg); }
+.category-specialized { --category-bg: var(--category-specialized-bg); --category-accent: var(--category-specialized-accent); background: var(--category-bg); }
+
+/* Portal shell. Existing content and functional styles remain in style.css. */
+.portal-shell { --ink: #24283d; --muted: #555b6c; --line: #dce0ec; --radius: 16px; --primary: #5840a6; --primary-dark: #3f2b83; --canvas: #f7f8fc; background: var(--canvas); color: var(--ink); }
+.portal-shell.specialist-space { --primary: #28585d; --primary-dark: #163f44; --soft: #e8f1f2; --canvas: #f5f7f9; }
+.signed-in h1, .signed-in h2 { font-family: 'Segoe UI', Arial, sans-serif; font-weight: 650; letter-spacing: -.025em; }
+.signed-in h1 { font-size: clamp(28px, 3.2vw, 42px); }
+.signed-in h2 { font-size: clamp(22px, 2.5vw, 28px); }
+.portal-shell .card { border-radius: 16px; padding: 20px; }
+.portal-shell .site-header { position: sticky; top: 0; background: #fff; }
+.portal-shell .header-inner { display: flex; flex-wrap: wrap; gap: 12px 20px; padding: 12px 24px; }
+.portal-shell .brand { min-height: 44px; }
+.portal-shell .brand-symbol svg { width: 44px; height: 44px; display: block; }
+.portal-shell .header-nav { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.portal-shell .header-nav a, .portal-shell .header-actions a, .portal-shell .text-button { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; padding: 8px; white-space: normal; }
+.portal-shell .header-actions { gap: 4px 12px; }
+.portal-shell .header-actions .help-link { border: 1px solid #a13c52; border-radius: 10px; color: #87283f; font-weight: 650; max-width: none; }
+.portal-nav { display: flex; justify-content: center; gap: 8px; padding: 8px 20px; background: #fff; border-bottom: 1px solid var(--line); }
+.portal-nav a { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 10px 18px; min-height: 48px; border-radius: 12px; color: #40475e; text-decoration: none; font-weight: 600; font-size: 14px; }
+.portal-nav a[aria-current='page'] { background: var(--soft); color: var(--primary-dark); box-shadow: inset 0 -3px var(--primary); }
+.category-icon { width: 24px; height: 24px; flex: 0 0 24px; }
+.portal-shell .page-intro { margin: 28px 0 24px; padding: 0; }
+.page-intro .eyebrow { margin-bottom: 10px; }
+.quick-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.quick-links > a { display: inline-flex; align-items: center; min-height: 44px; }
+.overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; margin: 24px 0; }
+.overview-card { display: flex; flex-direction: column; gap: 12px; min-width: 0; border-radius: 16px; padding: 20px; color: var(--ink); border: 1px solid #d9deeb; border-top: 4px solid var(--category-accent); text-decoration: none; }
+.overview-card:hover { color: var(--ink); box-shadow: 0 4px 16px #20264216; border-color: #66627f; }
+.overview-card-heading { display: flex; gap: 12px; align-items: center; }
+.overview-card-heading .category-icon { width: 32px; height: 32px; flex-basis: 32px; }
+.overview-value { font-size: clamp(20px,2vw,26px); font-weight: 650; line-height: 1.4; }
+.overview-card .caption { font-size: 13px; color: #41475b; }
+.card-action { color: var(--primary-dark); font-weight: 600; margin-top: auto; }
+.card-preference { min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 16px 0; }
+.card-preference legend { font-weight: 650; padding: 0 8px; }
+.card-preference input[type=number] { max-width: 120px; }
+.worklist-item { padding: 16px 0; border-top: 1px solid var(--line); }
+.worklist-item a { display: inline-flex; align-items: center; min-height: 44px; }
+.portal-shell .tab-nav { display: flex; flex-wrap: wrap; gap: 8px; overflow: visible; }
+.portal-shell .tab-nav a { display: inline-flex; align-items: center; min-height: 44px; white-space: normal; }
+.portal-shell .tab-nav [aria-current='page'] { background: var(--primary); color: #fff; }
+.portal-shell .check { min-height: 44px; align-items: center; }
+.portal-shell input:not([type=checkbox]):not([type=radio]):not([type=hidden]), .portal-shell select { min-height: 44px; }
+.portal-shell input, .portal-shell textarea, .portal-shell select { max-width: 100%; }
+.portal-shell summary { min-height: 44px; padding-block: 10px; }
+.portal-shell .demo-line { color: #53596b; }
+.portal-shell .badge { color: #43465e; }
+.portal-shell .family-leaf small, .portal-shell .family-legend,
+.portal-shell .family-progress p, .portal-shell .family-context-note { color: #55455f; }
+.portal-shell .family-panel .family-leaf span, .portal-shell .family-panel .family-leaf small { color: #55455f; }
+.portal-shell .table-scroll a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+.portal-shell main { overflow-wrap: anywhere; }
+.portal-shell main > *, .portal-shell .grid > *, .portal-shell .patient-grid > * { min-width: 0; }
+.portal-shell .site-footer a { display: inline-flex; align-items: center; min-height: 44px; }
+.portal-shell :focus-visible { outline: 3px solid #174d9d; outline-offset: 4px; }
+.portal-shell .skip-link { z-index: 100; }
+.minimal-ui .overview-card { background: #fff; box-shadow: none; border-top: 1px solid var(--line); }
+.minimal-ui .category-icon, .minimal-ui .brand-symbol, .minimal-ui .status-dot { display: none; }
+.minimal-ui .overview-card:hover { box-shadow: none; }
+.minimal-ui * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+html:has(.minimal-ui) { scroll-behavior: auto; }
+@media (max-width: 1000px) {
+  .overview-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .portal-shell .header-nav { order: 3; width: 100%; }
+  .portal-shell .header-actions { margin-left: auto; }
+}
+@media (max-width: 700px) {
+  html { scroll-padding-bottom: calc(154px + env(safe-area-inset-bottom)); }
+  .portal-shell .site-header { position: static; }
+  .portal-shell main { padding: 0 16px 32px; }
+  .portal-shell .header-inner { padding: 12px 16px; gap: 8px; }
+  .portal-shell .header-nav { gap: 4px; }
+  .portal-shell .header-actions { justify-content: flex-start; flex: 1 1 100%; }
+  .portal-shell .header-actions .help-link { display: inline-flex; position: fixed; right: 16px; bottom: 16px; z-index: 40; background: #fff; min-height: 44px; }
+  .signed-in.patient-space .header-actions .help-link { bottom: calc(88px + env(safe-area-inset-bottom)); }
+  .patient-space:not(.signed-in) { padding-bottom: 76px; }
+  .portal-shell .header-actions .role-badge { display: inline-flex; }
+  .portal-shell .header-actions .settings-link { margin-left: auto; }
+  .signed-in { padding-bottom: calc(82px + env(safe-area-inset-bottom)); }
+  .signed-in.patient-space { padding-bottom: calc(148px + env(safe-area-inset-bottom)); }
+  .portal-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 30; padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); gap: 2px; border-top: 1px solid var(--line); }
+  .portal-nav a { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 3px; padding: 8px 1px; font-size: 11px; line-height: 1.4; }
+  .portal-nav a[aria-current='page'] { box-shadow: inset 0 3px var(--primary); }
+  .minimal-ui .portal-nav a { min-height: 56px; }
+  .overview-grid { gap: 12px; }
+  .overview-card { padding: 16px; }
+  .overview-card-heading { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .portal-shell .site-footer { padding: 24px 16px; }
+  .portal-shell .tab-nav a { flex: 1 1 auto; }
+  .portal-shell :target { scroll-margin-top: 16px; }
+  .portal-shell :is(a, button, input, select, textarea, summary) { scroll-margin-bottom: 154px; }
+}
+@media (max-width: 360px) { .overview-grid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto !important; }
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (forced-colors: active) {
+  .overview-card, .portal-nav a[aria-current='page'] { border: 2px solid CanvasText; }
+}

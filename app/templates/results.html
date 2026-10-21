@@ -12,10 +12,10 @@
             {% include 'chart.html' %}
         {% endfor %}
     </div>
-    {% include 'reports_block.html' %}
+    <p><a href="/patients/{{ pid }}/reports">Отчёты специалиста — в отдельном разделе →</a></p>
     <section class="card">
         <h2>Результаты пройденных опросников</h2>
-        <div class="table-scroll">
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Таблица результатов опросников">
             <table>
                 <thead>
                     <tr>

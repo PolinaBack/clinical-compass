@@ -65,16 +65,17 @@ def test_reports_have_distinct_private_draft_and_published_states(client):
     assert post(client, "/patients/1/reports", **payload).status_code == 200
     rid = rows(client, "SELECT id FROM specialist_reports")[0]["id"]
     login(client, "patient1")
-    assert "Учебное заключение" not in client.get("/patients/1/results").text
+    assert "Учебное заключение" not in client.get("/patients/1/reports").text
     assert post(client, f"/patients/1/reports/{rid}/publish").status_code == 403
     login(client, "doctor")
     assert post(client, f"/patients/2/reports/{rid}/publish").status_code == 404
     assert post(client, f"/patients/1/reports/{rid}/publish").status_code == 200
     login(client, "patient1")
-    profile = client.get("/patients/1/results").text
+    profile = client.get("/patients/1/reports").text
     for text in payload.values():
         assert text in profile
-    assert "Учебный план" in client.get("/patients/1/results").text
+    assert "Учебный план" in client.get("/patients/1/reports").text
+    assert "Учебный план" not in client.get("/patients/1/results").text
     login(client, "patient2")
     assert client.get("/patients/1/profile").status_code == 403
 

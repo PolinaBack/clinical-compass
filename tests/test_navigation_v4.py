@@ -19,7 +19,7 @@ def test_initial_page_and_profile_sections_load_separately(client):
     for entry in ["/", "/patients/1"]:
         assert client.get(entry).url.path == r.url.path
     nav = re.search(r'<nav class="header-nav".*?</nav>', r.text, re.S).group()
-    labels = ["Личный профиль", "Дневник", "Динамика опросников", "С чего начать"]
+    labels = ["Анкеты", "Специалист", "Семейная история", "Отчёты", "С чего начать"]
     assert [nav.index(label) for label in labels] == sorted(
         nav.index(label) for label in labels
     )
@@ -36,7 +36,7 @@ def test_initial_page_and_profile_sections_load_separately(client):
     index = client.get("/patients/1/profile").text
     assert 'name="biography"' in index and 'id="family"' not in index
     assert client.get("/patients/1/profile").url.path == "/patients/1/profile/about"
-    assert "reports" not in index and "Полезно каждому пациенту" not in index
+    assert 'id="reports"' not in index and "Полезно каждому пациенту" not in index
     for section, present, absent in [
         ("about", 'name="biography"', 'id="family"'),
         ("family", 'id="family"', 'name="biography"'),

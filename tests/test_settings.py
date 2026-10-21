@@ -282,7 +282,9 @@ def test_migration_checksum_and_original_records_survive_restarts(client):
     original = user_row(client, "patient1")
     with TestClient(create_app(client.app.state.db_path)) as restarted:
         with connect(restarted.app.state.db_path) as c:
-            assert c.execute("SELECT count(*) FROM schema_migrations").fetchone()[0] == 1
+            assert [r[0] for r in c.execute("SELECT version FROM schema_migrations ORDER BY version")] == [
+                "001_account_settings.sql", "002_interface_preferences.sql",
+            ]
             assert c.execute("PRAGMA foreign_key_check").fetchall() == []
         assert user_row(restarted, "patient1")["password_hash"] == original["password_hash"]
     with connect(client.app.state.db_path) as c:

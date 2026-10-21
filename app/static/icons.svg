@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+<symbol id="wellbeing" viewBox="0 0 24 24"><path d="M20 5a5 5 0 0 0-8 1 5 5 0 0 0-8-1C0 10 6 16 12 21c6-5 12-11 8-16Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="emotions" viewBox="0 0 24 24"><path d="M10 4C4 0 1 8 5 11c-5 4-1 11 5 9V4Zm4 0c6-4 9 4 5 7 5 4 1 11-5 9V4Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="sleep" viewBox="0 0 24 24"><path d="M20 15A9 9 0 0 1 9 3 9 9 0 1 0 20 15Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="activity" viewBox="0 0 24 24"><path d="M14 5h1m-4 4 4 3 4 1M11 9l-4 5H3m8-5 2-3 4 1m-6 8-3 6m5-7 3 6h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="cognitive" viewBox="0 0 24 24"><path d="M8 20v-4C0 10 8 0 15 4c5 2 4 7 7 9h-4v5h-5v3M9 8h5m-2-2v5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="medication" viewBox="0 0 24 24"><path d="m6 18 12-12M5 8l3-3c6-6 15 3 9 9l-3 3C8 23-1 14 5 8Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="anthropometry" viewBox="0 0 24 24"><path d="M12 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-4 3h8l3 7h-4v4H9v-4H5l3-7Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="physiology" viewBox="0 0 24 24"><path d="M2 12h4l3-7 5 14 3-7h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="nutrition" viewBox="0 0 24 24"><path d="M4 2v7m3-7v7m3-7v7M4 7h6l-3 5v10M19 22V2c-5 2-5 10 0 11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="somatic" viewBox="0 0 24 24"><path d="M12 3v7m-2-5C4 5 1 18 4 20c3 1 6-4 6-7V5Zm4 0c6 0 9 13 6 15-3 1-6-4-6-7V5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="psychotherapy" viewBox="0 0 24 24"><path d="M3 3h18v14H10l-6 4v-4H3V3Zm4 5h10M7 12h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="menstrual" viewBox="0 0 24 24"><path d="M12 2C7 9 4 12 4 16a8 8 0 0 0 16 0c0-4-3-7-8-14Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="vitamins" viewBox="0 0 24 24"><path d="M9 4h6V2H9v2ZM8 7h8l2 4v10H6V11l2-4Zm4 5v6m-3-3h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="goals" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9M12 7a5 5 0 1 0 5 5M12 12 22 2m-6 0h6v6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="scales" viewBox="0 0 24 24"><path d="M8 3h8v3H8V3ZM6 4H3v18h18V4h-3M7 11l2 2 3-4m2 3h3M7 18h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="materials" viewBox="0 0 24 24"><path d="M12 5C8 2 4 2 1 4v17c4-2 7-2 11 0 4-2 7-2 11 0V4c-3-2-7-2-11 1v16Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="consultation" viewBox="0 0 24 24"><path d="M4 2h12l4 4v16H4V2Zm12 0v6h4M8 12h8m-8 5h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="specialized" viewBox="0 0 24 24"><path d="M4 5h16v15H4V5Zm5 0V2h6v3m-3 4v7m-3-3h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="home" viewBox="0 0 24 24"><path d="m2 11 10-9 10 9M5 9v13h5v-7h4v7h5V9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="people" viewBox="0 0 24 24"><path d="M8 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-6 12v-5c0-6 12-6 12 0v5m3-18a3 3 0 0 1 0 6m1 3c4 0 4 4 4 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="calendar" viewBox="0 0 24 24"><path d="M3 5h18v17H3V5ZM7 2v6m10-6v6M3 11h18m-14 4h3m4 0h3m-10 4h3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="M5 4h14v18H5V4ZM9 4V2h6v2M8 13l3 3 5-7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="chart" viewBox="0 0 24 24"><path d="M3 3v19h19M7 18v-5m5 5V9m5 9V5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="settings" viewBox="0 0 24 24"><path d="m10 2 4 0 1 4 4-1 2 4-3 3 3 3-2 4-4-1-1 4h-4l-1-4-4 1-2-4 3-3-3-3 2-4 4 1 1-4Zm2 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>

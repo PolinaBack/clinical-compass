@@ -20,6 +20,8 @@ from .storage import extend_schema, audit, now
 from .workflows import register_workflows, overview
 from .migrations import apply_migrations
 from .routes.settings import register_settings
+from .routes.interface import register_interface
+from .services.interface import read_interface
 from .portal import register_portal, portal_data
 from .community import register_community, public_forum_data
 from .family import register_family
@@ -135,6 +137,15 @@ def create_app(db_path=None):
 
     def render(request, template, **context):
         request.session.setdefault("csrf", secrets.token_urlsafe(24))
+        interface_prefs = dict(minimal=False, revision=0, cards=[])
+        if request.session.get("account_id"):
+            with db() as c:
+                active = c.execute(
+                    "SELECT id FROM accounts WHERE id=? AND active=1 AND auth_version=?",
+                    (request.session["account_id"], request.session.get("auth_version")),
+                ).fetchone()
+                if active:
+                    interface_prefs = read_interface(c, active["id"])
         return templates.TemplateResponse(
             request=request,
             name=template,
@@ -145,6 +156,7 @@ def create_app(db_path=None):
                 "resources": RESOURCES,
                 "faq_items": FAQ,
                 "current_page": request.url.path,
+                "interface_prefs": interface_prefs,
                 **context,
             },
         )
@@ -343,6 +355,7 @@ def create_app(db_path=None):
         )
 
     register_community(app, db, identity, account, csrf_check, render)
+    register_interface(app, db, account, render, patient_context)
     register_portal(
         app, db, account, identity, access, csrf_check, render, patient_context
     )

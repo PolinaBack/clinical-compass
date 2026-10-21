@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Календарь' if calendar else 'Задачи' }} · Клинический компас{% endblock %}
+{% block content %}
+<div class="page-intro"><p class="eyebrow">РАБОЧЕЕ ПРОСТРАНСТВО</p><h1>{{ 'Календарь консультаций' if calendar else 'Задачи специалиста' }}</h1><p class="lead">Только записи ваших пациентов. Действия выполняются в соответствующей карточке.</p></div>
+{% if not calendar %}
+<section class="card safety-card"><h2>Клинические события</h2><p>Статусы доставки, подтверждения и действия врача отображаются отдельно.</p><div id="workflow-alerts" data-csrf="{{ csrf }}" aria-live="polite">Проверяем события…</div><div id="live-alerts" aria-live="polite">Проверяем сообщения о самочувствии…</div></section>
+<section class="card"><h2>Незавершённые анкеты пациентов</h2>
+{% for item in assignments %}<article class="worklist-item"><h3>{{ item.name }} · {{ item.scale|upper }}</h3><p>{{ 'Срок: ' ~ item.due_day if item.due_day else 'Срок не задан' }} · {{ 'Черновик' if item.status == 'draft' else item.status }}</p><a href="/patients/{{ item.patient_id }}/workspace/assessments">Анкеты пациента</a></article>{% else %}<p>Незавершённых анкет нет.</p>{% endfor %}</section>
+{% endif %}
+<section class="card"><h2>Заявки на консультацию</h2>
+{% for item in bookings %}<article class="worklist-item"><h3>{{ item.name }}</h3><p>{{ item.preferred_day }} · {{ item.time_window }} · {{ item.timezone_label }}</p><a href="/patients/{{ item.patient_id }}/profile/video#booking">Открыть заявку и согласовать встречу</a></article>{% else %}<p>Новых заявок нет.</p>{% endfor %}</section>
+{% if calendar %}
+<section class="card"><h2>Назначенные встречи</h2><p class="caption">Время указано в часовом поясе каждой встречи.</p>
+{% for item in appointments %}<article class="worklist-item"><h3>{{ item.name }}</h3><p>{{ item.starts_at }} · {{ item.timezone_label }}</p><a href="/patients/{{ item.patient_id }}/profile/video">Открыть встречу и подготовку</a></article>{% else %}<p>Назначенных встреч пока нет. Откройте раздел консультаций в карточке пациента, чтобы согласовать время.</p>{% endfor %}</section>
+{% endif %}
+{% endblock %}

@@ -42,7 +42,7 @@
         {% endif %}
         <a class="button secondary"
            href="/patients/{{ patient.id }}/profile/video">Записаться на консультацию</a>
-        {% if user != 'doctor' %}<a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>{% endif %}
+        {% if user != 'doctor' %}<a class="help-link" href="/help-now">Экстренная помощь</a>{% endif %}
     </section>
     {% if user != 'doctor' and consent %}
         <section class="card">

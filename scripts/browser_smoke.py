@@ -88,9 +88,10 @@ def run(
         ).to_be_visible()
         labels = patient.locator(".header-nav a").all_text_contents()
         assert labels == [
-            "Личный профиль",
-            "Дневник",
-            "Динамика опросников",
+            "Анкеты",
+            "Специалист",
+            "Семейная история",
+            "Отчёты",
             "С чего начать",
         ]
         expect(patient.locator(".trust-questions details")).to_have_count(3)
@@ -218,7 +219,7 @@ def run(
         expect(
             doctor.get_by_text("Учебная заметка к следующей консультации", exact=True)
         ).to_be_visible()
-        doctor.goto(url + "/patients/1/results")
+        doctor.goto(url + "/patients/1/reports")
         doctor.get_by_text("Подготовить отчёт", exact=True).click()
         doctor.get_by_label("Название", exact=True).fill(
             "Синтетический отчёт после встречи"
@@ -231,10 +232,12 @@ def run(
         )
         doctor.get_by_label("Поделиться с пациентом после сохранения").check()
         doctor.get_by_role("button", name="Сохранить отчёт", exact=True).click()
-        patient.goto(url + "/patients/1/results")
+        patient.goto(url + "/patients/1/reports")
         expect(
             patient.get_by_text("Учебное заключение специалиста", exact=True)
         ).to_be_visible()
+        patient.goto(url + "/patients/1/results")
+        expect(patient.locator("#reports")).to_have_count(0)
         expect(patient.locator(".axis-label")).to_have_count(6)
         expect(patient.locator(".diary-chart")).to_have_count(0)
         capture(patient, "dynamics-desktop")
@@ -416,7 +419,7 @@ def run(
             doctor.get_by_role("heading", name="Библиотека лекарств", exact=True)
         ).to_be_visible()
         expect(
-            doctor.get_by_role("link", name="Мне нужна помощь сейчас", exact=True)
+            doctor.get_by_role("link", name="Экстренная помощь", exact=True)
         ).to_have_count(0)
         capture(doctor, "medicines-desktop")
         guest_context = browser.new_context(viewport={"width": 390, "height": 844})
@@ -446,9 +449,11 @@ def run(
         doctor.set_viewport_size({"width": 390, "height": 844})
         capture(doctor, "specialist-mobile")
         assert not errors, errors
+        from scripts.browser_e02 import check_interface
+        check_interface(patient, doctor, url)
         browser.close()
     print(
-        "UI check passed: separate portals, trust/FAQ, teaching safety adaptation with hidden branches, stepped PHQ-4/9/GAD-7, PHQ-ADS assignment, safety events, synthetic audio, diary comments, separate profile pages, family tree/tabs, reports in dynamics, anonymous moderated FAQ, diary notes, consultation booking/video link, desktop/mobile; no JS errors."
+        "UI check passed: separate portals, trust/FAQ, teaching safety adaptation with hidden branches, stepped PHQ-4/9/GAD-7, PHQ-ADS assignment, safety events, synthetic audio, diary comments, separate profile pages, family tree/tabs, reports in a separate section, anonymous moderated FAQ, diary notes, consultation booking/video link, desktop/mobile; no JS errors."
     )
 
 

@@ -48,7 +48,7 @@ def test_specialist_sections_are_separate_and_patient_cannot_enter(client):
         for other in expected.values():
             if other != marker:
                 assert other not in html
-        assert "Журнал доступа" not in html and "Мне нужна помощь сейчас" not in html
+        assert "Журнал доступа" not in html and "Экстренная помощь" not in html
         nav = re.search(
             r'<nav class="tab-nav specialist-nav".*?</nav>', html, re.S
         ).group()
@@ -207,7 +207,7 @@ def test_catalog_has_uniform_tiles_and_medicine_library_is_role_scoped(client):
     assert 'href="/reference/aviandr"' not in html
     assert '<option value="0">Новое обследование</option>' in html
     html = client.get("/medicines").text
-    assert 'href="/medicines/aviandr"' in html and "Мне нужна помощь сейчас" not in html
+    assert 'href="/medicines/aviandr"' in html and "Экстренная помощь" not in html
     assert client.get("/medicines/aviandr").status_code == 200
     assert client.get("/medicines/not-real").status_code == 404
     login(client, "patient1")

@@ -8,27 +8,27 @@
             {% block title %}Клинический компас{% endblock %}
         </title>
         <link rel="stylesheet" href="/static/style.css">
+        <link rel="stylesheet" href="/static/interface.css">
         <script src="/static/app.js" defer></script><script src="/static/workflows.js" defer></script>
     </head>
-    <body class="{{ 'specialist-space' if user == 'doctor' else 'patient-space' }}">
+    <body class="portal-shell {{ 'signed-in' if user else '' }} {{ 'specialist-space' if user == 'doctor' else 'patient-space' }} {{ 'minimal-ui' if interface_prefs and interface_prefs.minimal else '' }}">
         <a class="skip-link" href="#main">К содержанию</a>
         <header class="site-header">
             <div class="header-inner">
                 <a class="brand" href="/"><span class="brand-symbol" aria-hidden="true">
                     <svg viewBox="0 0 64 64" aria-hidden="true">
-                        <path d="M32 8V56M8 32H56M15 15L49 49M49 15L15 49" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+                        <circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="3" />
+                        <path d="M42 20L36 36L21 44L27 28Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" />
+                        <path d="M32 1V8" stroke="currentColor" stroke-width="3" />
                     </svg>
                 </span><span>клинический
                 <br>
                 <b>компас</b></span></a>
             <nav class="header-nav" aria-label="Основная навигация">
                 {% if user == 'doctor' %}
-                    <a href="/doctor">Мои пациенты</a><a href="/clinical-tools">Библиотека анкет</a><a href="/medicines">Библиотека лекарств</a><a href="/doctor/faq">FAQ-форум</a>
+                    <a href="/doctor/library">Библиотека</a><a href="/clinical-tools">Анкеты</a><a href="/medicines">Лекарства</a><a href="/doctor/faq">FAQ-форум</a>
                 {% elif user %}
-                    <a href="/patients/{{ session_pid }}/profile"
-                       {% if '/profile' in current_page %}aria-current="page"{% endif %}>Личный профиль</a><a href="/patients/{{ session_pid }}/diary"
-   {% if '/diary' in current_page %}aria-current="page"{% endif %}>Дневник</a><a href="/patients/{{ session_pid }}/results"
-   {% if '/results' in current_page %}aria-current="page"{% endif %}>Динамика опросников</a><a href="/me/start"
+                    <a href="/patients/{{ session_pid }}/profile/assessments">Анкеты</a><a href="/patients/{{ session_pid }}/profile/video">Специалист</a><a href="/patients/{{ session_pid }}/profile/family">Семейная история</a><a href="/patients/{{ session_pid }}/reports">Отчёты</a><a href="/me/start"
    {% if current_page == '/me/start' %}aria-current="page"{% endif %}>С чего начать</a>
                 {% else %}
                     <a href="/#how">Как это работает</a><a href="/faq">Вопросы и ответы</a><a href="/#resources">Полезные материалы</a>
@@ -36,7 +36,7 @@
             </nav>
             <div class="header-actions">
                 {% if user %}<a class="settings-link" href="/settings">Настройки</a>{% endif %}
-                {% if user != 'doctor' %}<a class="help-link" href="/help-now">Мне нужна помощь сейчас</a>{% endif %}
+                {% if user != 'doctor' %}<a class="help-link" href="/help-now">Экстренная помощь</a>{% endif %}
                 {% if user %}
                     <span class="role-badge">{{ 'Специалист' if user == 'doctor' else 'Пациент' }}</span>
                     <form action="/logout" method="post">
@@ -49,6 +49,7 @@
             </div>
         </div>
     </header>
+    {% if user %}{% include 'portal_nav.html' %}{% endif %}
     <main id="main">
         <div class="demo-line">
             <span class="status-dot"></span> Исследовательский прототип · 18+ · только синтетические данные · служба помощи не подключена
@@ -56,7 +57,7 @@
         {% block content %}{% endblock %}
     </main>
     <footer class="site-footer">
-        <a class="brand" href="/">✳ Клинический компас</a>
+        <a class="brand" href="/">Клинический компас</a>
         <p>
             Помогаем подготовиться к разговору.
             <br>

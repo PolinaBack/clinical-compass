@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Материалы · Клинический компас{% endblock %}
+{% block content %}
+<div class="page-intro"><p class="eyebrow">ПОДДЕРЖКА И ИНФОРМАЦИЯ</p><h1>Полезные материалы</h1><p class="lead">Проверенные ссылки из библиотеки проекта. Рекомендации по лечению обсуждайте со специалистом.</p></div>
+<div class="grid two">
+{% for number,title,text,url,color in resources %}
+<article class="card category-materials"><h2>{% if url %}<a href="{{ url }}" {% if url.startswith('https://') %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ title }}{% if url.startswith('https://') %} <span class="caption">↗ внешний сайт</span>{% endif %}</a>{% else %}{{ title }}{% endif %}</h2><p>{{ text }}</p></article>
+{% endfor %}
+</div>
+<section class="card"><h2>Вопросы о работе приложения</h2><a href="/faq">Вопросы и ответы</a> · <a href="/me/start">С чего начать</a></section>
+{% endblock %}

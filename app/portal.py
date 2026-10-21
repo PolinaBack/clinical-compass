@@ -338,7 +338,7 @@ def register_portal(
                 pid,
                 rid,
             )
-        return redirect(pid, "/results#reports")
+        return redirect(pid, "/reports#reports")
 
     @app.post("/patients/{pid}/reports/{rid}/publish")
     def publish_report(request: Request, pid: int, rid: int, csrf: str = Form(...)):
@@ -352,7 +352,7 @@ def register_portal(
             if not result.rowcount:
                 raise HTTPException(404, "Черновик не найден")
             audit(c, user["id"], "report_published", pid, rid)
-        return redirect(pid, "/results#reports")
+        return redirect(pid, "/reports#reports")
 
     @app.get("/patients/{pid}/contact")
     def old_contact(request: Request, pid: int):

@@ -1,0 +1,162 @@
+[
+  {
+    "path": "/me/overview",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/diary",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/results",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/me/materials",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/profile",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/profile/family",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/reports",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/settings",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/help-now",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/me/overview",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/diary",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/results",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/me/materials",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/profile",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/profile/family",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/reports",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/settings",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/help-now",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/doctor",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/doctor/calendar",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/doctor/tasks",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/doctor/library",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/patients/1",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/reports",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/settings",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/doctor",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/doctor/calendar",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/doctor/tasks",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/doctor/library",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/patients/1",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/patients/1/reports",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/settings",
+    "width": 1280,
+    "violations": []
+  }
+]

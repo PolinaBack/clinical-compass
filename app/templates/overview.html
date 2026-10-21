@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% from 'icons.html' import icon %}
+{% block title %}Главная пациента · Клинический компас{% endblock %}
+{% block content %}
+<div class="page-intro">
+    <p class="eyebrow">МОЙ КЛИНИЧЕСКИЙ КОМПАС</p>
+    <h1>Как вы сегодня?</h1>
+    <p class="lead">Ваши записи, встречи и важные вопросы в одном месте.</p>
+    <div class="quick-links">
+        <a class="button" href="/patients/{{ patient.id }}/diary">Заполнить дневник</a>
+        <a class="button secondary" href="/patients/{{ patient.id }}/profile/assessments">Мои анкеты</a>
+        <a href="/me/start">С чего начать</a>
+        <a href="/settings#interface">Настроить карточки</a>
+    </div>
+</div>
+{% if not consent %}<p class="notice">Чтобы сохранять записи, <a href="/consent">ознакомьтесь с условиями участия</a>. Экстренная помощь доступна всегда.</p>{% endif %}
+<div class="overview-grid">
+    {% for card in cards %}
+        <a class="overview-card category-{{ card.category }}" href="{{ card.href }}" data-card="{{ card.key }}">
+            <span class="overview-card-heading">{{ icon(card.category) }}<strong>{{ card.title }}</strong></span>
+            {% if card.pinned %}<span class="caption">Закреплено</span>{% endif %}
+            <span class="overview-value">{{ card.value }}</span>
+            {% if card.day %}<span class="caption">{{ card.day }}</span>{% elif card.key not in ['materials','consultations'] %}<span class="caption">Записей пока нет</span>{% endif %}
+            <span class="card-action">Открыть →</span>
+        </a>
+    {% else %}
+        <section class="card"><h2>Карточки скрыты</h2><p>Все разделы доступны через меню. <a href="/settings#interface">Вернуть карточки на главную</a>.</p></section>
+    {% endfor %}
+</div>
+<section class="card">
+    <h2>Подготовиться к разговору</h2>
+    <div class="quick-links">
+        <a href="/patients/{{ patient.id }}/profile">Обо мне</a>
+        <a href="/patients/{{ patient.id }}/profile/family">Семейная история</a>
+        <a href="/patients/{{ patient.id }}/profile/video">Связаться со специалистом</a>
+        <a href="/patients/{{ patient.id }}/reports">Отчёты специалиста</a>
+    </div>
+</section>
+{% endblock %}
