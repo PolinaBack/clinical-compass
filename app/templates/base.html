@@ -11,6 +11,7 @@
         <link rel="stylesheet" href="/static/interface.css">
         <link rel="stylesheet" href="/static/diary.css">
         {% if current_page is defined and current_page.startswith('/medicines') %}<link rel="stylesheet" href="/static/medicines.css"><script src="/static/medicines.js" defer></script>{% endif %}
+        {% if current_page is defined and ('/meetings' in current_page or current_page.startswith('/meeting-recordings/') or current_page.startswith('/meeting-artifacts/')) %}<link rel="stylesheet" href="/static/meetings.css"><script src="/static/meetings.js" defer></script>{% endif %}
         <script src="/static/diary.js" defer></script>
         <script src="/static/app.js" defer></script><script src="/static/workflows.js" defer></script>
     </head>

@@ -29,6 +29,7 @@ from .community import register_community, public_forum_data
 from .family import register_family
 from .routes.drug_library import register_drug_library
 from .services.drug_library import bootstrap as bootstrap_drug_library
+from .routes.meetings import register_meetings
 from .recordings import register_recordings
 
 ROOT = Path(__file__).resolve().parent
@@ -587,6 +588,7 @@ def create_app(db_path=None):
         app, db, account, identity, access, csrf_check, render, has_consent
     )
     register_settings(app, db, account, csrf_check, render, has_consent)
+    register_meetings(app, db, account, access, csrf_check, render)
     return app
 
 

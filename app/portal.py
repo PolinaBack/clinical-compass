@@ -374,12 +374,18 @@ def register_portal(
         timezone_label: str = Form(..., min_length=1, max_length=80),
         url: str = Form(..., max_length=2000),
         fallback: str = Form(..., min_length=1, max_length=1000),
-        booking_id: int | None = Form(None),
+        booking_id: str | None = Form(None, max_length=20),
     ):
         user = specialist(request, pid)
         csrf_check(request, csrf)
         try:
             dt = datetime.fromisoformat(starts_at)
+            if booking_id in (None, ""):
+                booking_id = None
+            else:
+                booking_id = int(booking_id)
+                if not 0 < booking_id < 2**63:
+                    raise ValueError()
             parsed = urlsplit(url.strip())
             valid_url = (
                 parsed.scheme == "https"

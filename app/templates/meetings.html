@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Записи и итоги встреч</h1><p>{{ patient.name }} · <a href="/patients/{{ patient.id }}/profile/video">Консультации и видеосвязь</a></p>
+<p>Расшифровка помогает проверить разговор. Черновики итогов и следующих шагов видит врач; пациенту доступны только подтверждённые итоги.</p>
+{% for visit in visits %}<section class="card"><h2>Встреча {{ visit.starts_at|replace('T',' · ') }}</h2>
+{% if visit.meeting_id %}<a class="button" href="/meetings/{{ visit.meeting_id }}">Открыть запись и итоги</a>
+{% elif user == 'doctor' %}<form method="post" action="/patients/{{ patient.id }}/appointments/{{ visit.id }}/meeting"><input type="hidden" name="csrf" value="{{ csrf }}"><p>Будет создано отдельное согласование этой встречи. Запись звонка и обработка автоматически не запускаются.</p><button>Подготовить расшифровку встречи</button></form>
+{% else %}<p>Специалист ещё не подготовил отдельное согласование записи.</p>{% endif %}
+</section>{% else %}<p>Назначенных встреч пока нет. Специалист может добавить приём в разделе консультаций.</p>{% endfor %}
+{% endblock %}

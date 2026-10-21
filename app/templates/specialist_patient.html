@@ -5,6 +5,7 @@
         <a href="/doctor">Мои пациенты</a>
     </div>
     {% include 'specialist_nav.html' %}
+    <p><a href="/patients/{{ patient.id }}/meetings">Записи встреч, расшифровки и итоги</a></p>
     {% if section == 'safety' %}
         {% include 'safety_block.html' %}
     {% elif section == 'assessments' %}

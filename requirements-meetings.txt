@@ -1,0 +1,5 @@
+# Optional local AI worker; install separately from the main app.
+-r requirements.txt
+faster-whisper==1.1.1
+# Faster Whisper 1.1.1 imports requests; recent Hugging Face Hub no longer brings it transitively.
+requests==2.32.5
