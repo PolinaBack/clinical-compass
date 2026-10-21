@@ -410,7 +410,7 @@ def test_revocation_before_and_during_model_never_saves_result(client, meeting):
     service.process_one(client.app.state.db_path, MustNotRun())
 
 
-def test_retry_sanitized_errors_and_restart_recovery(client, meeting):
+def test_retry_sanitized_errors_and_restart_recovery(client, meeting, caplog):
     mid, context, _ = meeting
     grants(client, context)
     upload(client, mid)
@@ -422,6 +422,11 @@ def test_retry_sanitized_errors_and_restart_recovery(client, meeting):
             raise RuntimeError("SECRET PATIENT CONTENT")
 
     service.process_one(client.app.state.db_path, Broken())
+    assert (
+        "stage=transcribe" in caplog.text
+        and "exception_type=RuntimeError" in caplog.text
+    )
+    assert "SECRET PATIENT CONTENT" not in caplog.text
     with connect(client.app.state.db_path) as c:
         job = c.execute("SELECT * FROM meeting_jobs").fetchone()
         assert job["status"] == "failed" and job["error_code"] == "processing_failed"

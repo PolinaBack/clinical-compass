@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -18,9 +19,11 @@ from app.services.meeting_ai import (
 )
 from app.services.meeting_media import audio_for_model
 
+logger = logging.getLogger(__name__)
+
 ERRORS = {
     "asr_model_invalid": "Контрольная сумма локальной модели не подтверждена. Загрузите модель по инструкции заново.",
-    "asr_model_missing": "Не загружена локальная модель Whisper.",
+    "asr_model_missing": "Локальная модель Whisper отсутствует или загружена не полностью, включая словарь. Выполните: python -m scripts.setup_meeting_ai --download-whisper.",
     "asr_dependency_missing": "Установите зависимости из requirements-meetings.txt.",
     "local_provider_required": "Этот режим допускает только локальные модели и локальный Ollama.",
     "summary_provider_unavailable": "Ollama недоступна, модель не установлена или ответ не получен. Проверьте локальный сервис.",
@@ -236,6 +239,7 @@ def process_one(db_path, provider=None):
                 (stamp_time(600), job["id"], worker),
             )
 
+    stage = "prepare"
     try:
         with connect(db_path) as c:
             c.execute("BEGIN IMMEDIATE")
@@ -253,10 +257,14 @@ def process_one(db_path, provider=None):
             )
         checkpoint()
         if job["kind"] == "transcript":
+            stage = "decode_audio"
             with audio_for_model(content) as path:
+                stage = "transcribe"
                 raw, name = provider.transcribe(path, checkpoint)
+            stage = "validate_transcript"
             result = validate_transcript(raw, duration)
         else:
+            stage = "summarize"
             segments = json.loads(source["payload"])["segments"]
             raw, name = provider.summarize(segments, checkpoint)
             # Each chunk was checked; validate the aggregate without dropping long meetings.
@@ -270,6 +278,7 @@ def process_one(db_path, provider=None):
             if not any(result.values()):
                 raise ProcessingError("empty_summary")
         checkpoint()
+        stage = "save_result"
         with connect(db_path) as c:
             c.execute("BEGIN IMMEDIATE")
             guard(c)
@@ -299,6 +308,15 @@ def process_one(db_path, provider=None):
         )
         if isinstance(exc, RuntimeError) and str(exc) in ERRORS:
             code = str(exc)
+        if code == "processing_failed":
+            logger.error(
+                "Meeting processing failed: job=%s stage=%s exception_type=%s. "
+                "For ASR, run: python -m scripts.setup_meeting_ai --check-transcription. "
+                "Meeting contents and exception messages are omitted.",
+                job["id"],
+                stage,
+                type(exc).__name__,
+            )
         status = (
             "cancelled"
             if code in ("permission_changed", "configuration_changed")

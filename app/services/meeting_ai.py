@@ -81,6 +81,10 @@ def readiness():
                     "tokenizer.json",
                     "compass-model-source.json",
                 )
+            )
+            and any(
+                (local / name).is_file()
+                for name in ("vocabulary.json", "vocabulary.txt")
             ),
             summary_model=conf["model"],
             local_only=True,
