@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ drug.name }}</h1>
+{% include 'medicine_nav.html' %}
+<section class="card">
+    <h2>Идентификация записи {{ drug.code }}</h2>
+    <p>МНН / действующее вещество: <strong>{{ drug.inn }}</strong>. Группа: {{ drug.group }}. АТХ: {{ drug.atc }}.</p>
+    <p>Форма из исходной библиотеки: {{ drug.form or 'не указана' }}. Примеры брендов: {{ drug.aliases or 'не указаны' }}.</p>
+    <p class="caption">Идентификационные данные загружены из Excel. Они не подтверждают регистрацию всех перечисленных брендов и форм.</p>
+    <a href="/medicines/import/{{ drug._import }}">Источник и версия записи</a>
+    {% if drug.code == 'D01' %}<p><a href="/reference/aviandr/source">Исходный листок-вкладыш PDF</a> · <a href="/reference/aviandr/archive">Сохранённая справка по листку</a>. Актуальность листка по ГРЛС не подтверждена.</p>{% endif %}
+</section>
+<div class="notice">Справочник не назначает и не отменяет лечение. Сведения применимы только к указанному в проверенном источнике продукту и форме. Для клинического решения нужны действующая инструкция, российские клинические рекомендации и решение врача.</div>
+{% for field,label in fields.items() %}
+<section class="card medicine-fact">
+    <h2>{{ label }}</h2>
+    {% for f in facts[field] %}
+        <p class="medicine-preserve">{{ f.text }}</p>
+        <p>Раздел/страница: {{ f.locator }}. РУ: {{ f.source.meta.registration }}. Форма: {{ f.source.meta.product_form }}.</p>
+        <p><a href="{{ f.source.meta.source_url }}" target="_blank" rel="noopener noreferrer">Первоисточник ГРЛС</a> · <a href="/medicines/import/{{ f.source.id }}">Проверка и история</a></p>
+        <p class="caption">Редакция: {{ f.source.meta.version }}. Дата сверки врачом: {{ f.source.meta.checked_on }}; повторная сверка до {{ f.source.meta.valid_until }}. Сверка выполнена вручную, не автоматически.</p>
+    {% else %}<p>Подтверждённых данных в нашей базе нет. Отсутствие сведений не означает отсутствие противопоказаний, реакций или взаимодействий.</p>{% endfor %}
+    {% if facts[field]|length > 1 %}<p class="warning">Несколько источников: проверьте различия форм и формулировок. Система не объединяет их в рекомендацию.</p>{% endif %}
+</section>
+{% endfor %}
+<section class="card"><h2>Официальные документы и их статусы</h2>
+{% for s in refs %}<p><a href="/medicines/import/{{ s.id }}">{{ s.filename }} · {{ s.meta.version }}</a> — {{ 'проверен врачом в указанном объёме' if s.active else 'не проверен, заменён, отозван или срок сверки истёк' }}.</p>{% else %}<p>Официальный документ для этой записи пока не загружен.</p>{% endfor %}
+<a href="/medicines/import">Загрузить документ или обновление</a></section>
+<details class="card"><summary>Неподтверждённые исходные данные Excel — для вычитки</summary>
+    <p class="warning">Ниже исходные утверждения авторов Excel. Они могут быть неполными, противоречивыми или устаревшими. Не являются проверенными показаниями, дозировками или клиническими правилами. Пустые ячейки не заполнены предположениями.</p>
+    {% for block in raw %}<h2>{{ block.sheet }}</h2><p><a href="/medicines/import/{{ block.import_id }}">Версия источника</a></p>
+    {% for rownum,row in block.rows %}<details><summary>Строка {{ rownum }}</summary><ol>{% for cell in row %}<li>{{ cell if cell is not none else 'Нет данных в источнике' }}</li>{% endfor %}</ol></details>{% endfor %}{% endfor %}
+    <h2>Нежелательные реакции из книги категорий</h2><p>Записей: {{ adverse|length }}. Частоты и приоритеты не подтверждены и не включаются в алерты автоматически.</p>
+    {% for a in adverse %}<details><summary>{{ a.raw['Категория'] }} · {{ a.raw['Медицинский термин'] }}</summary><dl>{% for k,v in a.raw.items() %}<dt>{{ k }}</dt><dd>{{ v if v is not none else 'Нет данных в источнике' }}</dd>{% endfor %}</dl></details>{% endfor %}
+</details>
+<section class="card"><h2>История карточки</h2>{% for h in history %}<p><a href="/medicines/import/{{ h.import_id }}">Версия #{{ h.import_id }} · {{ h.filename }} · {{ h.created_at }}</a></p>{% endfor %}<p>Обновления добавляют версии. Прежние исходники и решения о проверке сохраняются.</p></section>
+{% endblock %}

@@ -426,7 +426,7 @@ def run(
         camera.close()
         doctor.goto(url + "/medicines")
         expect(
-            doctor.get_by_role("heading", name="Библиотека лекарств", exact=True)
+            doctor.get_by_role("heading", name="Библиотека препаратов", exact=True)
         ).to_be_visible()
         expect(
             doctor.get_by_role("link", name="Экстренная помощь", exact=True)
@@ -463,6 +463,8 @@ def run(
         check_diary(patient, doctor, url)
         from scripts.browser_e02 import check_interface
         check_interface(patient, doctor, url)
+        from scripts.browser_medicines import check_medicines
+        check_medicines(patient, doctor, url)
         browser.close()
     print(
         "UI check passed: separate portals, trust/FAQ, teaching safety adaptation with hidden branches, stepped PHQ-4/9/GAD-7, PHQ-ADS assignment, safety events, synthetic audio, diary comments, separate profile pages, family tree/tabs, reports in a separate section, anonymous moderated FAQ, diary notes, consultation booking/video link, desktop/mobile; no JS errors."

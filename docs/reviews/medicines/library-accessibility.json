@@ -1,0 +1,72 @@
+[
+  {
+    "path": "/medicines",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/medicines/aviandr",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/medicines/import",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/medicines/combinations?drug=D01&drug=D02&drug=D04",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/medicines/scenarios",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/medicines/import/3",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/medicines/import/4",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "path": "/medicines",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/medicines/aviandr",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/medicines/import",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/medicines/combinations?drug=D01&drug=D02&drug=D04",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/medicines/scenarios",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/medicines/import/3",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "path": "/medicines/import/4",
+    "width": 1280,
+    "violations": []
+  }
+]

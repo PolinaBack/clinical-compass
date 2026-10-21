@@ -1,0 +1,22 @@
+[
+  {
+    "dialog": "wellbeing",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "dialog": "sleep",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "dialog": "wellbeing",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "dialog": "sleep",
+    "width": 390,
+    "violations": []
+  }
+]

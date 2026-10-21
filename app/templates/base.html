@@ -10,6 +10,7 @@
         <link rel="stylesheet" href="/static/style.css">
         <link rel="stylesheet" href="/static/interface.css">
         <link rel="stylesheet" href="/static/diary.css">
+        {% if current_page is defined and current_page.startswith('/medicines') %}<link rel="stylesheet" href="/static/medicines.css"><script src="/static/medicines.js" defer></script>{% endif %}
         <script src="/static/diary.js" defer></script>
         <script src="/static/app.js" defer></script><script src="/static/workflows.js" defer></script>
     </head>

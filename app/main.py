@@ -27,7 +27,8 @@ from .routes.diary import register_diary
 from .portal import register_portal, portal_data
 from .community import register_community, public_forum_data
 from .family import register_family
-from .catalog import MEDICINES
+from .routes.drug_library import register_drug_library
+from .services.drug_library import bootstrap as bootstrap_drug_library
 from .recordings import register_recordings
 
 ROOT = Path(__file__).resolve().parent
@@ -71,6 +72,9 @@ def create_app(db_path=None):
             extend_schema(c)
         with db() as c:
             apply_migrations(c)
+        with db() as c:
+            c.execute('BEGIN IMMEDIATE')
+            bootstrap_drug_library(c)
         yield
 
     app = FastAPI(title="Клинический компас — демо", lifespan=lifespan)
@@ -558,22 +562,17 @@ def create_app(db_path=None):
         if identity(request) != "doctor":
             raise HTTPException(403, "Библиотека лекарств доступна специалисту")
 
-    @app.get("/medicines")
-    def medicine_library(request: Request):
-        doctor_reference_access(request)
-        return render(request, "medicines.html", medicines=MEDICINES)
+    register_drug_library(app, db, account, doctor_reference_access, csrf_check, render)
 
-    @app.get("/medicines/{slug}")
-    def medicine_page(request: Request, slug: str):
+    @app.get("/reference/aviandr/archive")
+    def aviandr_archive(request: Request):
         doctor_reference_access(request)
-        if slug not in {m["slug"] for m in MEDICINES}:
-            raise HTTPException(404, "Лекарство не найдено")
         return render(request, "aviandr.html")
 
     @app.get("/reference/aviandr")
     def aviandr_reference(request: Request):
         doctor_reference_access(request)
-        return RedirectResponse("/medicines/aviandr", status_code=303)
+        return RedirectResponse("/reference/aviandr/archive", status_code=303)
 
     @app.get("/reference/aviandr/source")
     def aviandr_source(request: Request):

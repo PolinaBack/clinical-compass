@@ -1,16 +1,33 @@
 {% extends 'base.html' %}
 {% block content %}
     <div class="section-page-heading">
-        <h1>Библиотека лекарств</h1>
+        <h1>Библиотека препаратов</h1>
+        <p>Поиск справочной информации для специалиста. Данные справочника не изменяют назначения пациентам.</p>
     </div>
+    {% include 'medicine_nav.html' %}
+    <form class="card medicine-search" action="/medicines" method="get" role="search">
+        <label for="medicine-query">Название, МНН или действующее вещество</label>
+        <input id="medicine-query" name="q" value="{{ q }}" type="search" maxlength="200" autocomplete="off" list="medicine-suggestions" placeholder="Например, Авиандр или маритупирдин">
+        <datalist id="medicine-suggestions"></datalist>
+        <span id="medicine-suggestion-status" role="status" class="caption"></span>
+        <div class="medicine-filters">
+            <label>Группа<select name="group"><option value="">Все группы</option>{% for g in groups %}<option {% if group == g %}selected{% endif %}>{{ g }}</option>{% endfor %}</select></label>
+            <label>Проверка источника<select name="status"><option value="">Все записи</option><option value="verified" {% if status == 'verified' %}selected{% endif %}>Есть проверенный источник</option><option value="unverified" {% if status == 'unverified' %}selected{% endif %}>Требуется проверка</option></select></label>
+            <button>Найти</button><a href="/medicines">Сбросить</a>
+        </div>
+    </form>
+    <p role="status">Найдено: {{ medicines|length }}. Проверка относится только к отдельным сведениям и конкретной форме в источнике.</p>
     <div class="grid two medicine-catalog">
         {% for medicine in medicines %}
             <a class="card profile-tile" href="/medicines/{{ medicine.slug }}">
                 <h2>{{ medicine.name }}</h2>
-                <p>{{ medicine.description }}</p>
+                <p>МНН / действующее вещество: <strong>{{ medicine.inn }}</strong></p>
+                <p>{{ medicine.group }} · АТХ {{ medicine.atc }}</p>
+                <p>Форма из Excel: {{ medicine.form or 'не указана' }}</p>
+                <span class="medicine-badge">{{ 'Есть проверенный источник' if medicine.verified else 'Требуется проверка источника' }}</span>
                 <span>Информация о лекарстве</span></a>
         {% else %}
-            <p>В библиотеке пока нет лекарств.</p>
+            <p>Совпадений нет. Попробуйте название или МНН без фильтров.</p>
         {% endfor %}
     </div>
 {% endblock %}

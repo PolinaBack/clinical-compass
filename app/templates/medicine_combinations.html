@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Проверка лекарственных сочетаний</h1>{% include 'medicine_nav.html' %}
+<p>Выберите от 2 до 20 разных препаратов. Проверяются все пары выбранного набора в загруженной базе. Это справочная проверка; она не оценивает всю схему, дозы, функции органов или индивидуальные противопоказания.</p>
+<form class="card" method="get" action="/medicines/combinations"><fieldset><legend>Препараты для сравнения</legend><div class="grid two">
+{% for d in drugs %}<label class="check"><input type="checkbox" name="drug" value="{{ d.code }}" {% if d.code in selected %}checked{% endif %}>{{ d.name }} · {{ d.inn }}</label>{% endfor %}</div></fieldset><button>Проверить сочетания</button></form>
+{% if results is not none %}
+<p role="status">Проверено пар: {{ results|length }}. Отсутствие записи не означает отсутствие взаимодействий.</p>
+{% for result in results %}<section class="card medicine-pair"><h2>{{ result.a.name }} + {{ result.b.name }}</h2>
+{% for known in result.known %}<article><h3>{{ severities[known.level] }}</h3><p class="medicine-preserve">{{ known.explanation }}</p><p>Раздел/страница: {{ known.locator }}.</p><p><a href="{{ known.source.meta.source_url }}" target="_blank" rel="noopener noreferrer">Первоисточник ГРЛС</a> · <a href="/medicines/import/{{ known.source.id }}">Версия и решение проверяющего врача</a></p><p>Редакция {{ known.source.meta.version }}, сверка {{ known.source.meta.checked_on }}. Продукт/форма: {{ known.source.meta.product_form }}.</p></article>
+{% else %}<p class="warning">Подтверждённое взаимодействие не найдено в нашей базе. Это не означает, что взаимодействий нет.</p>{% endfor %}
+{% if result.known|length > 1 %}<p class="warning">Найдено несколько источников. Сопоставьте применимость и возможные разногласия; общий уровень безопасности не рассчитывается.</p>{% endif %}
+{% if result.candidate %}<details><summary>Есть неподтверждённая запись Excel — требуется сверка</summary><p>Уровень в Excel: {{ result.candidate.level }}.</p><p>{{ result.candidate.explanation }}</p><p><a href="/medicines/import/{{ result.candidate._import }}">Исходный файл и версия</a></p><p>Ссылки, указанные авторами Excel:</p><ul>{% for url in result.candidate.urls %}<li>{{ url or 'Не указана' }}</li>{% endfor %}</ul><p>Эти данные не являются заключением о совместимости.</p></details>{% endif %}
+<p>Назначения, изменение доз и отмена — только по решению лечащего врача.</p></section>{% endfor %}
+{% endif %}
+{% endblock %}
