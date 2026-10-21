@@ -31,6 +31,7 @@
                 {% endif %}
             </nav>
             <div class="header-actions">
+                {% if user %}<a class="settings-link" href="/settings">Настройки</a>{% endif %}
                 <a class="help-link" href="/help-now">Мне нужна помощь сейчас →</a>
                 {% if user %}
                     <span class="role-badge">{{ 'Специалист' if user == 'doctor' else 'Пациент' }}</span>

@@ -1,0 +1,34 @@
+<article class="inset">
+    <h3>{{ document.title }}</h3>
+    <p>{{ document.body }}</p>
+    <p class="caption">Версия: {{ document.version }}</p>
+    <p><strong>Хранение и отзыв.</strong> {{ document.retention }}</p>
+    <p>
+        <strong>Моё согласие: {{ 'дано для этой версии' if granted else 'не дано для этой версии' }}.</strong>
+        {% if state %}
+            Последнее решение: {{ {'granted':'согласие дано','declined':'согласие не дано','withdrawn':'согласие отозвано'}[state.status] }}
+            · {{ state.created_at }}.
+        {% else %}
+            Отдельного согласия ещё нет.
+        {% endif %}
+    </p>
+    {% if can_change %}
+        <form action="/settings/consents/{{ document.purpose }}" method="post">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="context_id" value="{{ context_id or '' }}">
+            <input type="hidden" name="document_id" value="{{ document.id }}">
+            <input type="hidden" name="expected_id" value="{{ state.id if state else 0 }}">
+            {% if not granted and can_grant|default(true) %}
+                <label class="check">
+                    <input type="checkbox" name="confirmed" value="true">
+                    Я прочитал(а) этот текст и отдельно разрешаю: {{ document.title|lower }}{{ ' для этой консультации' if context_id else '' }}.
+                </label>
+                <button name="action" value="granted">Дать согласие: {{ document.title|lower }}</button>
+                <button class="secondary" name="action" value="declined">Не разрешать: {{ document.title|lower }}</button>
+            {% endif %}
+            {% if state and state.status == 'granted' %}
+                <button class="secondary" name="action" value="withdrawn">Отозвать: {{ document.title|lower }}</button>
+            {% endif %}
+        </form>
+    {% endif %}
+</article>

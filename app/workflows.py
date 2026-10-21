@@ -19,6 +19,7 @@ from .scales import (
     symptom_category,
 )
 from .storage import now, audit
+from .services.consent import withdraw_optional_consents
 
 
 def overview(db, pid):
@@ -165,6 +166,8 @@ def register_workflows(
                 "consent_accepted" if accepted else "consent_withdrawn",
                 user["patient_id"],
             )
+            if not accepted:
+                withdraw_optional_consents(c, user)
         return RedirectResponse("/me" if accepted else "/faq", status_code=303)
 
     @app.post("/assessments/start")

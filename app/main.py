@@ -18,6 +18,8 @@ from .content import FAQ, RESOURCES
 from .security import verify_password
 from .storage import extend_schema, audit, now
 from .workflows import register_workflows, overview
+from .migrations import apply_migrations
+from .routes.settings import register_settings
 
 ROOT = Path(__file__).resolve().parent
 
@@ -58,6 +60,7 @@ def create_app(db_path=None):
             """
             )
             extend_schema(c)
+            apply_migrations(c)
         yield
 
     app = FastAPI(title="Клинический компас — демо", lifespan=lifespan)
@@ -512,6 +515,7 @@ def create_app(db_path=None):
     register_workflows(
         app, db, account, identity, access, csrf_check, render, has_consent
     )
+    register_settings(app, db, account, csrf_check, render, has_consent)
     return app
 
 

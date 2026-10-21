@@ -167,11 +167,20 @@ small,
 }
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 18px;
   align-items: center;
 }
 .header-actions form {
   margin: 0;
+}
+.settings-link {
+  font-size: 12px;
+}
+.account-settings {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .help-link {
   color: var(--danger);
