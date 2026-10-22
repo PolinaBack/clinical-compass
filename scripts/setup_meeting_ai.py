@@ -52,6 +52,55 @@ def check_transcription():
     return 0
 
 
+def check_summary():
+    """Use the real app payload on fixed artificial text, with no database access."""
+    print(
+        "Проверка итогов на искусственном разговоре. База и записи встреч не читаются."
+    )
+    try:
+        conf = configuration()
+        print(f"Адрес: {conf['ollama_url']} · модель: {conf['model']}")
+        print(
+            "Проверяются /api/show, /api/chat, параметры приложения, JSON, цитаты и номера фрагментов."
+        )
+        segments = [
+            dict(
+                id=1,
+                start=0,
+                end=4,
+                text="Обсудили режим сна и время отхода ко сну.",
+                speaker="Тестовый участник",
+            ),
+            dict(
+                id=2,
+                start=4,
+                end=8,
+                text="Договорились записывать время сна в течение недели.",
+                speaker="Тестовый участник",
+            ),
+        ]
+        LocalModels().summarize(segments, lambda: None, diagnostic=True)
+    except ProcessingError as exc:
+        from app.services.meetings import ERRORS
+
+        print(f"Проверка не пройдена. Код: {exc.code}.")
+        print(
+            f"Этап: {exc.stage or 'настройка'} · HTTP: {exc.http_status or 'ответ не получен'}"
+        )
+        print(ERRORS.get(exc.code, "Проверьте настройку локальной модели."))
+        if exc.server_error:
+            print("Ошибка Ollama на искусственном запросе: " + exc.server_error)
+        return 1
+    except Exception as exc:
+        print(f"Ошибка среды на искусственном запросе: {type(exc).__name__}: {exc}")
+        return 1
+    print(
+        "Искусственный разговор обработан: ответ, структура и цитаты прошли проверку."
+    )
+    print("Это проверка работы программы, а не клинического качества итогов.")
+    return 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--download-whisper", action="store_true")
@@ -61,13 +110,24 @@ def main(argv=None):
         action="store_true",
         help="Test local ASR on generated silence; never reads meetings or downloads models",
     )
+    parser.add_argument(
+        "--check-summary",
+        action="store_true",
+        help="Test the app's real Ollama request using artificial text only",
+    )
     args = parser.parse_args(argv)
-    if args.check_transcription:
-        if args.download_whisper or args.pull_summary:
+    if args.check_transcription or args.check_summary:
+        if (
+            args.download_whisper
+            or args.pull_summary
+            or (args.check_transcription and args.check_summary)
+        ):
             parser.error(
-                "Проверку распознавания запускают отдельно от загрузки моделей."
+                "Каждую диагностическую проверку запускают отдельно, без загрузки моделей."
             )
-        raise SystemExit(check_transcription())
+        raise SystemExit(
+            check_transcription() if args.check_transcription else check_summary()
+        )
     conf = configuration()
     if args.download_whisper:
         try:

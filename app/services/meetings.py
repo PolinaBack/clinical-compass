@@ -29,7 +29,14 @@ ERRORS = {
     "asr_model_missing": "Локальная модель Whisper отсутствует или загружена не полностью, включая словарь. Выполните: python -m scripts.setup_meeting_ai --download-whisper.",
     "asr_dependency_missing": "Установите зависимости из requirements-meetings.txt.",
     "local_provider_required": "Этот режим допускает только локальные модели и локальный Ollama.",
-    "summary_provider_unavailable": "Ollama недоступна, модель не установлена или ответ не получен. Проверьте локальный сервис.",
+    "summary_provider_unavailable": "Не удалось получить ответ от локального Ollama. Проверьте адрес сервиса и доступ к нему из обработчика; выполните --check-summary.",
+    "summary_timeout": "Ollama не ответила в установленное время. Проверьте загрузку компьютера и журнал сервиса.",
+    "summary_model_missing": "Ollama вернула HTTP 404. Проверьте имя модели и её наличие на адресе, который использует обработчик.",
+    "summary_request_rejected": "Ollama отклонила параметры запроса. Запустите проверку --check-summary и посмотрите причину в журнале Ollama.",
+    "summary_provider_http_error": "Ollama ответила ошибкой HTTP при подготовке итогов. Запустите проверку --check-summary; причиной может быть сбой модели или нехватка ресурсов.",
+    "summary_protocol_invalid": "Ollama ответила, но формат HTTP/JSON-ответа отличается от ожидаемого. Выполните проверку --check-summary.",
+    "summary_json_invalid": "Ollama ответила, но текст итогов не является корректным JSON. Черновик не сохранён; это ошибка формата ответа, а не недоступность сервиса.",
+    "summary_output_truncated": "Ответ Ollama не завершён или достигнут лимит генерации. Черновик не сохранён. Требуется проверить размер частей и лимит ответа.",
     "invalid_transcript": "Модель вернула некорректную расшифровку или таймкоды.",
     "invalid_summary": "Ответ модели не прошёл проверку формата, цитат или ссылок на сегменты.",
     "empty_summary": "Модель не нашла подтверждённых пунктов в этом фрагменте.",
@@ -378,6 +385,14 @@ def process_one(db_path, provider=None):
                 job["id"],
                 stage,
                 type(exc).__name__,
+            )
+        elif isinstance(exc, ProcessingError) and exc.stage:
+            logger.warning(
+                "Meeting job=%s code=%s stage=%s HTTP=%s. Response contents omitted.",
+                job["id"],
+                code,
+                exc.stage,
+                exc.http_status,
             )
         status = (
             "cancelled"

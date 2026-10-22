@@ -20,9 +20,61 @@ GROUPS = {
 
 
 class ProcessingError(Exception):
-    def __init__(self, code):
+    def __init__(self, code, *, stage="", http_status=None, server_error=""):
         self.code = code
+        self.stage = stage
+        self.http_status = http_status
+        # Only populated by the explicit synthetic diagnostic, never real jobs.
+        self.server_error = server_error
         super().__init__(code)
+
+
+def ollama_json(client, path, payload, *, diagnostic=False):
+    try:
+        response = client.post(path, json=payload)
+    except httpx.TimeoutException:
+        raise ProcessingError("summary_timeout", stage=path) from None
+    except httpx.RequestError:
+        raise ProcessingError("summary_provider_unavailable", stage=path) from None
+    if response.is_redirect:
+        raise ProcessingError(
+            "local_provider_required", stage=path, http_status=response.status_code
+        )
+    if response.is_error:
+        code = (
+            "summary_model_missing"
+            if response.status_code == 404
+            else (
+                "summary_request_rejected"
+                if response.status_code in (400, 422)
+                else "summary_provider_http_error"
+            )
+        )
+        server_error = ""
+        if diagnostic:
+            try:
+                error = response.json().get("error")
+                if isinstance(error, str):
+                    server_error = error[:1000]
+            except (ValueError, AttributeError):
+                pass
+        raise ProcessingError(
+            code,
+            stage=path,
+            http_status=response.status_code,
+            server_error=server_error,
+        )
+    try:
+        data = response.json()
+    except ValueError:
+        raise ProcessingError(
+            "summary_protocol_invalid", stage=path, http_status=response.status_code
+        ) from None
+    if not isinstance(data, dict):
+        raise ProcessingError(
+            "summary_protocol_invalid", stage=path, http_status=response.status_code
+        )
+    return data
 
 
 def configuration():
@@ -258,7 +310,7 @@ class LocalModels:
         checkpoint()
         return result, "Faster Whisper · " + Path(conf["asr_path"]).name + " · локально"
 
-    def summarize(self, segments, checkpoint):
+    def summarize(self, segments, checkpoint, *, diagnostic=False):
         conf = configuration()
         output = {k: [] for k in GROUPS}
         prompt = (
@@ -278,51 +330,72 @@ class LocalModels:
             timeout=httpx.Timeout(180, connect=5),
         ) as client:
             checkpoint()
-            try:
-                info = client.post("/api/show", json={"model": conf["model"]})
-                info.raise_for_status()
-                meta = info.json()
-                if (
-                    meta.get("remote_host")
-                    or meta.get("remote_model")
-                    or not meta.get("model_info", {}).get("general.architecture")
-                ):
-                    raise ProcessingError("local_provider_required")
-            except (httpx.HTTPError, ValueError, TypeError, AttributeError):
-                raise ProcessingError("summary_provider_unavailable") from None
+            meta = ollama_json(
+                client, "/api/show", {"model": conf["model"]}, diagnostic=diagnostic
+            )
+            model_info = meta.get("model_info")
+            if (
+                meta.get("remote_host")
+                or meta.get("remote_model")
+                or not isinstance(model_info, dict)
+                or not model_info.get("general.architecture")
+            ):
+                raise ProcessingError("local_provider_required", stage="/api/show")
             parts = list(chunks(segments))
             report_progress(
                 checkpoint, stage="summarize", units_done=0, units_total=len(parts)
             )
             for index, part in enumerate(parts, 1):
                 checkpoint()
-                try:
-                    response = client.post(
-                        "/api/chat",
-                        json=dict(
-                            model=conf["model"],
-                            stream=False,
-                            format="json",
-                            options={
-                                "temperature": 0,
-                                "num_ctx": 8192,
-                                "num_predict": 3000,
+                response = ollama_json(
+                    client,
+                    "/api/chat",
+                    dict(
+                        model=conf["model"],
+                        stream=False,
+                        format="json",
+                        options={
+                            "temperature": 0,
+                            "num_ctx": 8192,
+                            "num_predict": 3000,
+                        },
+                        messages=[
+                            {"role": "system", "content": prompt},
+                            {
+                                "role": "user",
+                                "content": json.dumps(part, ensure_ascii=False),
                             },
-                            messages=[
-                                {"role": "system", "content": prompt},
-                                {
-                                    "role": "user",
-                                    "content": json.dumps(part, ensure_ascii=False),
-                                },
-                            ],
-                        ),
+                        ],
+                    ),
+                    diagnostic=diagnostic,
+                )
+                if (
+                    response.get("done") is False
+                    or response.get("done_reason") == "length"
+                ):
+                    raise ProcessingError(
+                        "summary_output_truncated", stage="/api/chat", http_status=200
                     )
-                    response.raise_for_status()
-                    data = json.loads(response.json()["message"]["content"])
-                except (httpx.HTTPError, ValueError, KeyError, TypeError):
-                    raise ProcessingError("summary_provider_unavailable") from None
+                message = response.get("message")
+                if not isinstance(message, dict) or not isinstance(
+                    message.get("content"), str
+                ):
+                    raise ProcessingError(
+                        "summary_protocol_invalid", stage="/api/chat", http_status=200
+                    )
+                try:
+                    data = json.loads(message["content"])
+                except ValueError:
+                    raise ProcessingError(
+                        "summary_json_invalid", stage="/api/chat", http_status=200
+                    ) from None
                 checkpoint()
-                part_result = validate_summary(data, part)
+                try:
+                    part_result = validate_summary(data, part)
+                except ProcessingError as exc:
+                    raise ProcessingError(
+                        exc.code, stage="validate_summary", http_status=200
+                    ) from None
                 for kind in GROUPS:
                     output[kind].extend(part_result[kind])
                 report_progress(
