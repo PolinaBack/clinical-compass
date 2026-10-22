@@ -1,6 +1,7 @@
 """Local persistent queue. Start separately from uvicorn; no implicit model download."""
 
 import argparse
+import logging
 import sqlite3
 import time
 from contextlib import closing
@@ -46,7 +47,7 @@ def checked_database_path():
                 required <= tables
                 and c.execute(
                     "SELECT 1 FROM schema_migrations WHERE version=?",
-                    ("005_meeting_processing.sql",),
+                    ("006_meeting_progress.sql",),
                 ).fetchone()
             )
     except sqlite3.Error:
@@ -54,7 +55,9 @@ def checked_database_path():
             "Не удалось прочитать базу SQLite. Проверьте выбранный файл и права доступа."
         )
     if not ready:
-        stop("В этой базе ещё не применена миграция 005 для записей встреч.")
+        stop(
+            "В этой базе ещё не применены миграции 005/006 для записей встреч и прогресса."
+        )
     return path
 
 
@@ -65,6 +68,8 @@ def main(argv=None):
     )
     args = parser.parse_args(argv)
     path = checked_database_path()
+    logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(message)s")
+    logging.getLogger("app.services.meetings").setLevel(logging.INFO)
     print(f"База данных обработчика: {path}")
     print(
         "Обработчик локальных встреч запущен. Ctrl+C — остановить. Содержимое записей в журнал не выводится."

@@ -10,6 +10,7 @@ from playwright.sync_api import expect
 
 
 def check_meetings(patient, doctor, url, run_job):
+    """The disposable worker callback reports progress across a five-second poll."""
     errors = []
     for page in (doctor, patient):
         page.on("pageerror", lambda error: errors.append(str(error)))
@@ -100,8 +101,19 @@ def check_meetings(patient, doctor, url, run_job):
     )
     media_path = doctor.locator("video").get_attribute("src")
     doctor.get_by_role("button", name="Расшифровать запись", exact=True).click()
+    # Observe real polling while the external callback handles only the disposable DB.
+    doctor.evaluate(
+        "window.progressMessages=[]; new MutationObserver(()=>window.progressMessages.push(document.querySelector('[data-job-progress]')?.textContent)).observe(document.querySelector('.meeting-recording'),{subtree:true,childList:true,characterData:true})"
+    )
     run_job()
-    doctor.reload()
+    expect(doctor.locator("[data-meeting-job]").first).to_have_attribute(
+        "data-job-state", "done", timeout=15000
+    )
+    expect(doctor.locator("[data-job-ready]").first).to_be_visible()
+    assert doctor.evaluate(
+        "window.progressMessages.some(message=>message?.includes('Распознано до'))"
+    )
+    doctor.locator("[data-job-ready] a").first.click()
     doctor.get_by_text("Расшифровка · версия", exact=False).click()
     doctor.get_by_label("Говорящий · фрагмент 1", exact=True).fill(
         "Пациент — синтетический пример"
@@ -115,11 +127,23 @@ def check_meetings(patient, doctor, url, run_job):
     doctor.get_by_role(
         "button", name="Подготовить итоги и следующие шаги", exact=True
     ).click()
+    doctor.get_by_text("Расшифровка · версия", exact=False).click()
+    doctor.get_by_label("Текст · фрагмент 1", exact=False).fill(
+        "НЕСОХРАНЁННАЯ тестовая правка"
+    )
     run_job()
+    expect(doctor.locator("[data-meeting-job]").first).to_have_attribute(
+        "data-job-state", "done", timeout=15000
+    )
+    expect(doctor.get_by_label("Текст · фрагмент 1", exact=False)).to_have_value(
+        "НЕСОХРАНЁННАЯ тестовая правка"
+    )
     doctor.reload()
     patient.goto(url + meeting_path)
     expect(patient.get_by_text("Обсуждался сон.", exact=True)).to_have_count(0)
-    expect(patient.locator('input[type="file"],video,audio')).to_have_count(0)
+    expect(
+        patient.locator('input[type="file"],video,audio,[data-meeting-job]')
+    ).to_have_count(0)
     assert patient.request.get(url + media_path).status == 403
     doctor.get_by_label(
         "Я проверил(а) смысл каждого оставленного пункта", exact=False
@@ -177,5 +201,5 @@ def check_meetings(patient, doctor, url, run_job):
     if axe:
         assert not any(a["violations"] for a in audits), audits
     print(
-        "PASS meetings UI: scoped consent, real MP4/doctor playback/seek, synthetic worker, corrections, cited draft, clinician review/withdrawal, patient denied upload/player/direct media/full transcript, four widths."
+        "PASS meetings UI: scoped consent, real MP4/doctor playback/seek, live progress polling without losing unsaved text, synthetic worker, corrections, cited draft, clinician review/withdrawal, patient denied progress/upload/player/direct media/full transcript, four widths."
     )

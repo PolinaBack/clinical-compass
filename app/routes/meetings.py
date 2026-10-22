@@ -3,7 +3,7 @@ from pathlib import Path
 import re
 
 from fastapi import Request, HTTPException
-from fastapi.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse, Response, JSONResponse
 from starlette.concurrency import run_in_threadpool
 from app.storage import now, audit
 from app.services import meetings as service
@@ -14,6 +14,7 @@ from app.services.meeting_ai import (
     validate_transcript,
     ProcessingError,
 )
+from app.services.meeting_progress import job_status
 from app.services.consent import (
     create_consultation_context,
     context_access,
@@ -43,6 +44,29 @@ def register_meetings(app, db, account, access, csrf_check, render):
 
     def reply(mid):
         return RedirectResponse(f"/meetings/{mid}", status_code=303)
+
+    def progress_view(row, duration):
+        result = job_status(row, duration)
+        result["error_message"] = (
+            service.ERRORS.get(row["error_code"], service.ERRORS["processing_failed"])
+            if row["error_code"]
+            else ""
+        )
+        return result
+
+    @app.get("/meetings/{mid}/jobs")
+    def jobs(request: Request, mid: int):
+        user = account(request)
+        clinician(user)
+        with db() as c:
+            scope(c, mid, user)
+            rows = c.execute(
+                """SELECT j.*,r.duration FROM meeting_jobs j JOIN meeting_recordings r ON r.id=j.recording_id
+                   WHERE r.meeting_id=? AND r.deleted_at IS NULL AND r.expires_at>? ORDER BY j.id DESC""",
+                (mid, now()),
+            ).fetchall()
+            result = [progress_view(row, row["duration"]) for row in rows]
+        return JSONResponse({"jobs": result}, headers={"Cache-Control": "no-store"})
 
     @app.get("/patients/{pid}/meetings")
     def index(request: Request, pid: int):
@@ -141,10 +165,13 @@ def register_meetings(app, db, account, access, csrf_check, render):
                 if item["deleted_at"] or item["expired"]:
                     item["transcript"] = item["summary"] = None
                 item["jobs"] = (
-                    c.execute(
-                        "SELECT id,kind,status,error_code,attempts,updated_at FROM meeting_jobs WHERE recording_id=? ORDER BY id DESC",
-                        (r["id"],),
-                    ).fetchall()
+                    [
+                        progress_view(job, r["duration"])
+                        for job in c.execute(
+                            "SELECT * FROM meeting_jobs WHERE recording_id=? ORDER BY id DESC",
+                            (r["id"],),
+                        ).fetchall()
+                    ]
                     if user["role"] == "doctor"
                     else []
                 )

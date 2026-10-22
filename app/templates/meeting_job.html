@@ -1,0 +1,11 @@
+<section class="meeting-job" data-meeting-job="{{ job.id }}" data-job-state="{{ job.status }}" aria-labelledby="job-title-{{ job.id }}">
+  <h3 id="job-title-{{ job.id }}">Задача {{ job.id }} · {{ 'расшифровка' if job.kind == 'transcript' else 'итоги встречи' }}</h3>
+  <p data-job-status role="status">Статус: {{ job.status_label }} · {{ job.stage_label }}</p>
+  <progress max="100" {% if job.percent is not none %}value="{{ job.percent }}"{% endif %} aria-label="Прогресс задачи {{ job.id }}" {% if job.status in ['failed','cancelled'] %}hidden{% endif %}></progress>
+  <p data-job-progress>{{ job.progress_text }}</p>
+  <p data-job-elapsed>{{ job.elapsed_text }}</p>
+  <p data-job-activity>{{ job.activity_text }}</p>
+  <p data-job-warning class="warning" {% if not job.warning %}hidden{% endif %}>{{ job.warning }}</p>
+  <p data-job-error class="warning" {% if not job.error_message %}hidden{% endif %}>{{ job.error_message }}{% if job.status == 'failed' %} После исправления нажмите кнопку обработки ещё раз.{% endif %}</p>
+  <p data-job-ready {% if job.status != 'done' %}hidden{% endif %}><a href="/meetings/{{ meeting.id }}?result={{ job.id }}#recording-{{ record.id }}">{{ 'Показать расшифровку' if job.kind == 'transcript' else 'Показать итоги' }}</a></p>
+</section>

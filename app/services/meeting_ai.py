@@ -191,8 +191,17 @@ def chunks(segments, limit=6000):
         yield part
 
 
+def report_progress(checkpoint, **fields):
+    report = getattr(checkpoint, "progress", None)
+    if report:
+        report(**fields)
+    else:
+        checkpoint()
+
+
 class LocalModels:
     def transcribe(self, path, checkpoint):
+        report_progress(checkpoint, stage="checking_model")
         conf = configuration()
         if not readiness()["model"]:
             raise ProcessingError("asr_model_missing")
@@ -215,6 +224,7 @@ class LocalModels:
         import onnxruntime
 
         onnxruntime.disable_telemetry_events()
+        report_progress(checkpoint, stage="loading_model")
         model = WhisperModel(
             conf["asr_path"],
             device="cpu",
@@ -222,6 +232,7 @@ class LocalModels:
             cpu_threads=4,
             local_files_only=True,
         )
+        report_progress(checkpoint, stage="detecting_speech")
         segments, info = model.transcribe(
             str(path),
             language="ru",
@@ -230,8 +241,11 @@ class LocalModels:
             condition_on_previous_text=False,
         )
         result = []
+        report_progress(checkpoint, stage="transcribe")
         for segment in segments:
-            checkpoint()
+            report_progress(
+                checkpoint, stage="transcribe", processed_seconds=segment.end
+            )
             if segment.text.strip():
                 result.append(
                     dict(
@@ -276,7 +290,11 @@ class LocalModels:
                     raise ProcessingError("local_provider_required")
             except (httpx.HTTPError, ValueError, TypeError, AttributeError):
                 raise ProcessingError("summary_provider_unavailable") from None
-            for part in chunks(segments):
+            parts = list(chunks(segments))
+            report_progress(
+                checkpoint, stage="summarize", units_done=0, units_total=len(parts)
+            )
+            for index, part in enumerate(parts, 1):
                 checkpoint()
                 try:
                     response = client.post(
@@ -307,4 +325,10 @@ class LocalModels:
                 part_result = validate_summary(data, part)
                 for kind in GROUPS:
                     output[kind].extend(part_result[kind])
+                report_progress(
+                    checkpoint,
+                    stage="summarize",
+                    units_done=index,
+                    units_total=len(parts),
+                )
         return output, "Ollama · " + conf["model"] + " · локально"

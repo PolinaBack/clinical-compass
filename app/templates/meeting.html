@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="meeting-page">
+<div class="meeting-page" {% if user == 'doctor' %}data-meeting-jobs-url="/meetings/{{ meeting.id }}/jobs"{% endif %}>
 <h1>{{ 'Запись и итоги встречи' if user == 'doctor' else 'Согласия и итоги встречи' }}</h1><p>{{ meeting.starts_at|replace('T',' · ') }} · <a href="/patients/{{ meeting.patient_id }}/meetings">Все встречи</a></p>
 <p class="notice">Итоги и следующие шаги готовятся только по разговору и проверяются врачом. Этот раздел не назначает лечение и не меняет дневник, шкалы или лекарственную схему.</p>
 <section class="card"><h2>Как обрабатывается запись</h2><p>Речь распознаёт локальная модель Faster Whisper. Черновик итогов формирует локальная Ollama. Запись и текст не отправляются внешнему ИИ-сервису; обработка происходит там, где запущен «Компас». Модели заранее скачиваются отдельно.</p>
@@ -23,7 +23,8 @@
 <p>Таймкоды ниже позволяют перейти к фрагменту оригинала. Без JavaScript нужное время можно выбрать в плеере.</p>
 <div class="meeting-actions"><form method="post" action="/meeting-recordings/{{ record.id }}/jobs/transcript"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Расшифровать запись</button></form>
 {% if record.transcript %}<form method="post" action="/meeting-recordings/{{ record.id }}/jobs/summary"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Подготовить итоги и следующие шаги</button></form>{% endif %}</div>
-{% for job in record.jobs %}<p>Задача {{ job.id }} · {{ 'расшифровка' if job.kind == 'transcript' else 'итоги встречи' }} — {{ {'queued':'ожидает обработчика','running':'выполняется','done':'завершена','failed':'ошибка','cancelled':'отменена'}[job.status] }}. {% if job.error_code %}{{ errors.get(job.error_code,errors.processing_failed) }}{% if job.status == 'failed' %} После исправления нажмите кнопку обработки ещё раз.{% endif %}{% endif %}</p>{% endfor %}
+{% if record.jobs %}<p data-job-poll-status role="status">Статусы обновляются каждые 5 секунд. Подтверждение связи не гарантирует продвижения распознавания. Готовый текст открывается по кнопке, чтобы сохранить ваши несохранённые правки.</p>{% endif %}
+{% for job in record.jobs %}{% include 'meeting_job.html' %}{% endfor %}
 {% endif %}
 {% if user == 'doctor' and record.transcript %}<details class="meeting-transcript"><summary>Расшифровка · версия {{ record.transcript.id }}</summary><p>{{ record.transcript.provider }} · {{ record.transcript.created_at }}. Автоматическое определение говорящих не включено: врач уточняет подписи вручную.</p>
 <p class="warning">Проверьте по оригиналу все названия лекарств, в том числе неизвестные и похожие названия, дозы, отрицания и принадлежность реплики. Предупреждение относится к каждому фрагменту; модель не исправляет препараты по догадке.</p>

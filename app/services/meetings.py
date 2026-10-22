@@ -3,7 +3,9 @@
 import hashlib
 import json
 import logging
+import math
 import secrets
+import time
 from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
@@ -18,6 +20,7 @@ from app.services.meeting_ai import (
     validate_summary,
 )
 from app.services.meeting_media import audio_for_model
+from app.services.meeting_progress import heartbeat, STAGES
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +122,7 @@ def enqueue(c, rid, kind, user):
     if old:
         if old["status"] == "failed":
             c.execute(
-                "UPDATE meeting_jobs SET status='queued',error_code='',updated_at=? WHERE id=?",
+                "UPDATE meeting_jobs SET status='queued',error_code='',stage='queued',processed_seconds=0,units_done=0,units_total=0,started_at=NULL,heartbeat_at=NULL,progress_at=NULL,updated_at=? WHERE id=?",
                 (now(), old["id"]),
             )
             event(c, rid, "job_retried", user["id"], reason=str(old["id"]))
@@ -130,8 +133,8 @@ def enqueue(c, rid, kind, user):
             )
         return old["id"]
     ident = c.execute(
-        """INSERT INTO meeting_jobs(recording_id,kind,source_id,job_key,consent_stamp,config_stamp,requested_by,created_at,updated_at)
-                       VALUES(?,?,?,?,?,?,?,?,?)""",
+        """INSERT INTO meeting_jobs(recording_id,kind,source_id,job_key,consent_stamp,config_stamp,requested_by,created_at,updated_at,stage)
+                       VALUES(?,?,?,?,?,?,?,?,?,'queued')""",
         (rid, kind, source_id, key, consent, config, user["id"], now(), now()),
     ).lastrowid
     event(c, rid, "job_queued", user["id"], reason=str(ident))
@@ -210,8 +213,8 @@ def process_one(db_path, provider=None):
             return False
         job = dict(job)
         c.execute(
-            "UPDATE meeting_jobs SET status='running',attempts=attempts+1,worker_token=?,lease_until=?,updated_at=? WHERE id=?",
-            (worker, stamp_time(600), now(), job["id"]),
+            "UPDATE meeting_jobs SET status='running',attempts=attempts+1,worker_token=?,lease_until=?,updated_at=?,stage='prepare',processed_seconds=0,units_done=0,units_total=0,started_at=?,heartbeat_at=?,progress_at=? WHERE id=?",
+            (worker, stamp_time(600), now(), now(), now(), now(), job["id"]),
         )
 
     def guard(c):
@@ -231,13 +234,64 @@ def process_one(db_path, provider=None):
                 raise ProcessingError("permission_changed")
         return row
 
-    def checkpoint():
+    last_log = 0
+
+    def checkpoint(
+        stage=None, processed_seconds=None, units_done=None, units_total=None
+    ):
+        nonlocal last_log
         with connect(db_path) as c:
-            guard(c)
-            c.execute(
-                "UPDATE meeting_jobs SET lease_until=? WHERE id=? AND worker_token=?",
-                (stamp_time(600), job["id"], worker),
+            c.execute("BEGIN IMMEDIATE")
+            row = guard(c)
+            previous = c.execute(
+                "SELECT * FROM meeting_jobs WHERE id=?", (job["id"],)
+            ).fetchone()
+            next_stage = stage or previous["stage"]
+            if next_stage not in STAGES:
+                raise ProcessingError("processing_failed")
+            seconds = previous["processed_seconds"]
+            if processed_seconds is not None:
+                if not math.isfinite(float(processed_seconds)):
+                    raise ProcessingError("invalid_transcript")
+                seconds = max(
+                    seconds, min(row["duration"], max(0, float(processed_seconds)))
+                )
+            total = max(previous["units_total"], int(units_total or 0))
+            completed = min(total, max(previous["units_done"], int(units_done or 0)))
+            changed = (next_stage, seconds, completed, total) != (
+                previous["stage"],
+                previous["processed_seconds"],
+                previous["units_done"],
+                previous["units_total"],
             )
+            c.execute(
+                "UPDATE meeting_jobs SET lease_until=?,heartbeat_at=?,stage=?,processed_seconds=?,units_done=?,units_total=?,progress_at=? WHERE id=? AND worker_token=?",
+                (
+                    stamp_time(600),
+                    now(),
+                    next_stage,
+                    seconds,
+                    completed,
+                    total,
+                    now() if changed else previous["progress_at"],
+                    job["id"],
+                    worker,
+                ),
+            )
+        if changed and (
+            next_stage != previous["stage"] or time.monotonic() - last_log >= 10
+        ):
+            logger.info(
+                "Meeting job=%s stage=%s processed_seconds=%s units=%s/%s",
+                job["id"],
+                next_stage,
+                round(seconds, 1),
+                completed,
+                total,
+            )
+            last_log = time.monotonic()
+
+    checkpoint.progress = checkpoint
 
     stage = "prepare"
     try:
@@ -255,18 +309,25 @@ def process_one(db_path, provider=None):
                 if job["source_id"]
                 else None
             )
-        checkpoint()
+        checkpoint(stage="prepare")
         if job["kind"] == "transcript":
             stage = "decode_audio"
-            with audio_for_model(content) as path:
+            checkpoint(stage=stage)
+            with heartbeat(db_path, job["id"], worker), audio_for_model(
+                content
+            ) as path:
                 stage = "transcribe"
                 raw, name = provider.transcribe(path, checkpoint)
             stage = "validate_transcript"
+            checkpoint(stage=stage)
             result = validate_transcript(raw, duration)
         else:
             stage = "summarize"
+            checkpoint(stage=stage)
             segments = json.loads(source["payload"])["segments"]
-            raw, name = provider.summarize(segments, checkpoint)
+            with heartbeat(db_path, job["id"], worker):
+                raw, name = provider.summarize(segments, checkpoint)
+            checkpoint(stage="validate_summary")
             # Each chunk was checked; validate the aggregate without dropping long meetings.
             result = {k: [] for k in ("summary", "next_steps", "clarifications")}
             for k, items in raw.items():
@@ -279,6 +340,7 @@ def process_one(db_path, provider=None):
                 raise ProcessingError("empty_summary")
         checkpoint()
         stage = "save_result"
+        checkpoint(stage=stage)
         with connect(db_path) as c:
             c.execute("BEGIN IMMEDIATE")
             guard(c)
@@ -292,7 +354,7 @@ def process_one(db_path, provider=None):
                 job=job["id"],
             )
             c.execute(
-                "UPDATE meeting_jobs SET status='done',lease_until=NULL,worker_token=NULL,error_code='',updated_at=? WHERE id=?",
+                "UPDATE meeting_jobs SET status='done',stage='done',lease_until=NULL,worker_token=NULL,error_code='',updated_at=? WHERE id=?",
                 (now(), job["id"]),
             )
             event(c, row["id"], "job_done", reason=str(job["id"]))
