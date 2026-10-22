@@ -74,9 +74,9 @@ def test_verbose_final_is_regenerated_once_instead_of_truncating_or_saving(
     if violation == "items":
         bad["summary"] *= 4
     elif violation == "characters":
-        bad["summary"][0]["text"] = "С" * 601
+        bad["summary"][0]["text"] = "С" * 1001
     else:
-        bad["summary"] = [dict(text="Сон. " * 74, source_id=1) for _ in range(3)]
+        bad["summary"] = [dict(text="Сон. " * 134, source_id=1) for _ in range(3)]
 
     def handler(request):
         if request.url.path == "/api/show":
@@ -91,7 +91,7 @@ def test_verbose_final_is_regenerated_once_instead_of_truncating_or_saving(
     transport(monkeypatch, handler)
     result, _ = ai.LocalModels().summarize(segments, lambda: None)
     assert len(calls) == 2
-    assert "220 слов" in calls[1]["messages"][0]["content"]
+    assert "400 слов" in calls[1]["messages"][0]["content"]
     assert result["summary"][0]["text"].endswith("пока не согласована.")
 
 
@@ -100,7 +100,7 @@ def test_repeated_verbosity_fails_with_safe_reason(monkeypatch):
         return (
             show_response()
             if request.url.path == "/api/show"
-            else response(draft(1, "С" * 601))
+            else response(draft(1, "С" * 1001))
         )
 
     transport(monkeypatch, handler)

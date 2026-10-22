@@ -61,7 +61,7 @@ def test_errors_from_working_show_and_chat_are_not_all_unavailable(
             ai.summary_sources(SEGMENTS), mode="final"
         )
         assert payload["options"]["num_ctx"] == 8192
-        assert payload["options"]["num_predict"] == 1800
+        assert payload["options"]["num_predict"] == 2400
         if scenario == "connect":
             raise httpx.ConnectError("PRIVATE ERROR CONTENT", request=request)
         if scenario == "timeout":

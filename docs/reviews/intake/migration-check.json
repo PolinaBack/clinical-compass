@@ -1,0 +1,21 @@
+{
+  "old_tables": 54,
+  "old_rows": 536,
+  "new_tables": [
+    "clinical_attachments",
+    "diary_answer_details",
+    "diary_question_config",
+    "diary_question_versions",
+    "intake_changes",
+    "intake_drafts",
+    "intake_entities",
+    "intake_entity_links",
+    "intake_preferences",
+    "intake_reviews",
+    "intake_submissions"
+  ],
+  "unchanged_old_rows": true,
+  "integrity": "ok",
+  "foreign_key_errors": 0,
+  "new_migration": "008_intake_and_diary_questions.sql"
+}

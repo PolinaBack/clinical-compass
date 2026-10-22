@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-22",
+  "requirements": {
+    "original_ids": 806,
+    "current_unique_ids": 806,
+    "same_ids_priorities_and_dependencies": true
+  },
+  "browser": {
+    "intake_widths": [
+      320,
+      390,
+      768,
+      1280
+    ],
+    "intake_axe_audits": 20,
+    "meeting_axe_audits": 8,
+    "axe_violations": 0,
+    "javascript_errors": 0,
+    "keyboard_entry": true,
+    "media_recorder": "real Chromium recorder with artificial microphone",
+    "meeting_models": "explicit SyntheticModels; no actual model quality claim"
+  },
+  "database": {
+    "original_tables": 54,
+    "original_rows": 536,
+    "new_tables": 11,
+    "old_rows_preserved": true,
+    "integrity_check": "ok",
+    "foreign_key_errors": 0,
+    "synthetic_data_written_to_working_database": false
+  },
+  "limitations": {
+    "clamav": "not installed; true CLI exit 1, unscanned preview disabled",
+    "whisper_ollama": "weights/service unavailable in cloud; adapters tested with artificial input/responses",
+    "windows_hardware": "not tested in cloud"
+  },
+  "full_pytest": {
+    "passed": 315,
+    "warnings": 1,
+    "exit_code": 0,
+    "seconds": 1098.32,
+    "command": ".venv/bin/python -m pytest -q"
+  }
+}

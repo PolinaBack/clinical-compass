@@ -46,3 +46,5 @@ html:not(.diary-enhanced) .diary-dialog { display: block; position: static; widt
 @media(max-width:800px) { .diary-enhanced .diary-cards { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media(max-width:400px) { .diary-enhanced .diary-cards { grid-template-columns: 1fr; }.diary-enhanced .diary-dialog[open] { padding: 16px; } }
 @media(prefers-reduced-motion:reduce) { .sleep-breath, .sleep-z { animation: none !important; } }
+
+.diary-card[hidden]{display:none!important}

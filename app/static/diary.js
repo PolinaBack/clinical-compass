@@ -32,7 +32,7 @@
   }
   function open(dialog, button) {
     openers.set(dialog, button);
-    snapshots.set(dialog, [...dialog.querySelectorAll('[data-value]')].map(input => [input, input.value]));
+    snapshots.set(dialog, [...dialog.querySelectorAll('input,select,textarea')].filter(input=>input.type!=='hidden').map(input => [input, input.type==='file'?[...input.files]:input.value, input.checked]));
     dialog.dataset.applied = '';
     const score = dialog.querySelector('#wellbeing-value, #sleep-quality');
     if (score && score.value === '') score.value = '5';
@@ -63,6 +63,9 @@
       let preview;
       if (dialog.id === 'wellbeing-dialog') preview = `${number.value}/10`;
       else if (dialog.id === 'sleep-dialog') preview = `${form.elements.sleep_quality.value || '—'}/10 · ${form.elements.sleep.value} ч`;
+      else if (dialog.querySelector('[data-question-status]') && !['unanswered','answered'].includes(dialog.querySelector('[data-question-status]').value)) preview = dialog.querySelector('[data-question-status]').selectedOptions[0].textContent;
+      else if (fields[0]?.type === 'checkbox') preview = fields.filter(input=>input.checked).map(input=>input.value).join(', ') || 'Не отмечено';
+      else if (fields[0]?.type === 'file') preview = [...fields[0].files].map(file=>file.name).join(', ') || 'Не отмечено';
       else if (fields[0].tagName === 'SELECT') preview = fields[0].selectedOptions[0].textContent;
       else preview = fields[0].value || 'Не отмечено';
       document.getElementById(dialog.dataset.preview).textContent = preview;
@@ -71,11 +74,31 @@
       form.querySelector('.diary-status').textContent = 'Отметка добавлена. Нажмите «Сохранить запись», когда закончите.';
     });
     dialog.addEventListener('close', () => {
-      if (dialog.dataset.applied !== 'true') (snapshots.get(dialog) || []).forEach(([input, value]) => { input.value = value; });
+      if (dialog.dataset.applied !== 'true') (snapshots.get(dialog) || []).forEach(([input, value, checked]) => { if(input.type==='file'){const transfer=new DataTransfer();value.forEach(file=>transfer.items.add(file));input.files=transfer.files;}else input.value=value; if(input.type==='checkbox')input.checked=checked; });
       sync(dialog);
       if (!dialogs.some(other => other.open)) openers.get(dialog)?.focus();
     });
   });
+  function refreshQuestions() {
+    const day=form.elements.day.value;
+    if(!day)return;
+    const date=new Date(day+'T12:00:00Z');
+    form.querySelectorAll('[data-diary-question]').forEach(button=>{
+      const q=JSON.parse(button.dataset.questionConfig), dialog=document.getElementById('metric-dialog-'+q.id);
+      let active=q.active!==false && (!q.start||day>=q.start) && (!q.end||day<=q.end);
+      if(q.frequency==='weekdays')active=active&&q.weekdays.includes(date.getUTCDay()||7);
+      if(q.frequency==='interval')active=active&&Math.round((date-new Date(q.start+'T12:00:00Z'))/86400000)%q.interval===0;
+      if(q.trigger==='wellbeing_lte')active=active&&form.elements.wellbeing.value!==''&&Number(form.elements.wellbeing.value)<=q.threshold;
+      if(q.trigger==='sleep_lte')active=active&&form.elements.sleep.value!==''&&Number(form.elements.sleep.value)<=q.threshold;
+      if(q.trigger==='missed')active=active&&form.elements.adherence.value==='missed';
+      button.hidden=!active;
+      dialog.querySelectorAll('input,select,textarea').forEach(input=>input.disabled=!active);
+    });
+  }
+  form.addEventListener('input',refreshQuestions);
+  form.addEventListener('change',refreshQuestions);
+  dialogs.forEach(dialog=>dialog.addEventListener('close',refreshQuestions));
+  refreshQuestions();
   function point(event) {
     const rect = compass.getBoundingClientRect();
     const angle = Math.atan2(event.clientX - rect.left - rect.width / 2, rect.top + rect.height / 2 - event.clientY) * 180 / Math.PI;

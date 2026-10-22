@@ -1,10 +1,11 @@
 <section class="card" id="assigned-metrics">
     <h2>Показатели дневника</h2>
     <p>Базовые карточки: самочувствие, сон и лечение. Дополнительные показатели добавляете вы для этого пациента.</p>
-    {% for metric in diary_metrics %}
-        <p><strong>{{ metric.title }}</strong> · {{ {'scale':'Шкала 0–10','number':'Число','boolean':'Да / нет','text':'Текст'}[metric.kind] }}{% if metric.unit %} · {{ metric.unit }}{% endif %}</p>
+    <p><a class="button" href="/patients/{{ patient.id }}/diary/questions/new">Добавить свой вопрос</a></p>
+    {% for metric in diary_metrics_all %}
+        <p><strong>{{ metric.title }}</strong> · {{ metric.kind }} · версия {{ metric.version }} · {{ 'активен' if metric.active else 'временно выключен' }}{% if metric.unit %} · {{ metric.unit }}{% endif %}</p><p><a href="/patients/{{ patient.id }}/diary/questions/{{ metric.id }}/edit">Изменить вопрос</a></p><form method="post" action="/patients/{{ patient.id }}/diary/questions/{{ metric.id }}/active"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ metric.version }}"><input type="hidden" name="active" value="{{ 'no' if metric.active else 'yes' }}"><button class="secondary">{{ 'Временно выключить' if metric.active else 'Включить вопрос' }}</button></form>
     {% else %}<p class="muted">Дополнительные показатели пока не добавлены.</p>{% endfor %}
-    <details><summary>Добавить новую метрику</summary>
+    <details><summary>Быстро добавить простой показатель</summary>
         <form action="/patients/{{ patient.id }}/diary/metrics" method="post">
             <input type="hidden" name="csrf" value="{{ csrf }}">
             <label>Название показателя<input name="title" maxlength="100" required></label>

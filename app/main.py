@@ -12,6 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from .content import FAQ, RESOURCES
@@ -22,8 +23,11 @@ from .migrations import apply_migrations
 from .routes.settings import register_settings
 from .routes.interface import register_interface
 from .services.interface import read_interface
-from .services.diary import read_diary_extras, parse_metric_values, sleep_rating
+from .services.diary import read_diary_extras, sleep_rating
 from .routes.diary import register_diary
+from .routes.intake import register_intake
+from .services import diary_questions as questions
+from .services import clinical_attachments as attachment_files
 from .portal import register_portal, portal_data
 from .community import register_community, public_forum_data
 from .family import register_family
@@ -74,7 +78,7 @@ def create_app(db_path=None):
         with db() as c:
             apply_migrations(c)
         with db() as c:
-            c.execute('BEGIN IMMEDIATE')
+            c.execute("BEGIN IMMEDIATE")
             bootstrap_drug_library(c)
         yield
 
@@ -91,6 +95,9 @@ def create_app(db_path=None):
     )
     app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
     templates = Jinja2Templates(directory=ROOT / "templates")
+    from .services.clinical_forms import local_datetime
+
+    templates.env.filters["local_datetime"] = local_datetime
 
     def account(request):
         uid = request.session.get("account_id")
@@ -149,7 +156,10 @@ def create_app(db_path=None):
             with db() as c:
                 active = c.execute(
                     "SELECT id FROM accounts WHERE id=? AND active=1 AND auth_version=?",
-                    (request.session["account_id"], request.session.get("auth_version")),
+                    (
+                        request.session["account_id"],
+                        request.session.get("auth_version"),
+                    ),
                 ).fetchone()
                 if active:
                     interface_prefs = read_interface(c, active["id"])
@@ -269,7 +279,9 @@ def create_app(db_path=None):
         user = account(request)
         if user["role"] != "patient":
             raise HTTPException(403, "Эта страница только для пациента")
-        return RedirectResponse(f"/patients/{user['patient_id']}/diary", status_code=303)
+        return RedirectResponse(
+            f"/patients/{user['patient_id']}/diary", status_code=303
+        )
 
     @app.post("/logout")
     def logout(request: Request, csrf: str = Form(...)):
@@ -334,7 +346,9 @@ def create_app(db_path=None):
             points=points,
             consent=has_consent(pid),
             assessment_data=overview(db, pid),
-            latest_diary=max(data['diary'], key=lambda r: (r['day'], r['id']), default=None),
+            latest_diary=max(
+                data["diary"], key=lambda r: (r["day"], r["id"]), default=None
+            ),
             **extras,
             **portal_data(db, pid, identity(request) == "doctor"),
             **data,
@@ -367,7 +381,8 @@ def create_app(db_path=None):
 
     register_community(app, db, identity, account, csrf_check, render)
     register_interface(app, db, account, render, patient_context)
-    register_diary(app, db, account, access, csrf_check)
+    register_diary(app, db, account, access, csrf_check, render, patient_context)
+    register_intake(app, db, account, access, csrf_check, render, patient_context)
     register_portal(
         app, db, account, identity, access, csrf_check, render, patient_context
     )
@@ -392,15 +407,66 @@ def create_app(db_path=None):
         if day > date.today() or adherence not in ["taken", "missed", "none"]:
             raise HTTPException(422, "Проверьте дату и отметку выполнения назначения")
         quality = sleep_rating(sleep_quality)
+        form = await request.form()
+        prepared = {}
         with db() as c:
-            c.execute('BEGIN IMMEDIATE')
-            extra_values = parse_metric_values(c, pid, await request.form())
+            assigned = {m["id"] for m in questions.definitions(c, pid)}
+        for key in form:
+            if not key.startswith("files_"):
+                continue
+            try:
+                mid = int(key[6:])
+            except ValueError:
+                raise HTTPException(422, "Проверьте вопрос вложения") from None
+            if mid not in assigned:
+                raise HTTPException(422, "Вопрос вложения не назначен пациенту")
+            for upload in form.getlist(key):
+                if not getattr(upload, "filename", ""):
+                    continue
+                content = await upload.read(attachment_files.file_limit() + 1)
+                prepared.setdefault(mid, []).append(
+                    (
+                        upload,
+                        content,
+                        await run_in_threadpool(
+                            attachment_files.validate, content, upload.filename
+                        ),
+                    )
+                )
+        if (
+            sum(len(items) for items in prepared.values()) > 10
+            or sum(len(content) for items in prepared.values() for _, content, _ in items)
+            > 3 * attachment_files.file_limit()
+        ):
+            raise HTTPException(422, "Слишком много вложений в одной записи")
+        with db() as c:
+            c.execute("BEGIN IMMEDIATE")
+            user = account(request)
+            from .services.intake import check_scope
+
+            check_scope(c, user, pid, write=True)
+            extra_values = questions.parse(
+                c,
+                pid,
+                form,
+                day,
+                dict(wellbeing=wellbeing, sleep=sleep, adherence=adherence),
+                prepared,
+            )
             did = c.execute(
                 "INSERT INTO diary(patient_id,day,wellbeing,sleep,adherence,note,contact,sleep_quality) VALUES(?,?,?,?,?,?,?,?)",
-                (pid, day.isoformat(), wellbeing, sleep, adherence, note, int(contact), quality),
+                (
+                    pid,
+                    day.isoformat(),
+                    wellbeing,
+                    sleep,
+                    adherence,
+                    note,
+                    int(contact),
+                    quality,
+                ),
             ).lastrowid
-            c.executemany('INSERT INTO diary_metric_values(diary_id,metric_id,value) VALUES(?,?,?)',
-                          [(did, mid, value) for mid, value in extra_values])
+            questions.save_answers(c, app.state.db_path, pid, user, did, extra_values)
         return RedirectResponse(f"/patients/{pid}/diary", status_code=303)
 
     @app.post("/patients/{pid}/screening")

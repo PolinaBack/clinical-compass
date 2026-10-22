@@ -175,6 +175,24 @@ def register_portal(
         if section not in ["about", "assessments", "family", "video"]:
             raise HTTPException(404, "Раздел не найден")
         context = patient_context(request, pid)
+        if section == "about":
+            from .routes.intake import intake_context
+
+            with db() as c:
+                context.update(
+                    intake_context(
+                        c,
+                        account(request),
+                        pid,
+                        request.query_params.get("view", "summary"),
+                        (
+                            int(request.query_params["submission_id"])
+                            if request.query_params.get("submission_id", "").isdigit()
+                            else None
+                        ),
+                        request.query_params.get("as_of"),
+                    )
+                )
         if section == "family":
             from .family import family_tree
 

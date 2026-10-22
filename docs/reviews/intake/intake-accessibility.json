@@ -1,0 +1,122 @@
+[
+  {
+    "role": "patient",
+    "path": "/patients/1/profile/about",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/profile/about/personal",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/profile/about/health",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/intake/entities/1",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/diary",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/profile/about",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/profile/about/personal",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/profile/about/health",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/intake/entities/1",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/diary",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/profile/about",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/profile/about/health",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/intake/entities/1",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/diary/questions/new",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/diary",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/profile/about",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/profile/about/health",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/intake/entities/1",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/diary/questions/new",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/diary",
+    "width": 1280,
+    "violations": []
+  }
+]

@@ -19,8 +19,8 @@
             {% endfor %}
         </div>
     {% elif section == 'about' %}
-        <section class="card" id="about">
-            <h2>Обо мне</h2>
+        {% if intake_version is defined %}{% include 'intake_overview.html' %}{% endif %}
+        <details class="card" id="about"><summary>Прежние свободные заметки «Обо мне»</summary><p>Этот прежний раздел сохраняется отдельно и по-прежнему доступен ведущему специалисту сразу. Режим личного черновика относится к новой первичной анкете выше.</p>
             {% if user != 'doctor' and consent %}
                 <p>Все поля необязательные. Можно написать «не знаю» или обсудить лично.</p>
                 {% if request.query_params.get('saved') %}<p class="success" role="status">Профиль сохранён.</p>{% endif %}
@@ -39,7 +39,7 @@
                     <p class="text">{{ profile.get(key) or 'Пока не заполнено' }}</p>
                 {% endfor %}
             {% endif %}
-        </section>
+        </details>
     {% elif section == 'assessments' %}
         {% include 'assessment_list.html' %}
     {% elif section == 'family' %}

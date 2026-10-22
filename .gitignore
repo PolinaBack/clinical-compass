@@ -9,3 +9,7 @@ __pycache__/
 .idea/
 data/
 artifacts/
+
+# Private encryption keys for clinical attachments and matching backups.
+attachments.key
+*.db.key
