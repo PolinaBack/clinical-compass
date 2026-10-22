@@ -1,4 +1,4 @@
-"""Strict evidence survives structured generation, one repair, and cancelled consent."""
+"""Free paraphrases retain real source excerpts, consent checks and bounded repair."""
 
 import json
 
@@ -21,13 +21,12 @@ from tests.test_meetings import (
 
 
 def result(segment=None):
-    segment = segment or SEGMENTS[0]
+    segment = segment or {"source_id": 1}
     return dict(
         summary=[
             dict(
                 text="Обсуждён сон.",
-                quote=segment["text"][:100],
-                segment_ids=[segment["id"]],
+                source_id=segment["source_id"],
             )
         ],
         next_steps=[],
@@ -148,9 +147,10 @@ def test_schema_uses_original_ids_in_each_chunk_and_counts_only_validated_parts(
         for category in schema["properties"].values():
             item = category["items"]
             assert item["additionalProperties"] is False
-            assert item["required"] == ["text", "quote", "segment_ids"]
-            ids = item["properties"]["segment_ids"]["items"]
-            assert ids == {"type": "integer", "enum": [part[0]["id"]]}
+            assert item["required"] == ["text", "source_id"]
+            ids = item["properties"]["source_id"]
+            assert ids == {"type": "integer", "enum": [s["source_id"] for s in part]}
+            assert all(set(s) == {"source_id", "text", "speaker"} for s in part)
         return response(result(part[0]))
 
     transport(monkeypatch, handler)
@@ -168,7 +168,7 @@ def test_one_repair_uses_same_source_and_strict_validation(monkeypatch, failure)
     if failure == "quote":
         bad["summary"][0]["quote"] = "PRIVATE INVENTED QUOTE"
     elif failure == "ids":
-        bad["summary"][0]["segment_ids"] = [99]
+        bad["summary"][0]["source_id"] = 99999
     elif failure == "fields":
         bad = {"wrong": "PRIVATE MODEL OUTPUT"}
 
@@ -177,7 +177,13 @@ def test_one_repair_uses_same_source_and_strict_validation(monkeypatch, failure)
             return show_response()
         payload = json.loads(request.content)
         calls.append(payload)
-        assert json.loads(payload["messages"][-1]["content"]) == SEGMENTS
+        assert json.loads(payload["messages"][-1]["content"]) == [
+            {
+                "source_id": 1,
+                "text": SEGMENTS[0]["text"],
+                "speaker": "Говорящий не определён",
+            }
+        ]
         assert "PRIVATE" not in json.dumps(payload)
         if len(calls) == 1:
             if failure == "json":
@@ -207,7 +213,7 @@ def test_invalid_evidence_is_not_returned_after_two_attempts_and_diagnostic_name
             return show_response()
         calls.append(request)
         bad = result()
-        bad["summary"][0]["quote"] = "PRIVATE INVENTED QUOTE"
+        bad["summary"][0]["source_id"] = 99999
         return response(bad)
 
     transport(monkeypatch, handler)
@@ -215,7 +221,7 @@ def test_invalid_evidence_is_not_returned_after_two_attempts_and_diagnostic_name
         script.main(["--check-summary"])
     assert caught.value.code == 1 and len(calls) == 2
     output = capsys.readouterr().out
-    assert "HTTP: 200" in output and "Правило: quote_not_found" in output
+    assert "HTTP: 200" in output and "Правило: source_id" in output
     assert "PRIVATE" not in output
 
 
@@ -259,13 +265,13 @@ def test_failed_repair_saves_no_summary_and_logs_only_safe_reason(
             return show_response()
         calls.append(request)
         bad = result()
-        bad["summary"][0]["quote"] = "PRIVATE INVENTED QUOTE"
+        bad["summary"][0]["source_id"] = 99999
         return response(bad)
 
     transport(monkeypatch, handler)
     assert service.process_one(client.app.state.db_path, ai.LocalModels())
     assert len(calls) == 2
-    assert "validation=quote_not_found" in caplog.text and "PRIVATE" not in caplog.text
+    assert "validation=source_id" in caplog.text and "PRIVATE" not in caplog.text
     with connect(client.app.state.db_path) as c:
         assert (
             c.execute(

@@ -57,7 +57,7 @@ def test_errors_from_working_show_and_chat_are_not_all_unavailable(
             )
         payload = json.loads(request.content)
         assert payload["stream"] is False
-        assert payload["format"] == ai.summary_schema(SEGMENTS)
+        assert payload["format"] == ai.summary_schema(ai.summary_sources(SEGMENTS))
         assert payload["options"]["num_ctx"] == 8192
         assert payload["options"]["num_predict"] == 3000
         if scenario == "connect":
@@ -94,8 +94,7 @@ def test_errors_from_working_show_and_chat_are_not_all_unavailable(
                             summary=[
                                 dict(
                                     text="Тестовый итог",
-                                    quote="Нет такой цитаты",
-                                    segment_ids=[1],
+                                    source_id=99999,
                                 )
                             ],
                             next_steps=[],
@@ -159,8 +158,7 @@ def test_synthetic_summary_diagnostic_checks_full_app_response(monkeypatch, caps
                             summary=[
                                 dict(
                                     text="Тестовый итог о сне.",
-                                    quote=SEGMENTS[0]["text"],
-                                    segment_ids=[1],
+                                    source_id=1,
                                 )
                             ],
                             next_steps=[],

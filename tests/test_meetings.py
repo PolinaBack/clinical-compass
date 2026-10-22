@@ -601,8 +601,7 @@ def test_local_ollama_adapter_checks_model_and_citations(monkeypatch, cloud):
                             "summary": [
                                 {
                                     "text": "Обсуждён сон.",
-                                    "quote": "Обсудим качество сна.",
-                                    "segment_ids": [1],
+                                    "source_id": 1,
                                 }
                             ],
                             "next_steps": [],

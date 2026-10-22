@@ -21,6 +21,8 @@ SUMMARY_VALIDATION_REASONS = {
     "groups": "Нужны ровно три раздела: summary, next_steps, clarifications.",
     "category_items": "Каждый раздел должен быть списком не более чем из 24 пунктов.",
     "item_fields": "В каждом пункте нужны text, quote и segment_ids.",
+    "model_item_fields": "В ответе модели каждый пункт должен содержать только text и source_id.",
+    "source_id": "Поле source_id должно быть целым номером источника из текущей части текста.",
     "text": "Поле text должно содержать строку длиной от 1 до 1500 символов.",
     "quote": "Поле quote должно содержать дословную цитату длиной от 6 до 2000 символов.",
     "segment_ids": "В segment_ids нужны от 1 до 12 целых номеров из переданной части расшифровки.",
@@ -247,21 +249,58 @@ def validate_summary(payload, segments):
     return output
 
 
-def summary_schema(segments):
-    """Ollama structured output; semantic evidence is still checked separately."""
+def summary_sources(segments, limit=1200):
+    """Immutable excerpts: the model chooses a source, never rewrites its quote."""
+    sources = []
+    for index, segment in enumerate(segments):
+        text = segment["text"]
+        ids = [segment["id"]]
+        speaker = segment.get("speaker", "Говорящий не определён")
+        if len(text.strip()) < 6:
+            # Keep short replies ("да", "нет") with nearby source context.
+            left, right = index, index + 1
+            while len(text.strip()) < 6 and right - left < 12:
+                if right < len(segments):
+                    right += 1
+                elif left:
+                    left -= 1
+                else:
+                    break
+                text = " ".join(s["text"] for s in segments[left:right])
+            ids = [s["id"] for s in segments[left:right]]
+            if right - left > 1:
+                speaker = "Контекст нескольких реплик"
+            excerpts = [text[-limit:] if left < index else text[:limit]]
+        else:
+            # Balanced lengths prevent a final 1–5 character excerpt. All source
+            # text is retained, including the end of a long ASR segment.
+            count = math.ceil(len(text) / limit)
+            excerpts = [
+                text[len(text) * i // count : len(text) * (i + 1) // count]
+                for i in range(count)
+            ]
+        for excerpt in excerpts:
+            if len(excerpt.strip()) >= 6:
+                sources.append(
+                    dict(
+                        source_id=len(sources) + 1,
+                        text=excerpt,
+                        segment_ids=ids,
+                        speaker=speaker,
+                    )
+                )
+    return sources
+
+
+def summary_schema(sources):
+    """The wire contract needs paraphrased text and an existing source number."""
     item = {
         "type": "object",
         "additionalProperties": False,
-        "required": ["text", "quote", "segment_ids"],
+        "required": ["text", "source_id"],
         "properties": {
             "text": {"type": "string", "minLength": 1, "maxLength": 1500},
-            "quote": {"type": "string", "minLength": 6, "maxLength": 2000},
-            "segment_ids": {
-                "type": "array",
-                "minItems": 1,
-                "maxItems": 12,
-                "items": {"type": "integer", "enum": [s["id"] for s in segments]},
-            },
+            "source_id": {"type": "integer", "enum": [s["source_id"] for s in sources]},
         },
     }
     return {
@@ -274,7 +313,37 @@ def summary_schema(segments):
     }
 
 
-def read_summary_response(response, segments):
+def resolve_summary_sources(payload, sources, segments):
+    def reject(reason):
+        raise ProcessingError("invalid_summary", validation_reason=reason)
+
+    if not isinstance(payload, dict) or set(payload) != set(GROUPS):
+        reject("groups")
+    by_id = {s["source_id"]: s for s in sources}
+    result = {kind: [] for kind in GROUPS}
+    for kind, items in payload.items():
+        if not isinstance(items, list) or len(items) > 24:
+            reject("category_items")
+        for item in items:
+            if not isinstance(item, dict) or set(item) != {"text", "source_id"}:
+                reject("model_item_fields")
+            source_id = item["source_id"]
+            if type(source_id) is not int or source_id not in by_id:
+                reject("source_id")
+            source = by_id[source_id]
+            result[kind].append(
+                dict(
+                    text=item["text"],
+                    quote=source["text"],
+                    segment_ids=source["segment_ids"],
+                )
+            )
+    # An irrelevant part may legitimately contain no conclusions. It still counts
+    # as processed; only an entirely empty meeting result is rejected at the end.
+    return validate_summary(result, segments) if any(result.values()) else result
+
+
+def read_summary_response(response, sources, segments):
     if response.get("done") is False or response.get("done_reason") == "length":
         raise ProcessingError(
             "summary_output_truncated", stage="/api/chat", http_status=200
@@ -291,7 +360,7 @@ def read_summary_response(response, segments):
             "summary_json_invalid", stage="/api/chat", http_status=200
         ) from None
     try:
-        return validate_summary(data, segments)
+        return resolve_summary_sources(data, sources, segments)
     except ProcessingError as exc:
         raise ProcessingError(
             exc.code,
@@ -391,12 +460,13 @@ class LocalModels:
             "Подготовь только черновик: summary — итоги, next_steps — явно обсуждённые/согласованные дальнейшие шаги, "
             "clarifications — возможные вопросы врачу с основанием в записи. Не добавляй диагнозов, назначений, доз, "
             "советов менять лечение или медицинских фактов извне. Не оценивай качество врача как установленный факт. "
-            "Каждый пункт: text на русском, quote — дословная цитата из поля text исходного фрагмента, "
-            "segment_ids — целые номера из поля id именно тех фрагментов, где находится цитата. "
-            "Не пересказывай и не исправляй quote, не добавляй в неё многоточия или имя говорящего. "
-            "Предпочитай короткую цитату из одного фрагмента и один его id. "
+            "Каждый пункт содержит только text — краткий пересказ своими словами на русском — "
+            "и source_id — целый номер источника, на котором основан этот пункт. "
+            "Выбирай source_id из переданного списка, подтверждающий смысл пункта. "
+            "Дословные цитаты писать не нужно: программа сама покажет исходный фрагмент. "
+            "Не угадывай роль говорящего, если она не указана в источнике. "
             "Неизвестное не заполняй. Если для категории нет оснований, верни пустой список. "
-            "Верни JSON ровно с ключами summary,next_steps,clarifications, каждый — список объектов text,quote,segment_ids. "
+            "Верни JSON ровно с ключами summary,next_steps,clarifications, каждый — список объектов text,source_id. "
             "Пиши кратко, обычно достаточно 1–3 пунктов в категории; максимум 24. "
             "Названия лекарств могут быть распознаны неверно: не исправляй их по догадке."
         )
@@ -418,7 +488,10 @@ class LocalModels:
                 or not model_info.get("general.architecture")
             ):
                 raise ProcessingError("local_provider_required", stage="/api/show")
-            parts = list(chunks(segments))
+            sources = summary_sources(segments)
+            if not sources:
+                raise ProcessingError("empty_summary", stage="validate_summary")
+            parts = list(chunks(sources))
             report_progress(
                 checkpoint, stage="summarize", units_done=0, units_total=len(parts)
             )
@@ -449,7 +522,17 @@ class LocalModels:
                                 },
                                 {
                                     "role": "user",
-                                    "content": json.dumps(part, ensure_ascii=False),
+                                    "content": json.dumps(
+                                        [
+                                            {
+                                                "source_id": s["source_id"],
+                                                "text": s["text"],
+                                                "speaker": s["speaker"],
+                                            }
+                                            for s in part
+                                        ],
+                                        ensure_ascii=False,
+                                    ),
                                 },
                             ],
                         ),
@@ -457,7 +540,7 @@ class LocalModels:
                     )
                     checkpoint()
                     try:
-                        part_result = read_summary_response(response, part)
+                        part_result = read_summary_response(response, part, segments)
                     except ProcessingError as exc:
                         if attempt or exc.code not in {
                             "summary_json_invalid",
@@ -469,12 +552,12 @@ class LocalModels:
                         # No model output is recycled as an instruction or logged.
                         reason = SUMMARY_VALIDATION_REASONS.get(
                             exc.validation_reason,
-                            "Нужен непустой результат в заданной схеме JSON с подтверждающей цитатой.",
+                            "Нужен ответ в заданной схеме JSON с существующим source_id для каждого пункта.",
                         )
                         correction = (
                             "\nПредыдущая попытка не прошла проверку: "
                             + reason
-                            + " Составь ответ заново по тем же исходным фрагментам. "
+                            + " Составь ответ заново по тем же источникам. "
                             "Не придумывай пунктов ради заполнения категорий. "
                             "Оставляй категорию пустой, если для неё нет основания."
                         )
@@ -488,4 +571,8 @@ class LocalModels:
                     units_done=index,
                     units_total=len(parts),
                 )
+        if not any(output.values()):
+            raise ProcessingError(
+                "empty_summary", stage="validate_summary", http_status=200
+            )
         return output, "Ollama · " + conf["model"] + " · локально"
