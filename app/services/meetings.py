@@ -388,11 +388,12 @@ def process_one(db_path, provider=None):
             )
         elif isinstance(exc, ProcessingError) and exc.stage:
             logger.warning(
-                "Meeting job=%s code=%s stage=%s HTTP=%s. Response contents omitted.",
+                "Meeting job=%s code=%s stage=%s HTTP=%s validation=%s. Response contents omitted.",
                 job["id"],
                 code,
                 exc.stage,
                 exc.http_status,
+                exc.validation_reason or "-",
             )
         status = (
             "cancelled"

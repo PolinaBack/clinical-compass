@@ -15,6 +15,7 @@ from app.services.meeting_ai import (
     readiness,
     LocalModels,
     ProcessingError,
+    SUMMARY_VALIDATION_REASONS,
 )
 from app.services.meeting_media import audio_for_model
 
@@ -88,6 +89,11 @@ def check_summary():
             f"Этап: {exc.stage or 'настройка'} · HTTP: {exc.http_status or 'ответ не получен'}"
         )
         print(ERRORS.get(exc.code, "Проверьте настройку локальной модели."))
+        if exc.validation_reason:
+            print(
+                f"Правило: {exc.validation_reason}. "
+                + SUMMARY_VALIDATION_REASONS[exc.validation_reason]
+            )
         if exc.server_error:
             print("Ошибка Ollama на искусственном запросе: " + exc.server_error)
         return 1

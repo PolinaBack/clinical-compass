@@ -56,7 +56,8 @@ def test_errors_from_working_show_and_chat_are_not_all_unavailable(
                 200, json={"model_info": {"general.architecture": "qwen2"}}
             )
         payload = json.loads(request.content)
-        assert payload["stream"] is False and payload["format"] == "json"
+        assert payload["stream"] is False
+        assert payload["format"] == ai.summary_schema(SEGMENTS)
         assert payload["options"]["num_ctx"] == 8192
         assert payload["options"]["num_predict"] == 3000
         if scenario == "connect":

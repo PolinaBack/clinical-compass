@@ -17,15 +17,30 @@ GROUPS = {
     "next_steps": "Следующие шаги по разговору",
     "clarifications": "Вопросы для уточнения",
 }
+SUMMARY_VALIDATION_REASONS = {
+    "groups": "Нужны ровно три раздела: summary, next_steps, clarifications.",
+    "category_items": "Каждый раздел должен быть списком не более чем из 24 пунктов.",
+    "item_fields": "В каждом пункте нужны text, quote и segment_ids.",
+    "text": "Поле text должно содержать строку длиной от 1 до 1500 символов.",
+    "quote": "Поле quote должно содержать дословную цитату длиной от 6 до 2000 символов.",
+    "segment_ids": "В segment_ids нужны от 1 до 12 целых номеров из переданной части расшифровки.",
+    "quote_not_found": "Цитата не совпадает с текстом указанных фрагментов. Копируй её дословно, без пересказа, исправлений и многоточий.",
+}
 
 
 class ProcessingError(Exception):
-    def __init__(self, code, *, stage="", http_status=None, server_error=""):
+    def __init__(
+        self, code, *, stage="", http_status=None, server_error="", validation_reason=""
+    ):
         self.code = code
         self.stage = stage
         self.http_status = http_status
         # Only populated by the explicit synthetic diagnostic, never real jobs.
         self.server_error = server_error
+        # Only a fixed enum, never keys, quotations or other model output.
+        self.validation_reason = (
+            validation_reason if validation_reason in SUMMARY_VALIDATION_REASONS else ""
+        )
         super().__init__(code)
 
 
@@ -186,35 +201,39 @@ def validate_transcript(raw, duration):
 
 
 def validate_summary(payload, segments):
+    def reject(reason):
+        raise ProcessingError("invalid_summary", validation_reason=reason)
+
     if not isinstance(payload, dict) or set(payload) != set(GROUPS):
-        raise ProcessingError("invalid_summary")
+        reject("groups")
     by_id = {s["id"]: s for s in segments}
     output = {}
     for kind in GROUPS:
         items = payload[kind]
         if not isinstance(items, list) or len(items) > 24:
-            raise ProcessingError("invalid_summary")
+            reject("category_items")
         output[kind] = []
         for item in items:
-            try:
-                text = item["text"].strip()
-                quote = item["quote"].strip()
-                ids = item["segment_ids"]
-                if (
-                    not isinstance(text, str)
-                    or not 1 <= len(text) <= 1500
-                    or not isinstance(quote, str)
-                    or not 6 <= len(quote) <= 2000
-                    or not isinstance(ids, list)
-                    or not 1 <= len(ids) <= 12
-                    or any(type(i) != int or i not in by_id for i in ids)
-                ):
-                    raise ValueError()
-                evidence = " ".join(by_id[i]["text"] for i in ids)
-                if quote not in evidence:
-                    raise ValueError()
-            except (KeyError, ValueError, TypeError, AttributeError):
-                raise ProcessingError("invalid_summary") from None
+            if (
+                not isinstance(item, dict)
+                or not {"text", "quote", "segment_ids"} <= item.keys()
+            ):
+                reject("item_fields")
+            text, quote, ids = item["text"], item["quote"], item["segment_ids"]
+            if not isinstance(text, str) or not 1 <= len(text.strip()) <= 1500:
+                reject("text")
+            if not isinstance(quote, str) or not 6 <= len(quote.strip()) <= 2000:
+                reject("quote")
+            text, quote = text.strip(), quote.strip()
+            if (
+                not isinstance(ids, list)
+                or not 1 <= len(ids) <= 12
+                or any(type(i) != int or i not in by_id for i in ids)
+            ):
+                reject("segment_ids")
+            evidence = " ".join(by_id[i]["text"] for i in ids)
+            if quote not in evidence:
+                reject("quote_not_found")
             output[kind].append(
                 dict(
                     text=text,
@@ -226,6 +245,60 @@ def validate_summary(payload, segments):
     if not any(output.values()):
         raise ProcessingError("empty_summary")
     return output
+
+
+def summary_schema(segments):
+    """Ollama structured output; semantic evidence is still checked separately."""
+    item = {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["text", "quote", "segment_ids"],
+        "properties": {
+            "text": {"type": "string", "minLength": 1, "maxLength": 1500},
+            "quote": {"type": "string", "minLength": 6, "maxLength": 2000},
+            "segment_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 12,
+                "items": {"type": "integer", "enum": [s["id"] for s in segments]},
+            },
+        },
+    }
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": list(GROUPS),
+        "properties": {
+            kind: {"type": "array", "maxItems": 24, "items": item} for kind in GROUPS
+        },
+    }
+
+
+def read_summary_response(response, segments):
+    if response.get("done") is False or response.get("done_reason") == "length":
+        raise ProcessingError(
+            "summary_output_truncated", stage="/api/chat", http_status=200
+        )
+    message = response.get("message")
+    if not isinstance(message, dict) or not isinstance(message.get("content"), str):
+        raise ProcessingError(
+            "summary_protocol_invalid", stage="/api/chat", http_status=200
+        )
+    try:
+        data = json.loads(message["content"])
+    except ValueError:
+        raise ProcessingError(
+            "summary_json_invalid", stage="/api/chat", http_status=200
+        ) from None
+    try:
+        return validate_summary(data, segments)
+    except ProcessingError as exc:
+        raise ProcessingError(
+            exc.code,
+            stage="validate_summary",
+            http_status=200,
+            validation_reason=exc.validation_reason,
+        ) from None
 
 
 def chunks(segments, limit=6000):
@@ -318,10 +391,14 @@ class LocalModels:
             "Подготовь только черновик: summary — итоги, next_steps — явно обсуждённые/согласованные дальнейшие шаги, "
             "clarifications — возможные вопросы врачу с основанием в записи. Не добавляй диагнозов, назначений, доз, "
             "советов менять лечение или медицинских фактов извне. Не оценивай качество врача как установленный факт. "
-            "Каждый пункт: text на русском, quote — точная непустая цитата из текста, segment_ids — номера её сегментов. "
+            "Каждый пункт: text на русском, quote — дословная цитата из поля text исходного фрагмента, "
+            "segment_ids — целые номера из поля id именно тех фрагментов, где находится цитата. "
+            "Не пересказывай и не исправляй quote, не добавляй в неё многоточия или имя говорящего. "
+            "Предпочитай короткую цитату из одного фрагмента и один его id. "
             "Неизвестное не заполняй. Если для категории нет оснований, верни пустой список. "
             "Верни JSON ровно с ключами summary,next_steps,clarifications, каждый — список объектов text,quote,segment_ids. "
-            "Не более 24 пунктов в каждой категории. Названия лекарств могут быть распознаны неверно: не исправляй их по догадке."
+            "Пиши кратко, обычно достаточно 1–3 пунктов в категории; максимум 24. "
+            "Названия лекарств могут быть распознаны неверно: не исправляй их по догадке."
         )
         with httpx.Client(
             base_url=conf["ollama_url"],
@@ -346,56 +423,63 @@ class LocalModels:
                 checkpoint, stage="summarize", units_done=0, units_total=len(parts)
             )
             for index, part in enumerate(parts, 1):
-                checkpoint()
-                response = ollama_json(
-                    client,
-                    "/api/chat",
-                    dict(
-                        model=conf["model"],
-                        stream=False,
-                        format="json",
-                        options={
-                            "temperature": 0,
-                            "num_ctx": 8192,
-                            "num_predict": 3000,
-                        },
-                        messages=[
-                            {"role": "system", "content": prompt},
-                            {
-                                "role": "user",
-                                "content": json.dumps(part, ensure_ascii=False),
+                schema = summary_schema(part)
+                correction = ""
+                for attempt in range(2):
+                    checkpoint()
+                    response = ollama_json(
+                        client,
+                        "/api/chat",
+                        dict(
+                            model=conf["model"],
+                            stream=False,
+                            format=schema,
+                            options={
+                                "temperature": 0,
+                                "num_ctx": 8192,
+                                "num_predict": 3000,
                             },
-                        ],
-                    ),
-                    diagnostic=diagnostic,
-                )
-                if (
-                    response.get("done") is False
-                    or response.get("done_reason") == "length"
-                ):
-                    raise ProcessingError(
-                        "summary_output_truncated", stage="/api/chat", http_status=200
+                            messages=[
+                                {
+                                    "role": "system",
+                                    "content": prompt
+                                    + "\nСхема JSON:\n"
+                                    + json.dumps(schema, ensure_ascii=False)
+                                    + correction,
+                                },
+                                {
+                                    "role": "user",
+                                    "content": json.dumps(part, ensure_ascii=False),
+                                },
+                            ],
+                        ),
+                        diagnostic=diagnostic,
                     )
-                message = response.get("message")
-                if not isinstance(message, dict) or not isinstance(
-                    message.get("content"), str
-                ):
-                    raise ProcessingError(
-                        "summary_protocol_invalid", stage="/api/chat", http_status=200
-                    )
-                try:
-                    data = json.loads(message["content"])
-                except ValueError:
-                    raise ProcessingError(
-                        "summary_json_invalid", stage="/api/chat", http_status=200
-                    ) from None
-                checkpoint()
-                try:
-                    part_result = validate_summary(data, part)
-                except ProcessingError as exc:
-                    raise ProcessingError(
-                        exc.code, stage="validate_summary", http_status=200
-                    ) from None
+                    checkpoint()
+                    try:
+                        part_result = read_summary_response(response, part)
+                    except ProcessingError as exc:
+                        if attempt or exc.code not in {
+                            "summary_json_invalid",
+                            "invalid_summary",
+                            "empty_summary",
+                        }:
+                            raise
+                        # One new local generation, not a change to invalid evidence.
+                        # No model output is recycled as an instruction or logged.
+                        reason = SUMMARY_VALIDATION_REASONS.get(
+                            exc.validation_reason,
+                            "Нужен непустой результат в заданной схеме JSON с подтверждающей цитатой.",
+                        )
+                        correction = (
+                            "\nПредыдущая попытка не прошла проверку: "
+                            + reason
+                            + " Составь ответ заново по тем же исходным фрагментам. "
+                            "Не придумывай пунктов ради заполнения категорий. "
+                            "Оставляй категорию пустой, если для неё нет основания."
+                        )
+                    else:
+                        break
                 for kind in GROUPS:
                     output[kind].extend(part_result[kind])
                 report_progress(
