@@ -137,3 +137,31 @@ html:has(.minimal-ui) { scroll-behavior: auto; }
 @media (forced-colors: active) {
   .overview-card, .portal-nav a[aria-current='page'] { border: 2px solid CanvasText; }
 }
+
+/* The specialist's five sections live in the sticky header at every width. */
+.specialist-space .header-inner { gap: 8px 16px; }
+.specialist-space .header-inner > .portal-nav { flex: 1 1 auto; position: static; border: 0; padding: 0; gap: 2px; }
+.specialist-space .header-inner > .portal-nav a { padding: 8px 10px; font-size: 13px; }
+.specialist-space .header-actions { flex: 0 0 auto; margin-left: 0; gap: 4px; }
+.header-tools { position: relative; margin: 0; }
+.portal-shell .header-tools > summary { cursor: pointer; padding: 10px 8px; font-size: 13px; }
+.header-tools > nav { position: absolute; top: 100%; right: 0; z-index: 50; min-width: 180px; padding: 8px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px #24283d20; max-height: 50dvh; overflow-y: auto; }
+.portal-shell .header-tools > nav a { display: flex; padding: 10px; }
+.specialist-space :is(:target, a, button, input, select, textarea, summary) { scroll-margin-top: 180px; }
+@media (max-width: 1150px) {
+  .specialist-space .header-inner > .portal-nav { order: 3; flex: 1 1 100%; }
+  .specialist-space .header-actions { margin-left: auto; }
+}
+@media (max-width: 700px) {
+  .signed-in.specialist-space { padding-bottom: 0; }
+  .specialist-space .site-header { position: sticky; top: 0; }
+  .specialist-space .header-inner { padding: 6px 10px; gap: 4px 8px; }
+  .specialist-space .brand-symbol svg { width: 32px; height: 32px; }
+  .specialist-space .brand { font-size: 11px; gap: 6px; }
+  .specialist-space .brand b { font-size: 17px; }
+  .specialist-space .header-actions { flex-basis: auto; }
+  .specialist-space .header-actions .role-badge { display: none; }
+  .specialist-space .header-inner > .portal-nav { width: 100%; gap: 0; }
+  .specialist-space .header-inner > .portal-nav a { flex: 1 1 0; padding: 6px 0; min-height: 56px; font-size: 10px; gap: 3px; }
+  .specialist-space .portal-nav .category-icon { width: 22px; height: 22px; flex-basis: 22px; }
+}

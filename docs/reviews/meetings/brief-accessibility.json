@@ -1,0 +1,46 @@
+[
+  {
+    "role": "doctor",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "page": "settings",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "page": "settings",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "page": "settings",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "page": "settings",
+    "width": 1280,
+    "violations": []
+  }
+]

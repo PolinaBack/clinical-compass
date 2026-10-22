@@ -28,18 +28,20 @@
                 </span><span>клинический
                 <br>
                 <b>компас</b></span></a>
+            {% if user == 'doctor' %}
+                {% include 'portal_nav.html' %}
+            {% else %}
             <nav class="header-nav" aria-label="Основная навигация">
-                {% if user == 'doctor' %}
-                    <a href="/doctor/library">Библиотека</a><a href="/clinical-tools">Анкеты</a><a href="/medicines">Лекарства</a><a href="/doctor/faq">FAQ-форум</a>
-                {% elif user %}
+                {% if user %}
                     <a href="/patients/{{ session_pid }}/profile/assessments">Анкеты</a><a href="/patients/{{ session_pid }}/profile/video">Специалист</a><a href="/patients/{{ session_pid }}/profile/family">Семейная история</a><a href="/patients/{{ session_pid }}/reports">Отчёты</a><a href="/me/start"
    {% if current_page == '/me/start' %}aria-current="page"{% endif %}>С чего начать</a>
                 {% else %}
                     <a href="/#how">Как это работает</a><a href="/faq">Вопросы и ответы</a><a href="/#resources">Полезные материалы</a>
                 {% endif %}
             </nav>
+            {% endif %}
             <div class="header-actions">
-                {% if user %}<a class="settings-link" href="/settings">Настройки</a>{% endif %}
+                {% if user == 'doctor' %}<details class="header-tools"><summary>Ещё</summary><nav aria-label="Инструменты специалиста"><a href="/clinical-tools">Анкеты</a><a href="/medicines">Лекарства</a><a href="/doctor/faq">FAQ-форум</a></nav></details>{% elif user %}<a class="settings-link" href="/settings">Настройки</a>{% endif %}
                 {% if user != 'doctor' %}<a class="help-link" href="/help-now">Экстренная помощь</a>{% endif %}
                 {% if user %}
                     <span class="role-badge">{{ 'Специалист' if user == 'doctor' else 'Пациент' }}</span>
@@ -53,7 +55,7 @@
             </div>
         </div>
     </header>
-    {% if user %}{% include 'portal_nav.html' %}{% endif %}
+    {% if user and user != 'doctor' %}{% include 'portal_nav.html' %}{% endif %}
     <main id="main">
         <div class="demo-line">
             <span class="status-dot"></span> Исследовательский прототип · 18+ · только синтетические данные · служба помощи не подключена

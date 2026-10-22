@@ -90,11 +90,20 @@ def test_actual_request_gets_longer_read_wait_and_all_sources_are_processed(
     transport(monkeypatch, handler)
     result, _ = ai.LocalModels().summarize(segments, checkpoint)
     assert len(calls) > len(list(ai.chunks(ai.summary_sources(segments), limit=6000)))
-    assert [s["source_id"] for part in calls for s in part] == [
+    original_parts = [
+        part
+        for part in calls
+        if not part[0]["speaker"].startswith("Промежуточная заметка")
+    ]
+    assert [s["source_id"] for part in original_parts for s in part] == [
         s["source_id"] for s in ai.summary_sources(segments)
     ]
-    assert len(result["summary"]) == len(calls)
-    assert [p["units_done"] for p in progress] == list(range(len(calls) + 1))
+    assert (
+        len(result["summary"]) == 1
+    )  # A single whole-meeting result, not concatenated notes.
+    assert progress[-1] == dict(
+        stage="finalize_summary", units_done=len(calls), units_total=len(calls)
+    )
     assert all(p["units_total"] == len(calls) for p in progress)
 
 

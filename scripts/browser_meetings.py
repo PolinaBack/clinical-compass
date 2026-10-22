@@ -134,6 +134,13 @@ def check_meetings(patient, doctor, url, run_job):
         patient.locator('input[type="file"],video,audio,[data-meeting-job]')
     ).to_have_count(0)
     assert patient.request.get(url + media_path).status == 403
+    expect(
+        doctor.locator(".meeting-brief").get_by_text("Обсуждался сон.", exact=True)
+    ).to_be_visible()
+    expect(doctor.locator(".meeting-summary textarea").first).not_to_be_visible()
+    doctor.get_by_text(
+        "Редактировать, проверить источники и опубликовать", exact=True
+    ).click()
     doctor.get_by_label(
         "Я проверил(а) смысл каждого оставленного пункта", exact=False
     ).check()
@@ -157,6 +164,10 @@ def check_meetings(patient, doctor, url, run_job):
     doctor.locator("video").evaluate(
         "async el => {el.muted=true; await el.play(); el.pause();}"
     )
+    doctor.get_by_text(
+        "Редактировать, проверить источники и опубликовать", exact=True
+    ).click()
+    doctor.get_by_text("Исходный фрагмент · Следующие шаги 1", exact=True).click()
     doctor.get_by_role("button", name="00:00 · фрагмент 2", exact=True).click()
     expect(doctor.locator("video")).to_have_js_property("currentTime", 0.45)
     audits = []
@@ -170,6 +181,23 @@ def check_meetings(patient, doctor, url, run_job):
                 role,
                 width,
             )
+            if role == "doctor":
+                nav = page.get_by_role(
+                    "navigation", name="Навигация специалиста", exact=True
+                )
+                expect(
+                    page.locator("header").get_by_role(
+                        "navigation", name="Навигация специалиста", exact=True
+                    )
+                ).to_have_count(1)
+                assert nav.locator("a").evaluate_all(
+                    "els=>els.length===5 && els.every(e=>e.getBoundingClientRect().height>=44)"
+                )
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+                assert nav.evaluate(
+                    "e=>{const r=e.getBoundingClientRect(); return r.top>=0 && r.bottom<innerHeight}"
+                )
+                page.evaluate("window.scrollTo(0,0)")
             if width in (390, 1280):
                 if axe:
                     page.add_script_tag(path=axe)
@@ -221,6 +249,9 @@ def check_meetings(patient, doctor, url, run_job):
                     path=f"artifacts/settings-{role}-{width}.png", full_page=True
                 )
     doctor.goto(url + meeting_path)
+    doctor.get_by_text(
+        "Редактировать, проверить источники и опубликовать", exact=True
+    ).click()
     doctor.get_by_role("button", name="Снять публикацию итогов", exact=True).click()
     patient.goto(url + meeting_path)
     expect(patient.get_by_text("Обсуждался сон.", exact=True)).to_have_count(0)

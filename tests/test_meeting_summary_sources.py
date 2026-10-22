@@ -135,8 +135,8 @@ def test_empty_intro_part_does_not_cancel_later_conclusions(monkeypatch):
 
     transport(monkeypatch, handler)
     result, _ = ai.LocalModels().summarize(segments, checkpoint)
-    assert len(calls) == 2
-    assert [p["units_done"] for p in progress] == [0, 1, 2]
+    assert len(calls) == 3  # Two parts, followed by one whole-meeting summary.
+    assert progress[-1] == dict(stage="finalize_summary", units_done=3, units_total=3)
     assert result["summary"][0]["segment_ids"] == [21]
 
 

@@ -6,7 +6,7 @@
     {% endif %}
     {% from 'icons.html' import icon %}
     {% for href,label,symbol in links %}
-        <a href="{{ href }}" {% if current_page == href or (href.endswith('/profile') and current_page.startswith(href)) or (href == '/doctor/library' and current_page in ['/clinical-tools','/medicines','/doctor/faq']) %}aria-current="page"{% endif %}>
+        <a href="{{ href }}" {% if href == '/settings' %}class="settings-link"{% endif %} {% if current_page == href or (href == '/settings' and current_page.startswith('/settings/')) or (href.endswith('/profile') and current_page.startswith(href)) or (href == '/doctor/library' and (current_page.startswith('/medicines') or current_page in ['/clinical-tools','/doctor/faq'])) %}aria-current="page"{% endif %}>
             {{ icon(symbol) }}<span>{{ label }}</span>
         </a>
     {% endfor %}

@@ -156,10 +156,16 @@ def test_schema_uses_original_ids_in_each_chunk_and_counts_only_validated_parts(
 
     transport(monkeypatch, handler)
     output, _ = ai.LocalModels().summarize(segments, checkpoint)
-    assert len(calls) == 2
-    assert [item["segment_ids"] for item in output["summary"]] == [[7], [21]]
-    assert [p["units_done"] for p in progress] == [0, 1, 2]
-    assert all(p["units_total"] == 2 for p in progress)
+    assert len(calls) == 3
+    assert [source["source_id"] for part in calls[:2] for source in part] == [
+        source["source_id"] for source in ai.summary_sources(segments)
+    ]
+    assert all(
+        source["speaker"].startswith("Промежуточная заметка") for source in calls[-1]
+    )
+    assert output["summary"][0]["segment_ids"] == [7]
+    assert progress[-1] == dict(stage="finalize_summary", units_done=3, units_total=3)
+    assert all(p["units_total"] == 3 for p in progress)
 
 
 @pytest.mark.parametrize("failure", ["quote", "ids", "fields", "json"])

@@ -65,7 +65,7 @@ def check_interface(patient, doctor, url):
                 assert page.locator('button:not([aria-label])').evaluate_all("els=>els.every(e=>e.textContent.trim().length>0)")
                 if width == 390:
                     nav = page.locator('.portal-nav')
-                    assert nav.evaluate("e=>getComputedStyle(e).position") == 'fixed'
+                    assert nav.evaluate("e=>getComputedStyle(e).position") == ('fixed' if page == patient else 'static')
                     assert nav.locator('a').evaluate_all("els=>els.every(e=>e.getBoundingClientRect().height>=44)")
                     if page == patient:
                         page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
