@@ -42,12 +42,13 @@ def checked_database_path():
                 "meeting_artifacts",
                 "meeting_events",
                 "schema_migrations",
+                "account_consent_contexts",
             }
             ready = (
                 required <= tables
                 and c.execute(
                     "SELECT 1 FROM schema_migrations WHERE version=?",
-                    ("006_meeting_progress.sql",),
+                    ("007_account_meeting_consents.sql",),
                 ).fetchone()
             )
     except sqlite3.Error:
@@ -56,7 +57,7 @@ def checked_database_path():
         )
     if not ready:
         stop(
-            "В этой базе ещё не применены миграции 005/006 для записей встреч и прогресса."
+            "В этой базе ещё не применены миграции 005–007 для встреч, прогресса и разрешений пациента."
         )
     return path
 

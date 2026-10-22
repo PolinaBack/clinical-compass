@@ -10,7 +10,11 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 from app.storage import now, audit, connect
-from app.services.consent import require_processing_consent, context_access
+from app.services.consent import (
+    require_processing_consent,
+    context_access,
+    account_context,
+)
 from app.services.meeting_ai import (
     ProcessingError,
     LocalModels,
@@ -30,7 +34,8 @@ ERRORS = {
     "asr_dependency_missing": "Установите зависимости из requirements-meetings.txt.",
     "local_provider_required": "Этот режим допускает только локальные модели и локальный Ollama.",
     "summary_provider_unavailable": "Не удалось получить ответ от локального Ollama. Проверьте адрес сервиса и доступ к нему из обработчика; выполните --check-summary.",
-    "summary_timeout": "Ollama не ответила в установленное время. Проверьте загрузку компьютера и журнал сервиса.",
+    "summary_timeout": "Истёк лимит ожидания ответа Ollama на одну часть. Проверьте загрузку компьютера и журнал Ollama. Лимит и размер частей можно изменить по инструкции настройки встреч; исходная запись и расшифровка сохранены.",
+    "summary_configuration_invalid": "Неверные параметры итогов: COMPASS_SUMMARY_TIMEOUT_SECONDS — целое число от 60 до 3600; COMPASS_SUMMARY_CHUNK_CHARS — от 1500 до 6000. Задайте одинаковые значения у приложения и обработчика.",
     "summary_model_missing": "Ollama вернула HTTP 404. Проверьте имя модели и её наличие на адресе, который использует обработчик.",
     "summary_request_rejected": "Ollama отклонила параметры запроса. Запустите проверку --check-summary и посмотрите причину в журнале Ollama.",
     "summary_provider_http_error": "Ollama ответила ошибкой HTTP при подготовке итогов. Запустите проверку --check-summary; причиной может быть сбой модели или нехватка ресурсов.",
@@ -91,13 +96,20 @@ def permission_stamp(c, row, kind):
         purposes.append("ai_summary")
     for purpose in purposes:
         require_processing_consent(c, row["context_id"], purpose)
+    patient = c.execute(
+        "SELECT a.id FROM accounts a JOIN consultation_consent_contexts x ON x.patient_id=a.patient_id WHERE x.id=? AND a.role='patient' AND a.active=1",
+        (row["context_id"],),
+    ).fetchone()
+    permission_context = account_context(c, patient["id"])
     events = c.execute(
         """SELECT e.account_id,e.purpose,MAX(e.id) FROM consent_events e
                        WHERE e.context_id=? GROUP BY e.account_id,e.purpose ORDER BY e.account_id,e.purpose""",
-        (row["context_id"],),
+        (permission_context,),
     ).fetchall()
     relevant = [tuple(r) for r in events if r["purpose"] in purposes]
-    return hashlib.sha256(serialize(relevant).encode()).hexdigest()
+    return hashlib.sha256(
+        serialize([row["context_id"], permission_context, relevant]).encode()
+    ).hexdigest()
 
 
 def event(c, rid, action, actor=None, artifact=None, reason=""):

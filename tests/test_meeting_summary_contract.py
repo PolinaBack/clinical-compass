@@ -124,6 +124,7 @@ def test_validator_reports_safe_reason_without_loosening_evidence(payload, reaso
 def test_schema_uses_original_ids_in_each_chunk_and_counts_only_validated_parts(
     monkeypatch,
 ):
+    monkeypatch.setenv("COMPASS_SUMMARY_CHUNK_CHARS", "6000")
     segments = [
         dict(id=7, text="Обсудили сон. " * 280),
         dict(id=21, text="Обсудили активность. " * 190),

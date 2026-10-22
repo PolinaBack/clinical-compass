@@ -16,6 +16,7 @@ from app.services.meeting_ai import (
     LocalModels,
     ProcessingError,
     SUMMARY_VALIDATION_REASONS,
+    summary_options,
 )
 from app.services.meeting_media import audio_for_model
 
@@ -60,7 +61,12 @@ def check_summary():
     )
     try:
         conf = configuration()
+        options = summary_options()
         print(f"Адрес: {conf['ollama_url']} · модель: {conf['model']}")
+        print(
+            f"Лимит ожидания части: {options['timeout_seconds']} с · "
+            f"порог разбиения: {options['chunk_chars']} символов с учётом служебного запаса."
+        )
         print(
             "Проверяются /api/show, /api/chat, параметры приложения, JSON, цитаты и номера фрагментов."
         )

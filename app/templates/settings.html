@@ -5,13 +5,13 @@
     <div class="page-intro">
         <a href="{{ '/doctor' if account_info.role == 'doctor' else '/me' }}">← В мой кабинет</a>
         <h1>Настройки и конфиденциальность</h1>
-        <p class="lead">Ваш аккаунт, удобное время и отдельные решения об использовании данных.</p>
+        <p class="lead">Профиль, напоминания и удобное оформление.</p>
     </div>
     <nav class="tab-nav" aria-label="Разделы настроек">
         <a href="#profile">Профиль</a>
         <a href="#notifications">Уведомления</a>
         <a href="#privacy">Конфиденциальность</a>
-        <a href="#consultations">Консультации и ИИ</a>
+        {% if account_info.role == 'patient' %}<a href="#consultations">Записи встреч</a>{% endif %}
         <a href="#interface">Оформление</a>
     </nav>
     {% if request.query_params.get('saved') in ['profile','notifications','consultations','privacy','interface'] %}
@@ -28,6 +28,7 @@
             <label>Имя аккаунта
                 <input name="display_name" value="{{ settings.profile.display_name }}" minlength="1" maxlength="80" required>
             </label>
+            <details><summary>Часовой пояс и обращение</summary>
             <label>Часовой пояс
                 <input name="timezone" value="{{ settings.profile.timezone }}" list="timezones" maxlength="80" required>
             </label>
@@ -44,19 +45,22 @@
                 </select>
             </label>
             <p class="caption">Предпочтение сохраняется для персональных напоминаний. Тексты клинических шкал оно не меняет.</p>
+            </details>
             <button>Сохранить профиль</button>
         </form>
     </section>
     <section class="card" id="notifications">
         <h2>Уведомления</h2>
-        <p>Выберите нужные категории и время. Отдельное согласие ниже можно отозвать независимо от этих настроек.</p>
-        <p class="notice">
-            Каналы доставки пока не подключены. Ваш выбор сохранится.
-            Согласие на необязательные напоминания {{ 'дано' if notification_allowed else 'не дано' }}.
-        </p>
+        <p>Выберите нужные напоминания. Каналы доставки пока не подключены, выбор сохранится.</p>
         <form action="/settings/notifications" method="post">
             <input type="hidden" name="csrf" value="{{ csrf }}">
             <input type="hidden" name="revision" value="{{ settings.notifications.revision }}">
+            {% if account_info.role == 'patient' %}
+                <input type="hidden" name="consent_document_id" value="{{ consent_docs.notifications.id }}">
+                <input type="hidden" name="consent_expected_id" value="{{ notification_state.id if notification_state else 0 }}">
+                <label class="check"><input type="checkbox" name="enabled" value="true" {% if notification_allowed %}checked{% endif %}>Разрешаю напоминания</label>
+            {% endif %}
+            <details><summary>Категории и расписание</summary>
             {% for key,label in [('diary','Напоминать о дневнике'),('medication','Напоминать об отметке приёма лекарств'),('tasks','Напоминать о заданиях специалиста')] %}
                 <label class="check">
                     <input type="checkbox" name="{{ key }}" value="true" {% if settings.notifications[key] %}checked{% endif %}>
@@ -76,103 +80,59 @@
             <label>Конец тихих часов
                 <input type="time" name="quiet_end" value="{{ settings.notifications.quiet_end }}" required>
             </label>
-            <p class="caption">Чтобы отключить все напоминания, снимите три отметки или отзовите согласие. Тихие часы могут переходить через полночь.</p>
+            <p class="caption">Тихие часы могут переходить через полночь.</p>
+            </details>
             <button>Сохранить уведомления</button>
         </form>
     </section>
-    <section class="card" id="privacy">
-        <h2>Конфиденциальность и согласия</h2>
-        {% if account_info.role == 'patient' %}
-            <p>Ваши записи доступны вашему аккаунту и ведущему специалисту:
-                <strong>{{ access_info.doctor_name if access_info else 'не указан' }}</strong>.
-                Другие пациенты и посторонние специалисты доступа не получают.
-                Настройки аккаунта не меняют медицинские права доступа.</p>
-            <p>Участие в синтетической демонстрации:
-                <strong>{{ 'подтверждено' if participation else 'не подтверждено или отозвано' }}</strong>.
-                <a href="/consent">Посмотреть условия или отозвать участие</a>.
-                Отзыв участия также запрещает новые необязательные напоминания и обработку консультаций.</p>
-        {% else %}
-            <p>Вы управляете только настройками и согласиями собственного аккаунта.
-                Эти действия не заменяют согласие пациента. Доступ к картам ограничен закреплёнными за вами пациентами.</p>
-        {% endif %}
-        {% with document=consent_docs.notifications, state=notification_state, granted=notification_allowed, context_id=none, can_change=true %}
-            {% include 'consent_control.html' %}
-        {% endwith %}
-        <p>Для аудиозаписи, видеозаписи, ИИ-расшифровки и сводки нужны отдельные решения участников
-            для конкретной консультации. Все необязательные согласия изначально выключены.</p>
-        <details>
-            <summary>История моих согласий и отзывов</summary>
-            <p class="caption">Время событий в истории указано в UTC.</p>
-            {% for item in consent_history %}
-                <article>
-                    <h3>{{ item.title }}</h3>
-                    <p>{{ {'granted':'Согласие дано','declined':'Согласие не дано','withdrawn':'Согласие отозвано'}[item.status] }}
-                        · {{ item.created_at }} · версия {{ item.version }}</p>
-                    <p>{{ 'Консультация: ' ~ item.context_id if item.context_id else 'Уведомления аккаунта' }}.
-                        Способ: {{ 'отзыв участия в демонстрации' if item.confirmed_via == 'participation_withdrawal' else 'отдельная форма' }}.</p>
-                    <details><summary>Текст, цель и правила хранения этой версии</summary>
-                        <p>{{ item.body }}</p><p>{{ item.retention }}</p>
-                    </details>
-                </article>
-            {% else %}
-                <p>Решений о необязательных согласиях пока нет.</p>
-            {% endfor %}
-            {% if participation_history %}
-                <h3>Участие в демонстрации — отдельная история</h3>
-                {% for item in participation_history %}
-                    <p>{{ item.created_at }} · {{ item.version }} ·
-                        {{ 'участие подтверждено' if item.accepted else 'участие не подтверждено или отозвано' }}</p>
-                {% endfor %}
-            {% endif %}
-        </details>
-        <p><a href="/privacy">Доступ, хранение данных и последствия отзыва</a></p>
-    </section>
+    {% if account_info.role == 'patient' %}
     <section class="card" id="consultations">
-        <h2>Консультации и ИИ</h2>
-        <p>Это предпочтения для планирования общения. Они не разрешают запись, передачу аудио или обработку ИИ.
-            При открытии настроек доступ к микрофону и камере не запрашивается.</p>
+        <h2>Записи встреч</h2>
+        <p>Выберите один раз, что разрешено для ваших встреч. Выбор действует, пока вы его не измените.
+            Подтверждать каждую запись заново не нужно. Все пункты изначально выключены.</p>
         <form action="/settings/consultations" method="post">
             <input type="hidden" name="csrf" value="{{ csrf }}">
             <input type="hidden" name="revision" value="{{ settings.consultations.revision }}">
-            {% for key,label in [('audio','Мне удобен разговор по аудио'),('video','Мне удобен разговор по видео'),('transcription','Хочу обсудить возможность ИИ-расшифровки'),('summary','Хочу обсудить подготовку черновика сводки')] %}
-                <label class="check">
-                    <input type="checkbox" name="{{ key }}" value="true" {% if settings.consultations[key] %}checked{% endif %}>
-                    {{ label }}
-                </label>
+            {% for purpose,key in media_fields.items() %}
+                <input type="hidden" name="document_id_{{ purpose }}" value="{{ consent_docs[purpose].id }}">
+                <input type="hidden" name="expected_id_{{ purpose }}" value="{{ media_states[purpose].id if media_states[purpose] else 0 }}">
+                <label class="check"><input type="checkbox" name="{{ key }}" value="true" {% if media_allowed[purpose] %}checked{% endif %}>{{ consent_docs[purpose].title }}</label>
             {% endfor %}
-            <button>Сохранить предпочтения консультаций</button>
+            <p class="caption">Отключение запрещает новые действия. Результат обработки, во время которой разрешение изменилось, не сохранится.
+                Сам выбор не включает камеру или микрофон. Исходные файлы видит ведущий врач; пациенту доступны только опубликованные им итоги.</p>
+            <button>Сохранить разрешения записей</button>
         </form>
-        <h2>Отдельные согласия консультации</h2>
-        <p>Для загруженных записей встреч предусмотрена локальная обработка на компьютере/сервере «Компаса».
-            Модели устанавливаются отдельно. Запуск требует действующих согласий всех участников на конкретное действие.
-            Предпочтения аккаунта их не заменяют. Приложение автоматически не записывает звонок и не включает устройства.</p>
-        {% for context in contexts %}
-            <section class="inset" aria-label="Согласия консультации">
-                <h3>Консультация {{ context.id }}</h3>
-                {% if not context.accessible %}
-                    <p>Состав или доступ участников изменился. Для новых разрешений нужно новое согласование.</p>
-                {% elif context.closed_at %}
-                    <p>Согласование закрыто для новых разрешений. Прежнее разрешение можно отозвать.</p>
-                {% endif %}
-                {% for purpose in media_purposes %}
-                    {% with document=consent_docs[purpose], state=context.states[purpose], granted=context.allowed[purpose], context_id=context.id, can_change=true, can_grant=context.accessible and not context.closed_at %}
-                        {% include 'consent_control.html' %}
-                    {% endwith %}
-                {% endfor %}
-            </section>
-        {% else %}
-            <p>Консультаций для отдельного согласования пока нет. Предпочтения аккаунта не дают разрешение на будущую запись.</p>
-        {% endfor %}
-        <details><summary>Тексты четырёх отдельных согласий</summary>
+        <details><summary>Что включают эти разрешения</summary>
+            <p>Обработка локальная, без отправки записей внешнему ИИ. Врач проверяет и отдельно публикует итоги.</p>
             {% for purpose in media_purposes %}
-                <h3>{{ consent_docs[purpose].title }}</h3>
-                <p>{{ consent_docs[purpose].body }}</p>
-                <p>{{ consent_docs[purpose].retention }}</p>
-                <p class="caption">{{ consent_docs[purpose].version }}</p>
+                <h3>{{ consent_docs[purpose].title }}</h3><p>{{ consent_docs[purpose].body }}</p>
+                <p>{{ consent_docs[purpose].retention }}</p><p class="caption">{{ consent_docs[purpose].version }}</p>
             {% endfor %}
         </details>
-        <p class="caption">Короткие голосовые пояснения к анкетам — отдельная существующая функция
-            с подтверждением на форме отправки. Они не являются записью консультации и не передаются внешнему ИИ.</p>
+    </section>
+    {% endif %}
+    <section class="card" id="privacy">
+        <h2>Конфиденциальность</h2>
+        {% if account_info.role == 'patient' %}
+            <p>Ведущий специалист: <strong>{{ access_info.doctor_name if access_info else 'не указан' }}</strong>.
+                Другие пациенты и посторонние специалисты не получают доступ к вашей карте.</p>
+            <details><summary>Участие и история разрешений</summary>
+                <p>Участие в демонстрации: {{ 'подтверждено' if participation else 'не подтверждено или отозвано' }}.
+                    <a href="/consent">Условия и отзыв участия</a>. Отзыв также останавливает необязательные напоминания и обработку встреч.</p>
+                <p class="caption">История сохраняется, время указано в UTC.</p>
+                {% for item in consent_history %}
+                    <article><h3>{{ item.title }}</h3>
+                    <p>{{ {'granted':'Согласие дано','declined':'Согласие не дано','withdrawn':'Согласие отозвано'}[item.status] }} · {{ item.created_at }} · {{ item.version }}</p>
+                    <p>{{ 'Уведомления аккаунта' if not item.context_id else ('Записи встреч аккаунта' if item.context_id == media_context else 'Прежнее разрешение отдельной консультации') }}.</p>
+                    <details><summary>Текст и хранение этой версии</summary><p>{{ item.body }}</p><p>{{ item.retention }}</p></details></article>
+                {% else %}<p>История разрешений пока пуста.</p>{% endfor %}
+                {% for item in participation_history %}<p>{{ item.created_at }} · {{ item.version }} · {{ 'участие подтверждено' if item.accepted else 'участие отозвано' }}</p>{% endfor %}
+            </details>
+        {% else %}
+            <p>Доступ к картам ограничен закреплёнными за вами пациентами. Разрешения на использование записей пациент задаёт в своих настройках.
+                Вы запускаете нужные действия; отдельных согласий в настройках врача нет.</p>
+        {% endif %}
+        <p><a href="/privacy">Доступ и хранение данных</a></p>
     </section>
     <section class="card" id="interface">
         <h2>Оформление</h2>

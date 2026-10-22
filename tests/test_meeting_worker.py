@@ -38,7 +38,7 @@ def test_legacy_database_is_preserved_and_gets_actionable_error(tmp_path, monkey
     with pytest.raises(SystemExit) as error:
         main(["--once"])
     message = str(error.value)
-    assert "миграции 005/006" in message
+    assert "миграции 005–007" in message
     assert "python -m uvicorn app.main:app --reload" in message
     assert "COMPASS_DB" in message
     assert path.read_bytes() == before

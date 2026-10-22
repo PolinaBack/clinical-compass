@@ -30,27 +30,18 @@ def check_meetings(patient, doctor, url, run_job):
     meeting_path = doctor.url.removeprefix(url)
     mid = meeting_path.split("/")[-1]
 
-    def give(page):
-        page.goto(url + meeting_path)
-        for purpose in ("video_recording", "ai_transcription", "ai_summary"):
-            details = (
-                page.locator("details")
-                .filter(
-                    has=page.locator("summary").filter(
-                        has_text=re.compile("^Согласия именно этой встречи$")
-                    )
-                )
-                .first
-            )
-            if details.get_attribute("open") is None:
-                details.locator("summary").first.click()
-            form = page.locator(f'form[action="/meetings/{mid}/consents/{purpose}"]')
-            form.locator('input[name="confirmed"]').check()
-            form.locator('button[value="granted"]').click()
-
-    give(doctor)
-    give(patient)
+    patient.goto(url + "/settings")
+    settings_form = patient.locator('form[action="/settings/consultations"]')
+    for field in ("video", "transcription", "summary"):
+        settings_form.locator(f'input[name="{field}"]').check()
+    settings_form.get_by_role(
+        "button", name="Сохранить разрешения записей", exact=True
+    ).click()
+    doctor.goto(url + "/settings")
+    expect(doctor.locator('form[action="/settings/consultations"]')).to_have_count(0)
+    expect(doctor.locator('form[action*="/consents/"]')).to_have_count(0)
     doctor.goto(url + meeting_path)
+    expect(doctor.locator('form[action*="/consents/"]')).to_have_count(0)
     with TemporaryDirectory(prefix="compass-browser-video-") as folder:
         path = Path(folder) / "synthetic.mp4"
         subprocess.run(
@@ -93,9 +84,7 @@ def check_meetings(patient, doctor, url, run_job):
             "buffer": content,
         }
     )
-    doctor.get_by_role(
-        "button", name="Загрузить с проверкой согласий", exact=True
-    ).click()
+    doctor.get_by_role("button", name="Загрузить запись", exact=True).click()
     doctor.locator("video").evaluate(
         "async el => {el.muted=true; await el.play(); el.pause();}"
     )
@@ -194,6 +183,44 @@ def check_meetings(patient, doctor, url, run_job):
                 page.screenshot(
                     path=f"artifacts/meeting-{role}-{width}.png", full_page=True
                 )
+            page.goto(url + "/settings")
+            assert page.evaluate("document.documentElement.scrollWidth<=innerWidth"), (
+                role,
+                width,
+                "settings",
+            )
+            expect(page.locator('form[action*="/consents/"]')).to_have_count(0)
+            if role == "doctor":
+                expect(
+                    page.locator('form[action="/settings/consultations"]')
+                ).to_have_count(0)
+            else:
+                expect(
+                    page.locator(
+                        'form[action="/settings/consultations"] input[type="checkbox"]'
+                    )
+                ).to_have_count(4)
+            if width in (390, 1280):
+                if axe:
+                    page.add_script_tag(path=axe)
+                    violations = page.evaluate(
+                        """async()=> (await axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']}})).violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))"""
+                    )
+                    audits.append(
+                        dict(
+                            role=role,
+                            page="settings",
+                            width=width,
+                            violations=violations,
+                        )
+                    )
+                    Path("artifacts/meetings-accessibility.json").write_text(
+                        json.dumps(audits, ensure_ascii=False, indent=2)
+                    )
+                page.screenshot(
+                    path=f"artifacts/settings-{role}-{width}.png", full_page=True
+                )
+    doctor.goto(url + meeting_path)
     doctor.get_by_role("button", name="Снять публикацию итогов", exact=True).click()
     patient.goto(url + meeting_path)
     expect(patient.get_by_text("Обсуждался сон.", exact=True)).to_have_count(0)
@@ -201,5 +228,5 @@ def check_meetings(patient, doctor, url, run_job):
     if axe:
         assert not any(a["violations"] for a in audits), audits
     print(
-        "PASS meetings UI: scoped consent, real MP4/doctor playback/seek, live progress polling without losing unsaved text, synthetic worker, corrections, cited draft, clinician review/withdrawal, patient denied progress/upload/player/direct media/full transcript, four widths."
+        "PASS meetings UI: one patient settings form, no doctor/per-meeting consent forms, real MP4/doctor playback/seek, live progress polling without losing unsaved text, synthetic worker, corrections, cited draft, clinician review/withdrawal, patient denied progress/upload/player/direct media/full transcript, four widths."
     )

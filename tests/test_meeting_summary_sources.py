@@ -110,6 +110,7 @@ def test_server_source_still_has_to_match_real_transcript():
 
 
 def test_empty_intro_part_does_not_cancel_later_conclusions(monkeypatch):
+    monkeypatch.setenv("COMPASS_SUMMARY_CHUNK_CHARS", "6000")
     segments = [
         dict(id=7, text="Вступительная часть. " * 190),
         dict(id=21, text="Договорились отмечать сон. " * 145),

@@ -19,11 +19,10 @@ from app.services.consent import (
     create_consultation_context,
     context_access,
     documents,
-    latest_event,
-    is_granted,
     MEDIA_PURPOSES,
     record_consent,
     require_processing_consent,
+    patient_media_permissions,
 )
 
 
@@ -117,26 +116,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
         with db() as c:
             meeting = scope(c, mid, user)
             docs = documents(c)
-            states = {
-                p: latest_event(c, user["id"], p, meeting["context_id"])
-                for p in MEDIA_PURPOSES
-            }
-            granted = {
-                p: is_granted(c, user["id"], p, meeting["context_id"])
-                for p in MEDIA_PURPOSES
-            }
-            participants = c.execute(
-                """SELECT a.id,a.role,COALESCE(p.display_name,a.username) name FROM consent_participants cp JOIN accounts a ON a.id=cp.account_id
-                                     LEFT JOIN account_profiles p ON p.account_id=a.id WHERE cp.context_id=?""",
-                (meeting["context_id"],),
-            ).fetchall()
-            approvals = {
-                p: all(
-                    is_granted(c, a["id"], p, meeting["context_id"])
-                    for a in participants
-                )
-                for p in MEDIA_PURPOSES
-            }
+            approvals = patient_media_permissions(c, meeting["patient_id"])
             records = []
             for r in c.execute(
                 "SELECT id,filename,mime,duration,created_at,expires_at,deleted_at FROM meeting_recordings WHERE meeting_id=? ORDER BY id DESC",
@@ -190,10 +170,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
             meeting=meeting,
             records=records,
             consent_docs=docs,
-            states=states,
-            granted=granted,
             approvals=approvals,
-            participants=participants,
             purposes=MEDIA_PURPOSES,
             ai=readiness(),
             errors=service.ERRORS,

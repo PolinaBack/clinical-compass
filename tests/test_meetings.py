@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 from app.main import create_app
 from app.storage import connect, now
 from app.services import meetings as service
-from app.services.consent import documents
+from app.services.consent import documents, account_context
 from app.services.meeting_ai import (
     ProcessingError,
     validate_summary,
@@ -96,15 +96,24 @@ def grants(
     with connect(client.app.state.db_path) as c:
         docs = documents(c)
         rows = c.execute(
-            "SELECT account_id FROM consent_participants WHERE context_id=?", (context,)
+            "SELECT p.account_id FROM consent_participants p JOIN accounts a ON a.id=p.account_id WHERE p.context_id=? AND a.role='patient'",
+            (context,),
         ).fetchall()
         for a in rows:
             if who is not None and a[0] != who:
                 continue
+            consent_context = account_context(c, a[0], create=True)
             for purpose in purposes:
                 c.execute(
                     "INSERT INTO consent_events(account_id,context_id,purpose,document_id,status,created_at) VALUES(?,?,?,?,?,?)",
-                    (a[0], context, purpose, docs[purpose]["id"], status, now()),
+                    (
+                        a[0],
+                        consent_context,
+                        purpose,
+                        docs[purpose]["id"],
+                        status,
+                        now(),
+                    ),
                 )
 
 

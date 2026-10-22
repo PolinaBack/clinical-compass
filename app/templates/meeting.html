@@ -8,14 +8,14 @@
 <p>Загрузить и просмотреть оригинал записи и полную расшифровку может только ведущий врач. Пациенту доступны его согласия и отдельно проверенные и опубликованные врачом итоги.</p>
 {% if user == 'doctor' %}<dl class="meeting-status"><dt>FFmpeg</dt><dd>{{ 'найден' if ai.ffmpeg else 'требуется установка' }}</dd><dt>Распознавание речи</dt><dd>{{ 'зависимости установлены' if ai.recognizer else 'нужно установить requirements-meetings.txt' }}</dd><dt>Локальная модель речи</dt><dd>{{ 'файлы найдены' if ai.model else 'ещё не загружена' }}</dd><dt>Модель итогов</dt><dd>{{ ai.summary_model or 'некорректная настройка' }} · для работы нужен запущенный локальный Ollama</dd></dl><p>Очередь обрабатывает отдельно запущенный обработчик встреч. Если задача ожидает, проверьте, что он работает. <a href="/meetings/{{ meeting.id }}">Обновить страницу и результаты</a></p>{% endif %}
 </section>
-<details class="card"><summary>Согласия именно этой встречи</summary><p>Участники: {% for p in participants %}{{ p.name }} ({{ 'врач' if p.role == 'doctor' else 'пациент' }}){{ ', ' if not loop.last else '.' }}{% endfor %}</p>
-<ul>{% for p in purposes %}<li>{{ consent_docs[p].title }} — {{ 'все участники подтвердили' if approvals[p] else 'нужны отдельные подтверждения участников' }}</li>{% endfor %}</ul>
-{% for p in purposes %}{% with document=consent_docs[p],state=states[p],granted=granted[p],context_id=meeting.context_id,can_change=true,consent_base='/meetings/' ~ meeting.id ~ '/consents' %}{% include 'consent_control.html' %}{% endwith %}{% endfor %}
+<details class="card"><summary>Разрешения пациента</summary><p>Пациент задаёт их один раз в настройках для своих встреч. Повторное подтверждение каждой записи не требуется.</p>
+<ul>{% for p in purposes %}<li>{{ consent_docs[p].title }} — {{ 'разрешено' if approvals[p] else 'выключено' }}</li>{% endfor %}</ul>
+{% if user != 'doctor' %}<a href="/settings#consultations">Изменить разрешения записей</a>{% else %}<p>Врач запускает нужные действия; отдельные согласия в настройках врача не требуются.</p>{% endif %}
 </details>
-{% if user == 'doctor' %}<section class="card"><h2>Загрузить запись</h2><p>Добавьте файл уже записанной встречи только с разрешения всех участников: аудио WAV/MP3/FLAC/OGG/M4A или видео MP4/WebM, до 200 МБ и двух часов, обязательно со звуком. Микрофон и камера здесь не включаются.</p>
+{% if user == 'doctor' %}<section class="card"><h2>Загрузить запись</h2><p>Аудио WAV/MP3/FLAC/OGG/M4A или видео MP4/WebM, до 200 МБ и двух часов, обязательно со звуком. Разрешение пациента проверяется по его настройкам. Для первого теста удобно взять фрагмент на 2–5 минут.</p>
 <form method="post" action="/meetings/{{ meeting.id }}/recordings" enctype="multipart/form-data"><input type="hidden" name="csrf" value="{{ csrf }}">
 <label for="meeting-media-kind">Вид записи</label><select id="meeting-media-kind" name="media_kind"><option value="audio">Аудиозапись</option><option value="video">Видеозапись со звуком</option></select>
-<label>Файл записи<input type="file" name="file" accept=".wav,.mp3,.flac,.ogg,.m4a,.mp4,.webm" required></label><button>Загрузить с проверкой согласий</button></form></section>{% endif %}
+<label>Файл записи<input type="file" name="file" accept=".wav,.mp3,.flac,.ogg,.m4a,.mp4,.webm" required></label><button>Загрузить запись</button></form></section>{% endif %}
 {% for record in records %}<section class="card meeting-recording" id="recording-{{ record.id }}"><h2>{% if user == 'doctor' %}Запись {{ record.id }} · {{ record.filename }}{% else %}Материалы встречи · {{ record.id }}{% endif %}</h2>{% if user == 'doctor' %}<p>{{ timecode(record.duration) }} · загружено {{ record.created_at }} · хранение до {{ record.expires_at }}</p>{% endif %}
 {% if record.deleted_at or record.expired %}<p>Запись удалена или срок хранения истёк. Производные недоступны.</p>
 {% else %}
@@ -43,6 +43,6 @@
 {% if user == 'doctor' or record.published_id %}<p><a href="/meeting-recordings/{{ record.id }}/export">Скачать доступные текстовые результаты (JSON)</a></p>{% endif %}
 {% if user == 'doctor' %}<details><summary>История версий и происхождение</summary>{% for v in record.history %}<p><a href="/meeting-artifacts/{{ v.id }}">Версия #{{ v.id }}</a> · {{ 'расшифровка' if v.kind == 'transcript' else 'сводка' }} · {{ v.provider }} · {{ v.created_at }}{{ ' · содержимое удалено' if v.deleted_at else '' }}</p>{% else %}<p>Версий пока нет.</p>{% endfor %}</details>{% endif %}
 <details><summary>Удалить запись и её производные</summary><p>Удалится файл и содержимое расшифровок/сводок из рабочей базы; метаданные и история действий сохранятся. Копии базы удаляются отдельно. Это не меняет назначения и дневник.</p><form method="post" action="/meeting-recordings/{{ record.id }}/delete"><input type="hidden" name="csrf" value="{{ csrf }}"><label class="check"><input type="checkbox" name="confirmed" value="yes" required>Подтверждаю удаление файла и его текстовых производных</label><button class="secondary">Удалить запись и производные</button></form></details>
-{% endif %}</section>{% else %}<p>Записей пока нет. Согласуйте отдельные разрешения; затем врач сможет загрузить файл.</p>{% endfor %}
+{% endif %}</section>{% else %}<p>Записей пока нет. Для загрузки нужны действующие разрешения в настройках пациента.</p>{% endfor %}
 </div>
 {% endblock %}
