@@ -39,6 +39,7 @@
                                {% if not can_edit %}readonly{% endif %}
                                required>
                     </label>
+                    {% if person.get('relation')=='custom' %}<label>Своя категория родства<input name="custom_relation" maxlength="80" value="{{ person.get('custom_relation','') }}" {% if not can_edit %}readonly{% endif %} required></label>{% endif %}
                     <label>Пол для медицинской схемы<select name="sex" {% if not can_edit %}disabled{% endif %}>{% for key,label in [('unknown','Не указан'),('male','Мужской'),('female','Женский')] %}<option value="{{ key }}" {% if person.get('sex','unknown')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
                     <label>Возраст · если известен<input name="age" type="number" min="0" max="130" value="{{ person.get('age') if person.get('age') is not none else '' }}" {% if not can_edit %}readonly{% endif %}></label>
                     <label class="check"><input type="checkbox" name="deceased" value="yes" {% if person.get('deceased') %}checked{% endif %}{% if not can_edit %}disabled{% endif %}>Умер(ла)</label>

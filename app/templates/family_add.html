@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% block content %}
+<div class="section-page-heading"><h1>Добавить близкого</h1><a href="/patients/{{ patient.id }}/profile/family">К дереву</a></div>
+{% include 'profile_nav.html' %}<section class="card narrow"><h2>Новый листик</h2><p>Можно начать с любого близкого. Остальных членов семьи заполнять не нужно.</p>
+<form method="post" action="/patients/{{ patient.id }}/relatives"><input type="hidden" name="csrf" value="{{ csrf }}">{% include 'family_add_fields.html' %}<button>Добавить участника</button></form></section>
+{% endblock %}

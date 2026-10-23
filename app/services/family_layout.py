@@ -9,6 +9,10 @@ RELATIONS = {
     "sister": "Сестра",
     "sibling": "Брат / сестра",
     "child": "Ребёнок",
+    "grandmother": "Бабушка",
+    "grandfather": "Дедушка",
+    "uncle": "Дядя",
+    "aunt": "Тётя",
     "other": "Близкий",
     "custom": "Близкий",
     "self": "Я",
@@ -58,15 +62,13 @@ def layout(relatives, selected=""):
         match = [c for c in conditions if c["label"] == selected] if selected else []
         sex = (person or {}).get("sex", "unknown")
         if sex == "unknown":
-            if (
-                key in ("father", "paternal_grandfather", "maternal_grandfather")
-                or (person or {}).get("relation") == "brother"
-            ):
+            if key in ("father", "paternal_grandfather", "maternal_grandfather") or (
+                person or {}
+            ).get("relation") in ("brother", "uncle", "grandfather"):
                 sex = "male"
-            elif (
-                key in ("mother", "paternal_grandmother", "maternal_grandmother")
-                or (person or {}).get("relation") == "sister"
-            ):
+            elif key in ("mother", "paternal_grandmother", "maternal_grandmother") or (
+                person or {}
+            ).get("relation") in ("sister", "aunt", "grandmother"):
                 sex = "female"
         about = (person or {}).get("about", "") or (person or {}).get("description", "")
         notes = "; ".join(c["label"] for c in conditions[:2]) or about[:100]
@@ -181,7 +183,13 @@ def layout(relatives, selected=""):
             if parent:
                 generation = parent["generation"] + 1 if parent["generation"] else 0
             else:
-                generation = 4 if p["relation"] == "child" else 0
+                generation = {
+                    "child": 4,
+                    "grandmother": 1,
+                    "grandfather": 1,
+                    "uncle": 2,
+                    "aunt": 2,
+                }.get(p["relation"], 0)
             y = {0: (parent["py"] + 300 if parent else 955), 1: 95, 2: 365, 3: 655}.get(
                 generation, 955 + (generation - 4) * 300
             )
@@ -223,4 +231,63 @@ def layout(relatives, selected=""):
         family_self_y=self_node["y"],
         family_connections=lines,
         selected_condition=selected,
+    )
+
+
+def patient_layout(nodes):
+    """Leaf positions around the canopy restored from commit 43bbc4a, not a pedigree."""
+    anchors = {
+        "maternal_grandmother": (198, 240),
+        "maternal_grandfather": (418, 160),
+        "paternal_grandmother": (682, 160),
+        "paternal_grandfather": (902, 240),
+        "mother": (363, 500),
+        "father": (737, 500),
+    }
+    extras = [n for n in nodes if n["key"] not in {*anchors, "self"}]
+    rows = (len(extras) + 2) // 3
+    height = 760 + rows * 190
+    result = []
+    people = {}
+    twigs = []
+    for original in nodes:
+        n = dict(original)
+        if n["key"] in anchors:
+            x, y = anchors[n["key"]]
+        elif n["key"] == "self":
+            x, y = 550, height - 75
+        else:
+            index = extras.index(original)
+            row = index // 3
+            batch_size = min(3, len(extras) - row * 3)
+            x = (
+                [200]
+                if batch_size == 1
+                else [200, 900] if batch_size == 2 else [200, 550, 900]
+            )[index % 3]
+            y = 680 + row * 190
+            twigs.append(f"M550 {y+85} Q550 {y+30} {x} {y}")
+        n.update(leaf_x=x, leaf_y=y)
+        if n["person"]:
+            person = n["person"]
+            people[n["key"]] = dict(
+                name=person["name"],
+                label=n["label"],
+                sex=person.get("sex", "unknown"),
+                age=person.get("age"),
+                deceased=person.get("deceased", 0),
+                about=person.get("about", ""),
+                custom_relation=(
+                    person.get("custom_relation", "")
+                    if person["relation"] == "custom"
+                    else None
+                ),
+                relation=person["relation"],
+            )
+        result.append(n)
+    return dict(
+        family_patient_nodes=result,
+        family_patient_height=height,
+        family_patient_twigs=twigs,
+        family_patient_people=people,
     )

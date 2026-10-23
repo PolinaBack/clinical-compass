@@ -1,0 +1,1 @@
+PASS family leaves: historical canopy/branches, empty garden, sister and brother without parents, grandmother and uncle without ancestors, custom category/edit/reload, short leaf dialogs, full history/no-JS fallback, preserved doctor pedigree, both roles at 320/390/768/1280, no overlaps/overflow, keyboard, accessibility.

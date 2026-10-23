@@ -32,6 +32,53 @@ SOURCES = [
     "Мои наблюдения",
     "Не знаю",
 ]
+RELATION_CHOICES = [
+    ("mother", "Мама"),
+    ("father", "Папа"),
+    ("brother", "Брат"),
+    ("sister", "Сестра"),
+    ("grandmother", "Бабушка · линия не уточнена"),
+    ("grandfather", "Дедушка · линия не уточнена"),
+    ("maternal_grandmother", "Бабушка по маминой линии"),
+    ("maternal_grandfather", "Дедушка по маминой линии"),
+    ("paternal_grandmother", "Бабушка по папиной линии"),
+    ("paternal_grandfather", "Дедушка по папиной линии"),
+    ("uncle", "Дядя"),
+    ("aunt", "Тётя"),
+    ("child", "Ребёнок"),
+    ("other", "Другой близкий"),
+    ("custom", "Другая / Своя категория"),
+]
+
+
+def creation_context(relatives):
+    occupied = {r.get("slot") for r in relatives}
+    parents = {
+        r["relation"] for r in relatives if r["relation"] in ("mother", "father")
+    }
+    return dict(
+        family_relation_choices=[
+            (key, label)
+            for key, label in RELATION_CHOICES
+            if key not in occupied and key not in parents
+        ]
+    )
+
+
+def person_fields(form):
+    sex = str(form.get("sex", "unknown"))
+    age = str(form.get("age", "")).strip()
+    about = str(form.get("about", "")).strip()
+    if (
+        sex not in ("male", "female", "unknown")
+        or age
+        and (not age.isdigit() or not 0 <= int(age) <= 130)
+        or len(about) > 3000
+    ):
+        raise HTTPException(422, "Проверьте пол, возраст и заметку о близком")
+    return sex, int(age) if age else None, int(form.get("deceased") == "yes"), about
+
+
 CONDITION_KINDS = {
     "known": "Знаю название заболевания",
     "signs": "Помню признаки, диагноз не знаю",
@@ -45,9 +92,14 @@ def canonical_source(source):
 
 
 def family_tree(relatives, selected=""):
-    from .services.family_layout import layout
+    from .services.family_layout import layout, patient_layout
 
-    return layout(relatives, selected)
+    context = layout(relatives, selected)
+    return {
+        **context,
+        **patient_layout(context["family_nodes"]),
+        **creation_context(relatives),
+    }
 
 
 def register_family(app, db, account, access, csrf_check, render, patient_context):
@@ -64,6 +116,109 @@ def register_family(app, db, account, access, csrf_check, render, patient_contex
             if row:
                 return row
         raise HTTPException(404, "Родственник не найден")
+
+    @app.get("/patients/{pid}/profile/family/add")
+    def add_page(request: Request, pid: int, relation: str = ""):
+        access(request, pid, True)
+        context = patient_context(request, pid)
+        choices = creation_context(context["relatives"])
+        allowed = dict(choices["family_relation_choices"])
+        return render(
+            request,
+            "family_add.html",
+            section="family",
+            new_relation=relation if relation in allowed else "",
+            **choices,
+            **context,
+        )
+
+    @app.post("/patients/{pid}/relatives")
+    async def add_relative(request: Request, pid: int):
+        access(request, pid, True)
+        form = await request.form()
+        csrf_check(request, str(form.get("csrf", "")))
+        relation = str(form.get("relation", ""))
+        custom = str(form.get("custom_relation", "")).strip()
+        name = str(form.get("name", "")).strip()
+        if (
+            relation not in dict(RELATION_CHOICES)
+            and relation not in ("self", "sibling")
+            or len(name) > 80
+            or len(custom) > 80
+        ):
+            raise HTTPException(422, "Проверьте родство и имя близкого")
+        if relation == "custom" and (
+            not custom or custom.casefold() in ("мама", "папа", "мать", "отец")
+        ):
+            raise HTTPException(
+                422, "Укажите свою категорию; для матери и отца используйте их листья"
+            )
+        sex, age, deceased, about = person_fields(form)
+        label = (
+            SLOTS[relation][0]
+            if relation in SLOTS
+            else {**dict(RELATION_CHOICES), "self": "Я", "sibling": "Близкий"}.get(
+                relation
+            )
+        )
+        if relation == "custom":
+            label = custom
+        with db() as c:
+            c.execute("BEGIN IMMEDIATE")
+            if (
+                relation in SLOTS
+                and c.execute(
+                    "SELECT 1 FROM relatives WHERE patient_id=? AND (slot=? OR (? IN ('mother','father') AND relation=?))",
+                    (pid, relation, relation, relation),
+                ).fetchone()
+            ):
+                raise HTTPException(
+                    409, "Этот родственник уже есть. Откройте существующий лист"
+                )
+            parent_text = str(form.get("parent_id", "")).strip()
+            parent = None
+            if parent_text:
+                if (
+                    not parent_text.isdigit()
+                    or len(parent_text) > 18
+                    or not c.execute(
+                        "SELECT 1 FROM relatives WHERE id=? AND patient_id=?",
+                        (int(parent_text), pid),
+                    ).fetchone()
+                ):
+                    raise HTTPException(422, "Родитель должен принадлежать этой семье")
+                parent = int(parent_text)
+            rid = c.execute(
+                "INSERT INTO relatives(patient_id,name,relation,parent_id,slot) VALUES(?,?,?,?,?)",
+                (
+                    pid,
+                    name or label,
+                    SLOTS[relation][2] if relation in SLOTS else relation,
+                    parent,
+                    relation if relation in SLOTS else None,
+                ),
+            ).lastrowid
+            c.execute(
+                "INSERT INTO family_person_meta(relative_id,custom_relation,sex,age,deceased,updated_by,updated_at) VALUES(?,?,?,?,?,?,?)",
+                (
+                    rid,
+                    custom if relation == "custom" else "",
+                    sex,
+                    age,
+                    deceased,
+                    account(request)["id"],
+                    now(),
+                ),
+            )
+            c.execute(
+                "INSERT INTO family_details(relative_id,about,updated_at) VALUES(?,?,?)",
+                (rid, about, now()),
+            )
+            audit(c, account(request)["id"], "family_member_added", pid, rid)
+        key = relation if relation in SLOTS else f"custom-{rid}"
+        return RedirectResponse(
+            f"/patients/{pid}/profile/family#leaf-{key}", status_code=303
+        )
 
     @app.get("/patients/{pid}/profile/family/summary")
     def family_summary(request: Request, pid: int):
@@ -183,6 +338,21 @@ def register_family(app, db, account, access, csrf_check, render, patient_contex
                     "UPDATE family_details SET about=?,updated_at=? WHERE relative_id=?",
                     (fields["about"], now(), rid),
                 )
+                if row and row["relation"] == "custom" and "custom_relation" in form:
+                    custom = str(form.get("custom_relation", "")).strip()
+                    if not 1 <= len(custom) <= 80 or custom.casefold() in (
+                        "мама",
+                        "папа",
+                        "мать",
+                        "отец",
+                    ):
+                        raise HTTPException(
+                            422, "Укажите свою категорию родства, до 80 символов"
+                        )
+                    c.execute(
+                        "UPDATE family_person_meta SET custom_relation=? WHERE relative_id=?",
+                        (custom, rid),
+                    )
             elif tab == "knowledge":
                 c.execute(
                     "UPDATE family_details SET answer_kind=?,description=?,updated_at=? WHERE relative_id=?",
@@ -199,6 +369,10 @@ def register_family(app, db, account, access, csrf_check, render, patient_contex
                     ),
                 )
             audit(c, account(request)["id"], "family_" + tab + "_saved", pid, rid)
+        if form.get("return_to") == "tree":
+            return RedirectResponse(
+                f"/patients/{pid}/profile/family#leaf-{key}", status_code=303
+            )
         return RedirectResponse(
             f"/patients/{pid}/profile/family/member/{key}?tab={tab}&saved=1",
             status_code=303,

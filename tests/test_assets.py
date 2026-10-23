@@ -44,12 +44,18 @@ def test_both_family_views_load_their_own_versioned_style_and_draw_unfilled_path
         for url in urls:
             assert len(parse_qs(urlsplit(url).query)["v"][0]) == 16
             assert client.get(url).status_code == 200
-        assert (
-            'class="family-connectors" width="0" height="0" fill="none"'
-            in response.text
-        )
+        assert assets.asset_url("family.js") in urls
+        if role == "doctor":
+            assert (
+                'class="family-connectors" width="0" height="0" fill="none"'
+                in response.text
+            )
+            assert "--family-width:" in response.text
+        else:
+            assert 'class="tree-art" width="0" height="0"' in response.text
+            assert 'class="tree-branches" fill="none"' in response.text
+            assert "--garden-height:" in response.text
         assert '<ul class="family-node-list">' in response.text
-        assert "--family-width:" in response.text
         assert (
             'style="width:'
             not in response.text.split('class="family-diagram', 1)[1].split(">", 1)[0]

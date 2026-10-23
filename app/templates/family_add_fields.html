@@ -1,0 +1,10 @@
+<label>Родство<select name="relation" required><option value="">Выберите родство</option>{% for key,label in family_relation_choices %}<option value="{{ key }}" {% if new_relation is defined and new_relation==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<label data-custom-relation>Своя категория родства<input name="custom_relation" maxlength="80" placeholder="Например, двоюродная сестра"></label>
+<label>Имя · необязательно<input name="name" maxlength="80" autocomplete="off"></label>
+<label>Коротко о близком · необязательно<textarea name="about" maxlength="3000" rows="2"></textarea></label>
+<details><summary>Дополнительные сведения · по желанию</summary>
+<label>Возраст · если известен<input name="age" type="number" min="0" max="130"></label>
+<label>Пол для медицинской схемы<select name="sex"><option value="unknown">Не указан</option><option value="male">Мужской</option><option value="female">Женский</option></select></label>
+<label class="check"><input type="checkbox" name="deceased" value="yes">Умер(ла)</label>
+<label>Родитель этого участника · необязательно<select name="parent_id"><option value="">Не указан</option>{% for relative in relatives %}<option value="{{ relative.id }}">{{ relative.display_name or relative.name }}</option>{% endfor %}</select></label>
+</details>

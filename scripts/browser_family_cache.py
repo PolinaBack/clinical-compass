@@ -14,7 +14,7 @@ def check_family_cache(patient, doctor, url):
     for page in (patient, doctor):
         page.on("pageerror", lambda error: css_failures.append(str(error)))
     patient.goto(url + "/patients/1/profile/family")
-    patient.locator('.family-node-leaf[href$="/mother"]').click()
+    patient.goto(url + "/patients/1/profile/family/member/mother")
     patient.get_by_label("Имя или родство", exact=True).fill("Учебная мама")
     patient.get_by_label("Возраст · если известен", exact=True).fill("54")
     patient.get_by_label("Что хотите рассказать о близком", exact=True).fill(
@@ -23,8 +23,8 @@ def check_family_cache(patient, doctor, url):
     patient.get_by_role("button", name="Сохранить сведения", exact=True).click()
     for relation, name in [("brother", "Учебный брат"), ("sister", "Учебная сестра")]:
         patient.goto(url + "/patients/1/profile/family")
-        patient.get_by_text("Добавить близкого", exact=True).click()
-        form = patient.locator('form[action="/patients/1/relatives"]')
+        patient.locator("#family-add-leaf").click()
+        form = patient.locator("#family-add-dialog form")
         form.locator('[name="name"]').fill(name)
         form.locator('[name="relation"]').select_option(relation)
         form.get_by_role("button").click()
@@ -42,19 +42,23 @@ def check_family_cache(patient, doctor, url):
             assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
             # Actual loaded dimensions and computed styles catch the screenshot defect.
             diagram = page.locator(".family-diagram")
-            connectors = page.locator(".family-connectors")
+            connectors = page.locator(
+                ".family-connectors" if role == "doctor" else ".tree-art"
+            )
             assert connectors.evaluate("e=>getComputedStyle(e).position") == "absolute"
             assert connectors.evaluate(
                 "e=>e.getBoundingClientRect().height"
             ) == diagram.evaluate("e=>e.getBoundingClientRect().height")
             assert (
-                connectors.locator("path").first.evaluate("e=>getComputedStyle(e).fill")
+                connectors.locator(
+                    "path" if role == "doctor" else ".tree-branches path"
+                ).first.evaluate("e=>getComputedStyle(e).fill")
                 == "none"
             )
             assert (
-                connectors.locator("path").first.evaluate(
-                    "e=>getComputedStyle(e).stroke"
-                )
+                connectors.locator(
+                    "path" if role == "doctor" else ".tree-branches path"
+                ).first.evaluate("e=>getComputedStyle(e).stroke")
                 != "none"
             )
             nodes = page.locator(
@@ -106,9 +110,7 @@ def check_family_cache(patient, doctor, url):
     patient.goto(url + "/patients/1/profile/family")
     expect(patient.locator(".family-node-list > li")).to_have_count(9)
     assert (
-        patient.locator(".family-connectors").evaluate(
-            "e=>e.getBoundingClientRect().height"
-        )
+        patient.locator(".tree-art").evaluate("e=>e.getBoundingClientRect().height")
         == 0
     )
     assert (

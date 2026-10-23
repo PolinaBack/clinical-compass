@@ -38,7 +38,7 @@ def check_revision(patient, doctor, url):
     doctor.locator("[data-resource-search]").fill("дыхание")
     expect(doctor.locator("[data-resource-card]:visible")).to_have_count(1)
     patient.goto(url + "/patients/1/profile/family")
-    patient.locator('.family-node-leaf[href$="/mother"]').click()
+    patient.goto(url + "/patients/1/profile/family/member/mother")
     patient.get_by_label("Имя или родство", exact=True).fill("Синтетическая мама")
     patient.get_by_label("Возраст · если известен", exact=True).fill("54")
     patient.locator('[name="sex"]').select_option("female")
@@ -52,8 +52,8 @@ def check_revision(patient, doctor, url):
         ("custom", "Синтетическая тётя", "Тётя"),
     ]:
         patient.goto(url + "/patients/1/profile/family")
-        patient.get_by_text("Добавить близкого", exact=True).click()
-        f = patient.locator('form[action="/patients/1/relatives"]')
+        patient.locator("#family-add-leaf").click()
+        f = patient.locator("#family-add-dialog form")
         f.locator('[name="name"]').fill(name)
         f.locator('[name="relation"]').select_option(relation)
         if category:

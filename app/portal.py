@@ -222,6 +222,10 @@ def register_portal(
                     node["sex"] = {"Мужской": "male", "Женский": "female"}.get(
                         value.get("value"), "unknown"
                     )
+        if section == "family":
+            for node in context["family_patient_nodes"]:
+                if node["key"] == "self":
+                    node["age"] = context["intake_calculations"]["age"]
         response = render(request, "profile.html", section=section, **context)
         response.headers["Cache-Control"] = "no-store"
         return response

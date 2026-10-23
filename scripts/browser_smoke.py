@@ -255,7 +255,7 @@ def run(
         patient.get_by_role("button", name="Сохранить профиль").click()
         patient.goto(url + "/patients/1/profile/family")
         expect(patient.locator("a.family-node-leaf")).to_have_count(6)
-        patient.locator('.family-node-leaf[href$="/mother"]').click()
+        patient.goto(url + "/patients/1/profile/family/member/mother")
         patient.get_by_label("Имя или родство", exact=True).fill("Учебная мама")
         patient.get_by_label("Что хотите рассказать о близком").fill(
             "Вымышленный контекст"
@@ -303,13 +303,14 @@ def run(
         patient.get_by_label("Хочу обсудить на консультации").check()
         patient.get_by_role("button", name="Сохранить сведения", exact=True).click()
         patient.get_by_role("link", name="К дереву", exact=True).click()
-        expect(patient.locator('.family-node-leaf[href$="/mother"]')).to_contain_text(
-            "Обсудить"
-        )
-        patient.get_by_text("Добавить близкого", exact=True).click()
-        patient.get_by_label("Имя", exact=True).fill("Учебная сестра")
-        patient.locator('[name="relation"]').select_option("sister")
-        patient.get_by_label("Родитель этого участника").select_option(
+        expect(
+            patient.locator('.family-node-leaf[href$="/mother"] .family-discuss')
+        ).to_have_attribute("aria-label", "Тема для обсуждения")
+        patient.locator("#family-add-leaf").click()
+        patient.locator('#family-add-dialog [name="name"]').fill("Учебная сестра")
+        patient.locator('#family-add-dialog [name="relation"]').select_option("sister")
+        patient.locator("#family-add-dialog details summary").click()
+        patient.locator('#family-add-dialog [name="parent_id"]').select_option(
             label="Учебная мама"
         )
         patient.get_by_role("button", name="Добавить участника", exact=True).click()

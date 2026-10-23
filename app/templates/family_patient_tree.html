@@ -1,0 +1,30 @@
+<p class="family-tree-hint" id="family-tree-hint">Нажмите на свободный листик или «+». Можно начать с любого близкого — имя и связи с другими родственниками необязательны.</p>
+<div class="family-tree-scroll family-patient-scroll" tabindex="0" role="region" aria-label="Семейное дерево; горизонтальная прокрутка" aria-describedby="family-tree-hint">
+<div class="family-diagram family-tree-garden" id="genogram" style="--garden-height:{{ family_patient_height }}px">
+<svg class="tree-art" width="0" height="0" viewBox="0 0 1100 {{ family_patient_height }}" aria-hidden="true">
+<!-- Canopy, branches and small leaves restored from 43bbc4a:family_block.html. -->
+<path class="tree-canopy" transform="scale(1 {{ family_patient_height/760 }})" d="M85 465C-5 330 120 140 280 175C340 35 495 30 570 110C700 20 825 90 840 170C1040 145 1130 335 1010 480C1000 650 770 665 710 575C590 685 420 670 365 605C210 690 55 585 85 465Z"/>
+<g class="tree-branches" fill="none"><path d="M550 705V{{ family_patient_height-55 }}"/><path d="M550 705Q530 595 370 475Q260 380 198 220"/><path d="M550 650Q725 550 750 470Q805 350 902 220"/><path d="M370 475Q420 330 418 160"/><path d="M750 470Q695 305 682 160"/><path d="M550 660Q540 520 505 440M550 590Q610 535 625 465"/>{% for path in family_patient_twigs %}<path class="tree-extra-branch" d="{{ path }}"/>{% endfor %}</g>
+<g class="tree-leaves"><path d="M500 495Q450 475 475 425Q530 430 500 495"/><path d="M604 520Q660 500 642 455Q590 465 604 520"/><path d="M232 380Q175 395 158 360Q190 325 232 380"/><path d="M848 338Q900 355 910 310Q865 295 848 338"/></g>
+<path class="tree-ground" fill="none" d="M360 {{ family_patient_height-18 }}Q550 {{ family_patient_height-44 }} 740 {{ family_patient_height-18 }}"/>
+</svg>
+<span class="tree-branch-label maternal">МАМИНА ВЕТВЬ</span><span class="tree-branch-label paternal">ПАПИНА ВЕТВЬ</span>
+<ul class="family-node-list">
+{% for node in family_patient_nodes %}<li>
+{% if node.key=='self' %}<div class="family-node-leaf self-leaf" style="--leaf-x:{{ node.leaf_x }}px;--leaf-y:{{ node.leaf_y }}px"><strong>Я</strong>{% if node.age is not none %}<span>{{ node.age }} лет</span>{% endif %}</div>
+{% else %}<a class="family-node-leaf {{ 'leaf-filled' if node.person else 'leaf-empty' }}" id="leaf-{{ node.key }}" href="/patients/{{ patient.id }}/profile/family/{{ 'member/' ~ node.key if node.person or not consent else 'add?relation=' ~ node.key }}" {% if consent %}{{ 'data-family-edit' if node.person else 'data-family-add' }}="{{ node.key }}"{% endif %} style="--leaf-x:{{ node.leaf_x }}px;--leaf-y:{{ node.leaf_y }}px"><strong>{{ node.label }}</strong>
+{% if node.person and node.display_name!=node.label %}<span class="leaf-name">{{ node.display_name }}</span>{% elif not node.person %}<span>{{ node.subtitle }}</span>{% endif %}
+{% if node.age is not none %}<span>{{ node.age }} лет{% if node.deceased %} · умер(ла){% endif %}</span>{% endif %}
+<small>{{ node.brief or ('Добавить сведения' if not node.person else 'Родство добавлено') }}</small>{% if node.person and node.person.get('discuss') %}<span class="family-discuss" aria-label="Тема для обсуждения">!</span>{% endif %}
+</a>{% endif %}</li>{% endfor %}</ul>
+{% if consent %}<a class="family-add-leaf" id="family-add-leaf" href="/patients/{{ patient.id }}/profile/family/add" data-family-add=""><span aria-hidden="true">+</span><strong>Добавить близкого</strong></a>{% endif %}
+<span class="tree-root-caption">С ВАС НАЧИНАЕТСЯ ИСТОРИЯ</span>
+</div></div>
+{% if consent %}
+<p><a class="button secondary" href="/patients/{{ patient.id }}/profile/family/add" data-family-add="">Добавить ещё родственника</a></p>
+<dialog class="family-dialog" id="family-add-dialog" aria-labelledby="family-add-title"><div class="family-dialog-heading"><h2 id="family-add-title">Новый листик</h2><button type="button" class="secondary" data-family-close aria-label="Закрыть добавление">✕</button></div><p>Начните с того, что знаете. Можно добавить одного близкого и вернуться позже.</p>
+<form method="post" action="/patients/{{ patient.id }}/relatives"><input type="hidden" name="csrf" value="{{ csrf }}">{% include 'family_add_fields.html' %}<button>Добавить участника</button></form></dialog>
+<dialog class="family-dialog" id="family-edit-dialog" aria-labelledby="family-edit-title"><div class="family-dialog-heading"><h2 id="family-edit-title">О близком</h2><button type="button" class="secondary" data-family-close aria-label="Закрыть сведения">✕</button></div>
+<form method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="tab" value="about"><input type="hidden" name="return_to" value="tree"><label>Имя или родство<input name="name" maxlength="80" required></label><label data-edit-custom>Своя категория родства<input name="custom_relation" maxlength="80"></label><label>Что хотите рассказать о близком<textarea name="about" rows="2" maxlength="3000"></textarea></label><details><summary>Дополнительные сведения</summary><label>Возраст · если известен<input name="age" type="number" min="0" max="130"></label><label>Пол для медицинской схемы<select name="sex"><option value="unknown">Не указан</option><option value="male">Мужской</option><option value="female">Женский</option></select></label><label class="check"><input type="checkbox" name="deceased" value="yes">Умер(ла)</label></details><button>Сохранить сведения</button></form><p><a data-family-full href="/patients/{{ patient.id }}/profile/family">Подробная семейная история и сведения о здоровье</a></p></dialog>
+<script type="application/json" id="family-people">{{ family_patient_people|tojson }}</script>
+{% endif %}
