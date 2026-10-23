@@ -1,0 +1,20 @@
+{% from 'intake_records.html' import record with context %}
+{% if category.kinds %}
+{% set intro={
+ 'health':('Заболевания и симптомы','Можно указать название или описать своими словами. Подтверждающие документы можно добавить позже.'),
+ 'medicines':('Что важно рассказать о препаратах?','Отдельно укажите назначенную схему и то, как фактически принимаете препарат. Не забудьте о средствах без рецепта, витаминах и добавках.'),
+ 'exams':('Анализы, заключения и исследования','Можно добавить сведения об обследовании и прикрепить результат, заключение или фотографию документа.'),
+ 'visits':('Консультации и обращения','Можно добавить обращения к врачам и другим специалистам. Необязательно помнить имя или точную дату.')
+} %}
+<section class="card intake-add-panel" id="intake-section-records"><h2>{{ intro.get(category.key,('Дополнительные записи','Можно добавить отдельную запись, если хочется рассказать подробнее.'))[0] }}</h2>
+<p class="intake-panel-hint">{{ intro.get(category.key,('','Можно добавить отдельную запись, если хочется рассказать подробнее.'))[1] }}</p>
+{% if category.key=='medicines' %}<p class="intake-panel-hint">Это сведения со слов пациента: они не создают и не отменяют назначения врача.</p>{% endif %}
+{% if not intake_readonly and consent %}<div class="intake-add-actions">
+{% set add_labels={'condition':'Добавить заболевание','symptom':'Добавить симптом','medication':'Добавить препарат','reaction':'Добавить аллергию или реакцию','exam':'Добавить обследование','visit':'Добавить посещение','family':'Добавить сведения о родственнике'} %}
+{% for kind in category.kinds %}<a class="button{% if not loop.first %} secondary{% endif %}" href="/patients/{{ patient.id }}/intake/entities/new/{{ kind }}"><span aria-hidden="true">＋</span> {{ add_labels.get(kind,'Добавить запись') }}</a>{% endfor %}
+{% if category.key in ['medicines','exams'] %}<a class="button secondary" href="#intake-file-upload" data-intake-reveal>{{ 'Могу прикрепить фото упаковки' if category.key=='medicines' else 'Прикрепить результаты' }}</a>{% endif %}
+</div>{% endif %}
+{% set matching=intake_data.entities|selectattr('kind','in',category.kinds)|list %}
+<div class="intake-section-records"><h3>Записи в этом разделе</h3>{% for e in matching %}{{ record(e) }}{% else %}<p class="intake-panel-hint">Пока нет записей. Можно добавить их позже — это не означает, что заболеваний, лечения или обращений не было.</p>{% endfor %}</div>
+</section>
+{% endif %}

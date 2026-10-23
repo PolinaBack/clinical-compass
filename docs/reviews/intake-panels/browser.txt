@@ -1,0 +1,1 @@
+PASS panels: visible add/list controls, metadata/escaping/edit/reload, real linked counts, file upload/download/confirmed deletion, voice link without automatic recording, unknown preserves answers and closed extras, previous/skip/native footer, immutable clinician snapshot and private draft, both roles at four widths; 16 axe checks; no JavaScript errors.

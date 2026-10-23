@@ -77,6 +77,20 @@
       if(selected==='answered'&&!Array.from(box.querySelectorAll('[name="a_'+box.dataset.intakeField+'"]')).some(e=>['checkbox','radio'].includes(e.type)?e.checked:e.value!==''))selected='unanswered';
       choice.value=selected;choice.dispatchEvent(new Event('change',{bubbles:true}));
     }));
+    document.querySelectorAll('[data-intake-section-state]').forEach(button=>{
+      if(button.form!==form)return;
+      button.addEventListener('click',()=>{
+        let count=0;
+        form.querySelectorAll('[data-intake-field]').forEach(box=>{
+          const choice=box.querySelector('[data-intake-state]');
+          if(box.hidden||choice.disabled||choice.value!=='unanswered'||box.closest('.intake-extra:not([open])'))return;
+          if(Array.from(box.querySelectorAll('[name="a_'+box.dataset.intakeField+'"]')).some(e=>['checkbox','radio'].includes(e.type)?e.checked:e.value.trim()!==''))return;
+          choice.value='unknown';count++;choice.dispatchEvent(new Event('change',{bubbles:true}));
+        });
+        const message=document.querySelector('[data-intake-section-state-status]');
+        if(message)message.textContent=count?'Открытые вопросы без ответа отмечены как «Не знаю». Дождитесь сообщения о сохранении.':'Открытых вопросов без ответа нет. Уже заполненные ответы не изменены.';
+      });
+    });
     form.addEventListener('submit',event=>{clearTimeout(timer);if(busy){event.preventDefault();queuedSubmitter=event.submitter;show('Завершаю сохранение перед переходом…');}else if(conflict){event.preventDefault();show('Анкета изменилась в другой вкладке. Скопируйте последние правки и обновите страницу перед переходом.');}else{dirty=false;paused=true;}});
     window.addEventListener('beforeunload',event=>{if((dirty||busy)&&form.hasAttribute('data-intake-autosave')){event.preventDefault();event.returnValue='';}});
     branches();
@@ -85,11 +99,17 @@
     const button=select.closest('[data-intake-jump]').querySelector('[data-intake-jump-button]');
     if(button.form)button.form.requestSubmit(button);
   }));
+  document.querySelectorAll('[data-intake-jump-target]').forEach(button=>button.addEventListener('click',()=>{
+    const select=document.querySelector('[data-intake-jump-select]');
+    if(select&&Array.from(select.options).some(option=>option.value===button.dataset.intakeJumpTarget)){
+      select.value=button.dataset.intakeJumpTarget;select.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+  }));
   document.querySelectorAll('[data-intake-reveal]').forEach(link=>link.addEventListener('click',event=>{
     const target=document.getElementById(link.hash.slice(1));if(!target||target.closest('[hidden]'))return;
     event.preventDefault();for(let node=target;node;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;
     target.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
-    const control=target.matches('input,textarea,select,button')?target:target.querySelector('textarea,input:not([type="hidden"]):not([disabled]),select,button');
+    const control=target.matches('input,textarea,select,button,a[href]')?target:target.querySelector('textarea,input:not([type="hidden"]):not([disabled]),select,button,a[href]');
     control?.focus({preventScroll:true});
   }));
   document.querySelectorAll('[data-memory-search]').forEach(input=>input.addEventListener('input',()=>{

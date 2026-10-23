@@ -128,3 +128,64 @@
  .intake-question-footer{gap:10px;}
  .intake-linked-actions{grid-template-columns:1fr;}
 }
+
+/* Visible repeatable records and shared lower panels. */
+.intake-page .intake-add-panel,.intake-page .intake-links-panel,.intake-page .intake-attachments,.intake-page .intake-empty-panel,.intake-page .intake-support {padding:26px 30px;margin:22px 0;border:1px solid #eeecf3;border-radius:24px;background:#fff;}
+.intake-add-panel h2,.intake-links-panel h2,.intake-attachments h2,.intake-empty-panel h2 {font-size:18px;color:#23304f;margin:0 0 14px;}
+.intake-panel-hint {font-size:14px;line-height:1.65;color:#6b7181;margin:0 0 18px;}
+.intake-add-actions,.intake-empty-actions {display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.intake-page .intake-add-actions .button,.intake-page .intake-empty-actions button,.intake-page .intake-support-actions .button {display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:700;min-height:48px;border-radius:14px;padding:12px 18px;}
+.intake-add-actions .button:not(.secondary) {background:#7346cc;color:#fff;border-color:#7346cc;}
+.intake-page .intake-add-actions .secondary,.intake-page .intake-support-actions .secondary {color:#584198!important;background:#fff!important;border-color:#ded8ec!important;}
+.intake-page .intake-support-actions .intake-discuss,.intake-page .intake-empty-actions .secondary {background:#f6f3fc!important;color:#534773!important;border-color:transparent!important;}
+.intake-section-records {border-top:1px solid #eeecf3;padding-top:22px;margin-top:24px;}
+.intake-section-records h3,.intake-linked-group h3 {font-size:16px;color:#23304f;margin:0 0 14px;}
+.intake-record-card {display:flex;align-items:center;justify-content:space-between;gap:18px;padding:19px 22px;border:1px solid #e8e5ee;border-radius:18px;background:#fff;text-decoration:none;margin:12px 0;color:#253352;}
+.intake-record-card:hover {background:#fbf9ff;border-color:#b6a5d6;}
+.intake-record-card:focus-visible,.intake-linked-actions a:focus-visible {outline:3px solid #6950ab;outline-offset:3px;}
+.intake-record-content {display:flex;flex-direction:column;gap:7px;min-width:0;}
+.intake-record-content>strong {font-size:15px;line-height:1.5;}
+.intake-page .intake-record-meta {display:block;font-size:13px;font-weight:400;line-height:1.65;color:#6b7181;margin:0;overflow-wrap:anywhere;}
+.intake-record-open {display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;border-radius:13px;color:#695785;background:#f7f5fc;}
+.intake-linked-actions a {display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:8px;min-height:88px;font-size:14px;font-weight:400;}
+.intake-linked-actions strong {color:#4c5874;font-size:14px;}
+.intake-linked-group {margin-top:24px;scroll-margin-top:150px;}
+.intake-link-picker {border:1px solid #eeecf3;border-radius:22px;background:#fff;padding:20px 24px;margin:22px 0;}
+.intake-link-picker legend {color:#23304f;font-size:16px;font-weight:700;}
+.intake-file-picker {font-size:14px;color:#23304f;}
+.intake-page .intake-file-picker input[type=file] {border:0;border-radius:0;background:transparent;padding:8px 0;font:inherit;}
+.intake-file-picker input::file-selector-button {background:#7346cc;color:#fff;border:0;border-radius:14px;padding:14px 20px;min-height:48px;font:inherit;font-weight:700;margin-right:12px;cursor:pointer;}
+.intake-upload-options {border:0;background:#faf8fe;border-radius:16px;padding:12px 16px;margin:18px 0;}
+.intake-upload-options>summary {font-size:14px;color:#584198;font-weight:600;}
+.intake-file-list {margin-top:24px;}
+.intake-page .intake-file {display:flex;align-items:flex-start;gap:16px;position:relative;border:1px solid #e8e5ee;background:#fcfaff;border-radius:18px;padding:20px 74px 20px 20px;margin:14px 0;}
+.intake-file-symbol {display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;border-radius:13px;background:#f0eafa;color:#6650ad;font-size:24px;}
+.intake-file-content {min-width:0;flex:1;}
+.intake-file-content>a {display:inline-block;color:#253352;font-size:15px;font-weight:700;margin-bottom:7px;overflow-wrap:anywhere;}
+.intake-file-delete {border:0;background:transparent;padding:0;margin:0;}
+.intake-file-delete>summary {display:grid;place-items:center;position:absolute;right:16px;top:16px;list-style:none;width:44px;height:44px;padding:0;background:#f3effa;color:#625375;border-radius:13px;font-size:25px;cursor:pointer;}
+.intake-file-delete>summary::-webkit-details-marker {display:none;}
+.intake-file-delete[open] {flex-basis:100%;}
+.intake-file:has(.intake-file-delete[open]) {flex-wrap:wrap;}
+.intake-file-delete[open] form {margin-top:12px;}
+.intake-empty-panel>h2 {font-size:17px;}
+.intake-empty-panel .caption {margin-bottom:0;}
+.intake-section-unknown,.intake-page .intake-empty-actions .intake-section-unknown,.intake-page .intake-footer-actions .intake-previous {display:none;}
+.intake-enhanced .intake-section-unknown {display:block;}
+.intake-enhanced .intake-page .intake-empty-actions .intake-section-unknown,.intake-enhanced .intake-page .intake-footer-actions .intake-previous {display:inline-flex;}
+.intake-footer-note {font-size:14px;color:#6b7181;margin:28px 4px;}
+.intake-footer-actions {display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:30px 0 16px;}
+.intake-page .intake-footer-actions button {min-height:50px;border-radius:14px;font-size:14px;padding:12px 20px;}
+.intake-footer-actions [data-intake-next] {background:#7346cc;color:#fff;}
+.minimal-ui .intake-file,.minimal-ui .intake-upload-options {background:#fff;}
+@media(max-width:640px) {
+ .intake-page .intake-add-panel,.intake-page .intake-links-panel,.intake-page .intake-attachments,.intake-page .intake-empty-panel,.intake-page .intake-support {padding:22px 18px;margin:18px 0;border-radius:21px;}
+ .intake-page .intake-add-actions .button,.intake-page .intake-empty-actions button,.intake-page .intake-support-actions .button {font-size:13px;padding:11px 14px;}
+ .intake-record-card {padding:16px;gap:12px;}
+ .intake-page .intake-file {padding:16px 60px 16px 16px;gap:10px;}
+ .intake-file-symbol {width:30px;height:36px;font-size:20px;}
+ .intake-file-delete>summary {right:10px;top:10px;}
+ .intake-footer-actions {align-items:stretch;flex-direction:column;}
+ .intake-footer-actions button {width:100%;justify-content:center;}
+ .intake-file-picker input::file-selector-button {padding:12px 14px;margin-right:8px;}
+}

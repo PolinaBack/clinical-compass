@@ -91,6 +91,7 @@ def check_intake_controls(patient, doctor, url):
     saved(patient)
     patient.get_by_role("link", name="Файл", exact=True).click()
     expect(patient.locator("[data-record-file]")).to_be_focused()
+    patient.get_by_role("link", name="Голосовая заметка", exact=True).click()
     expect(patient.locator("[data-record-start]")).to_be_visible()
     # Keyboard-only, native form submission without JavaScript.
     plain_context = patient.context.browser.new_context(

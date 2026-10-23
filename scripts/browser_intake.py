@@ -71,10 +71,7 @@ def check_intake(patient, doctor, url):
         "Черновик сохранён", timeout=20000
     )
     patient.goto(url + "/patients/1/profile/about/exams")
-    patient.locator(".intake-attachments > summary").click()
-    patient.get_by_text(
-        "Добавить документ, фото или голосовую заметку", exact=True
-    ).click()
+    patient.locator(".intake-upload-options > summary").click()
     upload = patient.locator("form[data-local-recording]")
     # An actual browser MediaRecorder with the runner's artificial audio device.
     upload.locator("[data-record-start]").click()
