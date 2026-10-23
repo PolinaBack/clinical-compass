@@ -55,15 +55,6 @@
             <input type="hidden" name="revision" value="{{ assessment.revision }}">
             <input type="hidden" name="request_id" value="{{ request_id }}">
             <input type="hidden" name="step_item" value="{{ step }}">
-            {% if assessment.scale != 'hcl33' and assessment.period_end < today %}
-                <div class="warning">
-                    <p>Вы вернулись к анкете за прежний период. Если состояние изменилось, обсудите новую сессию со специалистом.</p>
-                    <label class="check">
-                        <input type="checkbox" name="period_ack" value="true" required>
-                        Мои ответы относятся к указанному периоду.
-                    </label>
-                </div>
-            {% endif %}
             {% if assessment.scale == 'hcl33' and step == 1 %}
                 <section class="card">
                     <h2>Перед вопросами о состоянии подъёма</h2>
@@ -77,12 +68,12 @@
                 <legend>
                     <span class="question-number">{{ '6а' if assessment.scale == 'safety6' and step == 7 else step }}</span>{{ definition['items'][step-1] }}
                 </legend>
-                <div class="answer-options"
+                <div> class="answer-options"
                      {% if assessment.scale == 'phq9' and step == 9 %}data-safety-answer{% endif %}
                      {% if assessment.scale == 'safety6' and step == 6 %}data-safety-recent{% endif %}>
                     {% for value,label in ([(0,'Нет'),(1,'Да')] if assessment.scale in ['hcl33','safety6'] else options) %}
                         <label class="answer-option">
-                            <input type="radio"
+                            <input> type="radio"
                                    name="answer_{{ key }}"
                                    value="{{ value }}"
                                    {% if answer.get('state') == 'answered' and answer.get('value') == value %}checked{% endif %}>
@@ -101,7 +92,7 @@
                     </p>
                     <p class="caption">Ответ описывает переживание, а не вашу личность. Он сам по себе не устанавливает диагноз.</p>
                 </details>
-                <details class="question-extra"
+                <details class="question-extra">
                          {% if answer.get('comment') or answer.get('discuss') %}open{% endif %}>
                     <summary>Добавить комментарий или обсудить</summary>
                     <label>
@@ -110,8 +101,8 @@
                     <label class="check">
                         <input type="checkbox"
                                name="discuss_{{ key }}"
-                               value="true"
-                               {% if answer.get('discuss') %}checked{% endif %}>
+                               value="true">
+                               {% if answer.get('discuss') %}checked{% endif %}
                         ! Хочу обсудить этот вопрос со специалистом
                     </label>
                     <p class="caption">
@@ -125,7 +116,7 @@
                             <label>
                                 <input type="radio"
                                        name="answer_{{ key }}"
-                                       value="{{ state }}"
+                                       value="{{ state }}">
                                        {% if answer.get('state','unanswered') == state %}checked{% endif %}>
                                 {{ label }}
                             </label>
@@ -152,7 +143,6 @@
                         <button name="intent" value="submit">Завершить и отправить</button>
                     {% endif %}
                 </div>
-                <span>Экстренная помощь — в правом верхнем углу.</span>
             </div>
         </form>
         <details class="section-fold">
@@ -161,7 +151,7 @@
         </details>
         {% for note in audio if note.item == key %}
             <section class="card">
-                <h3>Голосовой комментарий к вопросу {{ key }}</h3>
+                <h4>Голосовой комментарий к вопросу {{ key }}</h4>
                 <audio controls preload="none" src="/audio/{{ note.id }}"></audio>
                 <p class="text">{{ note.transcript or 'Без расшифровки' }}</p>
                 <p class="caption">
@@ -173,11 +163,5 @@
                 </form>
             </section>
         {% endfor %}
-        <details class="provenance">
-            <summary>О форме и сохранённых ответах</summary>
-            <p>{{ definition.source }} · версия {{ assessment.version }}</p>
-            <p>{{ definition.validation }}</p>
-            <a href="/assessments/{{ assessment.id }}/history">История изменений ответов</a>
-        </details>
     </div>
 {% endblock %}
