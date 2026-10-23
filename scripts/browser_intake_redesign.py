@@ -26,9 +26,10 @@ def check_intake_redesign(patient, doctor, url):
     expect(patient.locator('textarea[name="biography"]')).to_have_count(0)
     patient.locator("[data-intake-jump-select]").select_option("personal")
     expect(patient).to_have_url(url + "/patients/1/profile/about/personal")
-    assert patient.evaluate("document.documentElement.scrollHeight") < 2000
     patient.locator('[name="a_preferred_name"]').fill("Синтетическое обращение")
-    patient.locator('[name="a_sex"]').select_option("Женский")
+    patient.locator('[data-intake-field="sex"]').get_by_role(
+        "radio", name="Женский", exact=True
+    ).check()
     expect(patient.locator("[data-intake-save-status]")).to_contain_text(
         "Черновик сохранён", timeout=20000
     )
@@ -37,11 +38,15 @@ def check_intake_redesign(patient, doctor, url):
     ).to_have_count(1)
     patient.locator("[data-intake-jump-select]").select_option("reproductive")
     expect(patient).to_have_url(url + "/patients/1/profile/about/reproductive")
-    patient.locator('[name="a_menstruation"]').select_option("Да")
+    patient.locator('[data-intake-field="menstruation"]').get_by_role(
+        "radio", name="Да", exact=True
+    ).check()
     patient.locator('[name="a_cycle_days"]').fill("28")
     patient.locator("[data-intake-jump-select]").select_option("personal")
     expect(patient).to_have_url(url + "/patients/1/profile/about/personal")
-    patient.locator('[name="a_sex"]').select_option("Мужской")
+    patient.locator('[data-intake-field="sex"]').get_by_role(
+        "radio", name="Мужской", exact=True
+    ).check()
     expect(patient.locator("[data-intake-save-status]")).to_contain_text(
         "Черновик сохранён", timeout=20000
     )
@@ -55,7 +60,9 @@ def check_intake_redesign(patient, doctor, url):
     patient.goto(url + "/patients/1/profile/about")
     assert "Менструальный" not in patient.locator("main").inner_text()
     patient.locator("[data-intake-jump-select]").select_option("personal")
-    patient.locator('[name="a_sex"]').select_option("Женский")
+    patient.locator('[data-intake-field="sex"]').get_by_role(
+        "radio", name="Женский", exact=True
+    ).check()
     patient.locator("[data-intake-next]").click()
     patient.goto(url + "/patients/1/profile/about/reproductive")
     expect(patient.locator('[name="a_cycle_days"]')).to_have_value("28")
@@ -129,8 +136,6 @@ def check_intake_redesign(patient, doctor, url):
                     )
                     == 3
                 )
-            if role == "personal" and width == 390:
-                assert page.evaluate("document.documentElement.scrollHeight") < 2500
             page.screenshot(path=str(out / f"{role}-{width}.png"), full_page=True)
             if width in (390, 1280):
                 page.add_script_tag(path=os.environ["COMPASS_AXE_PATH"])

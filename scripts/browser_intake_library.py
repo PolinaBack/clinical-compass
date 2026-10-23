@@ -14,25 +14,36 @@ def check_intake_library(patient, doctor, url):
     for page in (patient, doctor):
         page.on("pageerror", lambda e: errors.append(str(e)))
     patient.goto(url + "/patients/1/profile/about/personal")
-    expect(patient.locator('[name="a_sex"]')).to_be_visible()
-    patient.locator('[name="a_sex"]').select_option("Женский")
+    expect(patient.locator('[data-intake-field="sex"]')).to_be_visible()
+    patient.locator('[data-intake-field="sex"]').get_by_role(
+        "radio", name="Женский", exact=True
+    ).check()
     patient.locator("[data-intake-next]").click()
     expect(patient).to_have_url(url + "/patients/1/profile/about/measurements")
     patient.goto(url + "/patients/1/profile/about")
     expect(patient.locator('a.intake-category[href$="/reproductive"]')).to_have_count(1)
     expect(patient.locator("[data-optional-intake]")).to_have_count(0)
     patient.goto(url + "/patients/1/profile/about/personal")
-    patient.locator('[name="a_sex"]').select_option("Мужской")
+    patient.locator('[data-intake-field="sex"]').get_by_role(
+        "radio", name="Мужской", exact=True
+    ).check()
     patient.locator("[data-intake-next]").click()
     patient.goto(url + "/patients/1/profile/about")
     expect(patient.locator('a.intake-category[href$="/reproductive"]')).to_have_count(0)
     expect(patient.locator("[data-optional-intake]")).to_have_count(0)
-    assert patient.request.get(url + "/patients/1/profile/about/reproductive").status == 404
+    assert (
+        patient.request.get(url + "/patients/1/profile/about/reproductive").status
+        == 404
+    )
     patient.goto(url + "/patients/1/profile/about/personal")
-    patient.locator('[name="a_sex"]').select_option("Женский")
+    patient.locator('[data-intake-field="sex"]').get_by_role(
+        "radio", name="Женский", exact=True
+    ).check()
     patient.locator("[data-intake-next]").click()
     patient.goto(url + "/patients/1/profile/about/reproductive")
-    patient.locator('[name="a_menstruation"]').select_option("Да")
+    patient.locator('[data-intake-field="menstruation"]').get_by_role(
+        "radio", name="Да", exact=True
+    ).check()
     patient.locator('[name="a_cycle_days"]').fill("28")
     patient.locator("[data-intake-next]").click()
     patient.goto(url + "/patients/1/profile/about/reproductive")

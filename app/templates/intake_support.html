@@ -1,0 +1,6 @@
+{% if not intake_readonly and consent %}
+<section class="card intake-support"><h2>Нужно что-то добавить?</h2><p>Можно написать, отметить вопрос к врачу или прикрепить документ.</p><div class="intake-support-actions">
+{% for field in category.fields|default([]) if field.key in ['comment','discuss'] and intake_visible(field,intake_data.answers.get(category.key,{}),intake_preferences) %}<a class="button secondary" href="#{{ category.key }}-{{ field.key }}" data-intake-reveal>{{ '✎ Комментарий' if field.key=='comment' else '☆ Обсудить лично' }}</a>{% endfor %}
+{% if entity is not defined or not entity or entity.id %}<a class="button secondary" href="#intake-voice-upload" data-intake-reveal>Голосовая заметка</a><a class="button secondary" href="#intake-file-upload" data-intake-reveal>Файл</a>{% endif %}
+</div></section>
+{% endif %}

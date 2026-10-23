@@ -46,7 +46,11 @@ def check_intake(patient, doctor, url):
         "Синтетическое обращение"
     )
     patient.goto(url + "/patients/1/intake/entities/new/condition")
-    patient.locator('[name="a_system"]').select_option("Эндокринная")
+    system = patient.locator('[data-intake-field="system"]')
+    if system.locator('select[name="a_system"]').count():
+        system.locator('select[name="a_system"]').select_option("Эндокринная")
+    else:
+        system.get_by_role("radio", name="Эндокринная", exact=True).check()
     patient.locator('[name="a_name"]').fill("Щитовидка, точное название не помню")
     expect(patient.locator("[data-intake-save-status]")).to_contain_text(
         "Черновик сохранён", timeout=20000

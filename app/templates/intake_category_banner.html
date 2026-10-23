@@ -1,0 +1,7 @@
+{% from 'icons.html' import icon %}
+{% set banner=intake_categories|selectattr('key','equalto',category.key)|first %}
+{% if banner %}{% set shown=intake_categories|rejectattr('optional')|list %}{% set position=namespace(index=0) %}{% for item in shown %}{% if item.key==banner.key %}{% set position.index=loop.index %}{% endif %}{% endfor %}
+<section class="intake-category-banner" style="--intake-bg:{{ banner.bg }};--intake-accent:{{ banner.accent }}" aria-label="Категория анкеты">
+<div class="intake-banner-title">{{ icon(banner.icon) }}<div><p class="eyebrow">КАТЕГОРИЯ · {{ position.index }} ИЗ {{ shown|length }}</p><h2>{{ banner.title }}</h2></div></div>
+<p>{{ banner.description }}</p>
+</section>{% endif %}

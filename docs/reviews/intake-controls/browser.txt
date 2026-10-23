@@ -1,0 +1,1 @@
+PASS visual controls: common banners, native chips/multiple choice/0–10, 0 versus unknown/skipped, keyboard, branches, reload, no JS, comment/file links, sent clinician view, every section, four widths; 11 axe checks; no JavaScript errors.

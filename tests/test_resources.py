@@ -7,7 +7,10 @@ from app.services.materials import valid_url
 from tests.helpers import login, token
 
 
-def test_real_resource_assignment_read_status_and_restart(client):
+def test_real_resource_assignment_read_status_and_restart(client, monkeypatch):
+    # Fix the business date: UTC and Moscow can already be on different days.
+    reference_day = date(2026, 10, 23)
+    monkeypatch.setattr("app.services.materials.today", lambda: reference_day)
     login(client, "doctor")
     assert (
         client.get("/doctor/resources").text.count('class="card resource-card"') == 12
@@ -27,7 +30,7 @@ def test_real_resource_assignment_read_status_and_restart(client):
         csrf=token(client),
         patient_id="1",
         note="Обсудим на встрече",
-        due_day=date.today().isoformat(),
+        due_day=reference_day.isoformat(),
     )
     assert (
         client.post(f"/doctor/resources/{rid}/assign", data=payload).status_code == 200

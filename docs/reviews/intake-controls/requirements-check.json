@@ -1,0 +1,22 @@
+{
+  "requirements": 806,
+  "all_original_ids_preserved": true,
+  "descriptions_priorities_dependencies_stages_unchanged": true,
+  "question_catalog_unchanged": true,
+  "question_catalog_sha256": "890793b2d0497640976c4f7b25b4f0524b06487ee0d9952f79ff0a166ac295ef",
+  "server_and_storage_unchanged": true,
+  "updated_rows": [
+    "UX-06",
+    "ON-11"
+  ],
+  "changed_app_files": [
+    "app/static/intake.css",
+    "app/static/intake.js",
+    "app/templates/intake_category_banner.html",
+    "app/templates/intake_entity.html",
+    "app/templates/intake_fields.html",
+    "app/templates/intake_files.html",
+    "app/templates/intake_section.html",
+    "app/templates/intake_support.html"
+  ]
+}

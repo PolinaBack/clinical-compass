@@ -47,8 +47,10 @@ def test_sex_is_visible_and_cycle_appears_without_inventing_answers(client):
         login(restarted, "patient1")
         assert not cycle(restarted)["optional"]
         assert (
-            "<option selected>Женский</option>"
-            in restarted.get("/patients/1/profile/about/personal").text
+            restarted.get("/patients/1/profile/about/personal").context["intake_data"][
+                "answers"
+            ]["personal"]["sex"]["value"]
+            == "Женский"
         )
         assert save(restarted, "personal", s_sex="declined").status_code == 303
         assert cycle(restarted)["optional"]

@@ -9,7 +9,7 @@
       const box=form.querySelector(`[data-intake-field="${key}"]`);
       const choice=box?.querySelector('[data-intake-state]');
       if(choice?.value!=='answered')return [];
-      return [...box.querySelectorAll(`[name="a_${key}"]`)].filter(e=>e.type!=='checkbox'||e.checked).map(e=>e.value);
+      return [...box.querySelectorAll(`[name="a_${key}"]`)].filter(e=>!['checkbox','radio'].includes(e.type)||e.checked).map(e=>e.value);
     };
     function branches(){
       form.querySelectorAll('[data-intake-field]').forEach(box=>{
@@ -19,7 +19,11 @@
         box.querySelectorAll('input,textarea,select').forEach(e=>e.disabled=!active);
         const choice=box.querySelector('[data-intake-state]');
         const label=box.querySelector('[data-intake-state-label]');
-        if(label&&choice)label.textContent=['unanswered','answered'].includes(choice.value)?'Пропустить или уточнить ответ':choice.selectedOptions[0].textContent;
+        if(label&&choice)label.textContent=['unanswered','answered'].includes(choice.value)?'Другие варианты':choice.selectedOptions[0].textContent;
+        box.querySelectorAll('[data-intake-set-state]').forEach(button=>{
+          if(button.dataset.intakeSetState==='answered')button.hidden=['unanswered','answered'].includes(choice?.value);
+          else button.setAttribute('aria-pressed',String(choice?.value===button.dataset.intakeSetState));
+        });
         const inputs=box.querySelector('[data-intake-inputs]');
         if(inputs){const enabled=active&&['unanswered','answered'].includes(choice?.value);inputs.hidden=!enabled;inputs.querySelectorAll('input,textarea,select').forEach(e=>e.disabled=!enabled);}
       });
@@ -62,11 +66,17 @@
       const input=event.target;if(!conflict)paused=false;
       if(input.name?.startsWith('a_')){
         const choice=input.closest('[data-intake-field]')?.querySelector('[data-intake-state]');
-        if(choice){const box=input.closest('[data-intake-field]');const filled=[...box.querySelectorAll('[name="'+input.name+'"]')].some(e=>e.type==='checkbox'?e.checked:e.value!=='');choice.value=filled?'answered':'unanswered';}
+        if(choice){const box=input.closest('[data-intake-field]');const filled=[...box.querySelectorAll('[name="'+input.name+'"]')].some(e=>['checkbox','radio'].includes(e.type)?e.checked:e.value!=='');choice.value=filled?'answered':'unanswered';}
       }
       branches();changed();clearTimeout(timer);timer=setTimeout(save,700);
     });
     form.addEventListener('change',()=>{if(!conflict)paused=false;branches();changed();clearTimeout(timer);timer=setTimeout(save,300);});
+    form.querySelectorAll('[data-intake-set-state]').forEach(button=>button.addEventListener('click',()=>{
+      const box=button.closest('[data-intake-field]'),choice=box.querySelector('[data-intake-state]');
+      let selected=button.dataset.intakeSetState;
+      if(selected==='answered'&&!Array.from(box.querySelectorAll('[name="a_'+box.dataset.intakeField+'"]')).some(e=>['checkbox','radio'].includes(e.type)?e.checked:e.value!==''))selected='unanswered';
+      choice.value=selected;choice.dispatchEvent(new Event('change',{bubbles:true}));
+    }));
     form.addEventListener('submit',event=>{clearTimeout(timer);if(busy){event.preventDefault();queuedSubmitter=event.submitter;show('Завершаю сохранение перед переходом…');}else if(conflict){event.preventDefault();show('Анкета изменилась в другой вкладке. Скопируйте последние правки и обновите страницу перед переходом.');}else{dirty=false;paused=true;}});
     window.addEventListener('beforeunload',event=>{if((dirty||busy)&&form.hasAttribute('data-intake-autosave')){event.preventDefault();event.returnValue='';}});
     branches();
@@ -74,6 +84,13 @@
   document.querySelectorAll('[data-intake-jump-select]').forEach(select=>select.addEventListener('change',()=>{
     const button=select.closest('[data-intake-jump]').querySelector('[data-intake-jump-button]');
     if(button.form)button.form.requestSubmit(button);
+  }));
+  document.querySelectorAll('[data-intake-reveal]').forEach(link=>link.addEventListener('click',event=>{
+    const target=document.getElementById(link.hash.slice(1));if(!target||target.closest('[hidden]'))return;
+    event.preventDefault();for(let node=target;node;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;
+    target.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+    const control=target.matches('input,textarea,select,button')?target:target.querySelector('textarea,input:not([type="hidden"]):not([disabled]),select,button');
+    control?.focus({preventScroll:true});
   }));
   document.querySelectorAll('[data-memory-search]').forEach(input=>input.addEventListener('input',()=>{
     const words=input.value.toLocaleLowerCase('ru').replaceAll('ё','е').split(/\s+/).filter(Boolean);

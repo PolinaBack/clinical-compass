@@ -1,0 +1,9 @@
+{
+  "tables": 71,
+  "rows": 551,
+  "all_original_rows_unchanged": true,
+  "new_migration": false,
+  "integrity": "ok",
+  "foreign_keys": "ok",
+  "content_omitted": true
+}
