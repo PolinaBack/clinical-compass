@@ -1,0 +1,1 @@
+REPRODUCED: {"position": "static", "display": "inline", "fill": "rgb(0, 0, 0)", "stroke": "none", "legacy_requests": "{\"legacy_requests\":1}"}

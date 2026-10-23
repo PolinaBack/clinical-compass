@@ -16,6 +16,7 @@ from starlette.concurrency import run_in_threadpool
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from .content import FAQ, RESOURCES
+from .assets import asset_url
 from .security import verify_password
 from .storage import extend_schema, audit, now
 from .workflows import register_workflows, overview
@@ -101,6 +102,7 @@ def create_app(db_path=None):
     from .services.clinical_forms import local_datetime
 
     templates.env.filters["local_datetime"] = local_datetime
+    templates.env.globals["asset_url"] = asset_url
 
     def account(request):
         uid = request.session.get("account_id")

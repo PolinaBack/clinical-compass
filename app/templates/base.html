@@ -7,14 +7,15 @@
         <title>
             {% block title %}Клинический компас{% endblock %}
         </title>
-        <link rel="stylesheet" href="/static/style.css">
-        <link rel="stylesheet" href="/static/interface.css">
-        <link rel="stylesheet" href="/static/diary.css">
-        {% if current_page is defined and current_page.startswith('/medicines') %}<link rel="stylesheet" href="/static/medicines.css"><script src="/static/medicines.js" defer></script>{% endif %}
-        {% if current_page is defined and ('/meetings' in current_page or current_page.startswith('/meeting-recordings/') or current_page.startswith('/meeting-artifacts/')) %}<link rel="stylesheet" href="/static/meetings.css"><script src="/static/meetings.js" defer></script>{% endif %}
-        {% if user %}<link rel="stylesheet" href="/static/intake.css"><script src="/static/intake.js" defer></script>{% endif %}
-        <script src="/static/diary.js" defer></script>
-        <script src="/static/app.js" defer></script><script src="/static/workflows.js" defer></script>
+        <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+        <link rel="stylesheet" href="{{ asset_url('interface.css') }}">
+        <link rel="stylesheet" href="{{ asset_url('diary.css') }}">
+        {% if current_page is defined and current_page.startswith('/medicines') %}<link rel="stylesheet" href="{{ asset_url('medicines.css') }}"><script src="{{ asset_url('medicines.js') }}" defer></script>{% endif %}
+        {% if current_page is defined and ('/meetings' in current_page or current_page.startswith('/meeting-recordings/') or current_page.startswith('/meeting-artifacts/')) %}<link rel="stylesheet" href="{{ asset_url('meetings.css') }}"><script src="{{ asset_url('meetings.js') }}" defer></script>{% endif %}
+        {% if user %}<link rel="stylesheet" href="{{ asset_url('intake.css') }}"><script src="{{ asset_url('intake.js') }}" defer></script>{% endif %}
+        {% if current_page is defined and '/family' in current_page %}<link rel="stylesheet" href="{{ asset_url('family.css') }}">{% endif %}
+        <script src="{{ asset_url('diary.js') }}" defer></script>
+        <script src="{{ asset_url('app.js') }}" defer></script><script src="{{ asset_url('workflows.js') }}" defer></script>
     </head>
     <body class="portal-shell {{ 'signed-in' if user else '' }} {{ 'specialist-space' if user == 'doctor' else 'patient-space' }} {{ 'minimal-ui' if interface_prefs and interface_prefs.minimal else '' }}">
         <a class="skip-link" href="#main">К содержанию</a>

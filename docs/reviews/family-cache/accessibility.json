@@ -1,0 +1,22 @@
+[
+  {
+    "role": "patient",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "width": 1280,
+    "violations": []
+  }
+]
