@@ -469,9 +469,42 @@ def categories_with_progress(data, prefs):
                 total=len(applicable),
                 records=records,
                 file_count=file_count,
+                optional=category["key"] == "reproductive"
+                and not reproductive_suggested(data),
             )
         )
     return result
+
+
+def reproductive_suggested(data):
+    """Suggest the section without assuming menstruation or losing old answers."""
+    sex = data.get("answers", {}).get("personal", {}).get("sex", {})
+    return bool(
+        # Sent versions keep their own catalogue and remain reproducible.
+        data.get("catalog")
+        or sex.get("status") == "answered"
+        and sex.get("value") == "Женский"
+        or any(
+            answer.get("status") not in (None, "unanswered")
+            for answer in data.get("answers", {}).get("reproductive", {}).values()
+        )
+        or any(f["category"] == "reproductive" for f in data.get("attachments", []))
+    )
+
+
+def next_section(data, current):
+    """The next relevant questionnaire; family stays a separate visual editor."""
+    categories = [
+        c["key"]
+        for c in CATEGORIES
+        if c["key"] != "family"
+        and (c["key"] != "reproductive" or reproductive_suggested(data))
+    ]
+    # An optional section can also be opened directly, regardless of sex.
+    if current not in categories:
+        categories = [c["key"] for c in CATEGORIES if c["key"] != "family"]
+    index = categories.index(current)
+    return BY_KEY[categories[index + 1]] if index + 1 < len(categories) else None
 
 
 def computations(data, as_of=None):

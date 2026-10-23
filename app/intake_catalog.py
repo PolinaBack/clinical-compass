@@ -999,7 +999,7 @@ personal = next(c for c in CATEGORIES if c["key"] == "personal")
 measurement_fields = [f for f in personal["fields"] if f["key"] in MEASUREMENT_KEYS]
 personal["fields"] = [f for f in personal["fields"] if f["key"] not in MEASUREMENT_KEYS]
 personal.update(
-    title="Личные данные", description="Имя, дата рождения и удобный способ обращения."
+    title="Личные данные", description="Имя, дата рождения, пол и удобный способ обращения."
 )
 CATEGORIES.insert(
     1,
@@ -1267,6 +1267,7 @@ CORE_KEYS = {
         "full_name",
         "preferred_name",
         "birth_date",
+        "sex",
         "height",
         "weight",
         "measured_at",

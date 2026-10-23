@@ -1,0 +1,1 @@
+Intake/library browser: sex, voluntary cycle, save-and-continue during autosave, conflict protection, no JS with keyboard, persistence, three cards, FAQ, role checks, four widths; 8 axe audits passed. JavaScript errors: 0.

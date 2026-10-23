@@ -175,14 +175,15 @@ def test_doctor_navigation_is_single_panel_inside_header_and_routes_remain(clien
         ("/doctor", "Пациенты"),
         ("/doctor/calendar", "Календарь"),
         ("/doctor/tasks", "Задачи"),
-        ("/doctor/resources", "Ресурсы"),
+        ("/doctor/library", "Библиотека"),
         ("/settings", "Настройки"),
     ]:
         assert f'href="{path}"' in header and label in header
         assert client.get(path).status_code == 200
     for path in ("/clinical-tools", "/medicines", "/doctor/faq"):
         assert f'href="{path}"' not in header
-        assert f'href="{path}"' in client.get("/doctor/resources").text
+        destination = "/doctor/tasks" if path == "/doctor/faq" else "/doctor/library"
+        assert f'href="{path}"' in client.get(destination).text
         assert client.get(path).status_code == 200
     assert "Ещё" not in header and "Специалист" not in header
     assert header.count('href="/settings"') == 1

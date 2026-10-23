@@ -2,7 +2,7 @@
 (() => {
   document.documentElement.classList.add('intake-enhanced');
   document.querySelectorAll('[data-intake-autosave],[data-intake-entity]').forEach(form => {
-    let dirty=false, busy=false, paused=false, conflict=false, timer, edit=0;
+    let dirty=false, busy=false, paused=false, conflict=false, timer, edit=0, queuedSubmitter=null;
     const status=form.querySelector('[data-intake-save-status]');
     const show=message=>{if(status) status.textContent=message;};
     const state=key=>{
@@ -41,7 +41,12 @@
         }
         show(edit===savedEdit?'Черновик сохранён. Врач увидит его только после отправки анкеты.':'Сохраняю последние изменения…');
       }catch(_){dirty=true;show('Нет связи: изменения пока не сохранены. Оставьте страницу открытой или нажмите «Сохранить раздел».');}
-      finally{busy=false;if(dirty&&!paused)timer=setTimeout(save,1500);}
+      finally{
+        busy=false;
+        if(queuedSubmitter&&!dirty&&!paused){const submitter=queuedSubmitter;queuedSubmitter=null;form.requestSubmit(submitter);}
+        else if(dirty&&!paused)timer=setTimeout(save,queuedSubmitter?0:1500);
+        else queuedSubmitter=null;
+      }
     }
     function changed(){
       dirty=true;edit++;
@@ -58,7 +63,7 @@
       branches();changed();clearTimeout(timer);timer=setTimeout(save,700);
     });
     form.addEventListener('change',()=>{if(!conflict)paused=false;branches();changed();clearTimeout(timer);timer=setTimeout(save,300);});
-    form.addEventListener('submit',event=>{clearTimeout(timer);if(busy){event.preventDefault();show('Дождитесь текущего сохранения и нажмите кнопку ещё раз.');}else{dirty=false;paused=true;}});
+    form.addEventListener('submit',event=>{clearTimeout(timer);if(busy){event.preventDefault();queuedSubmitter=event.submitter;show('Завершаю сохранение перед переходом…');}else if(conflict){event.preventDefault();show('Анкета изменилась в другой вкладке. Скопируйте последние правки и обновите страницу перед переходом.');}else{dirty=false;paused=true;}});
     window.addEventListener('beforeunload',event=>{if((dirty||busy)&&form.hasAttribute('data-intake-autosave')){event.preventDefault();event.returnValue='';}});
     branches();
   });

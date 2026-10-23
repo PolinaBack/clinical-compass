@@ -1,0 +1,13 @@
+{
+  "requirements": 806,
+  "all_original_ids": true,
+  "original_descriptions": true,
+  "priorities": true,
+  "dependencies": true,
+  "stages": true,
+  "updated_sources_statuses_acceptance": [
+    "UX-11",
+    "ON-11",
+    "ON-12"
+  ]
+}

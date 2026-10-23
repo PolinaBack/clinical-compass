@@ -1,0 +1,3 @@
+Intake/library browser: sex, voluntary cycle, save-and-continue during autosave, conflict protection, no JS with keyboard, persistence, three cards, FAQ, role checks, four widths; 8 axe audits passed. JavaScript errors: 0.
+PASS revision: real article create/assign/read, search, tree leaves and medical symbols, BMI175/75 after delayed autosave and reload, sticky navigation/emergency, four widths and accessibility.
+PASS E02: real portal links and data, retired reports and top navigation, durable UI controls, 320/390/768/1280px, keyboard and reduced motion

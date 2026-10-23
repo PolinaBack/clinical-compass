@@ -22,10 +22,12 @@ def register_interface(app, db, account, render, patient_context):
         )
 
     @app.get("/doctor/library")
-    def legacy_library(request: Request):
+    def doctor_library(request: Request):
         if account(request)["role"] != "doctor":
             raise HTTPException(403, "Это раздел специалиста")
-        return RedirectResponse("/doctor/resources", status_code=303)
+        response = render(request, "doctor_library.html")
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.get("/doctor/calendar")
     @app.get("/doctor/tasks")

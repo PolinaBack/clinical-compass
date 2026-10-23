@@ -14,4 +14,5 @@
 <section class="card"><h2>Назначенные встречи</h2><p class="caption">Время указано в часовом поясе каждой встречи.</p>
 {% for item in appointments %}<article class="worklist-item"><h3>{{ item.name }}</h3><p>{{ item.starts_at }} · {{ item.timezone_label }}</p><a href="/patients/{{ item.patient_id }}/profile/video">Открыть встречу и подготовку</a></article>{% else %}<p>Назначенных встреч пока нет. Откройте раздел консультаций в карточке пациента, чтобы согласовать время.</p>{% endfor %}</section>
 {% endif %}
+{% if not calendar %}<section class="card" id="faq-forum"><h2>FAQ-форум</h2><p>Вопросы и обсуждения для специалистов.</p><a class="button secondary" href="/doctor/faq">Открыть FAQ-форум</a></section>{% endif %}
 {% endblock %}

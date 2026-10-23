@@ -86,7 +86,7 @@ def intake_context(c, user, pid, view="summary", submission_id=None, as_of=None)
         )
     ]
     progress = service.categories_with_progress(data, prefs)
-    counted = [c for c in progress if c["total"]]
+    counted = [c for c in progress if c["total"] and not c["optional"]]
     complete = sum(c["done"] == c["total"] for c in counted)
     quotes = [
         "Можно заполнять в своём темпе — даже несколько ответов помогут начать разговор.",
@@ -182,7 +182,13 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
         if not category_definition:
             raise HTTPException(404, "Раздел анкеты не найден")
         return render(
-            request, "intake_section.html", category=category_definition, **data
+            request,
+            "intake_section.html",
+            category=category_definition,
+            next_category=service.next_section(data["intake_data"], category)
+            if category in BY_KEY
+            else None,
+            **data,
         )
 
     @app.post("/patients/{pid}/intake/sections/{category}")
@@ -217,6 +223,12 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
                     calculations=calculations,
                     progress=dict(done=progress["done"], total=progress["total"]),
                 )
+            )
+        if form.get("navigate") == "next":
+            next_category = service.next_section(snapshot, category)
+            return redirect(
+                pid,
+                "/" + next_category["key"] if next_category else "?view=review",
             )
         return redirect(pid, "/" + category + "?saved=1")
 
