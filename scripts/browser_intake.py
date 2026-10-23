@@ -24,14 +24,20 @@ def check_intake(patient, doctor, url):
     tab_to(patient, '[name="a_preferred_name"]')
     patient.keyboard.type("Синтетическое обращение")
     patient.locator('[name="a_birth_date"]').fill("1990-01-01")
-    patient.locator('[name="a_height"]').fill("170")
-    patient.locator('[name="a_weight"]').fill("68")
+    expect(patient.locator("[data-intake-save-status]")).to_contain_text(
+        "Черновик сохранён", timeout=20000
+    )
+    patient.goto(url + "/patients/1/profile/about/measurements")
+    patient.locator('[name="a_height"]').fill("175")
+    patient.locator('[name="a_weight"]').fill("75")
     patient.locator('[name="a_measured_at"]').fill("2026-10-01")
     expect(patient.locator("[data-intake-save-status]")).to_contain_text(
         "Черновик сохранён", timeout=20000
     )
-    expect(patient.locator("[data-intake-bmi]")).to_have_text("23.5")
+    expect(patient.locator("[data-intake-bmi]")).to_have_text("24.5")
     patient.reload()
+    expect(patient.locator("[data-intake-bmi]")).to_have_text("24.5")
+    patient.goto(url + "/patients/1/profile/about/personal")
     expect(patient.locator('[name="a_preferred_name"]')).to_have_value(
         "Синтетическое обращение"
     )

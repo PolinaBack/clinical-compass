@@ -44,79 +44,10 @@ def canonical_source(source):
     return "Со слов родственников" if source == "Со слов родственника" else source
 
 
-def family_tree(relatives):
-    by_slot = {r["slot"]: r for r in relatives if r.get("slot")}
-    extras = [r for r in relatives if not r.get("slot") and r["relation"] != "self"]
-    height = 760 + ((len(extras) + 3) // 4) * 160
-    nodes = []
+def family_tree(relatives, selected=""):
+    from .services.family_layout import layout
 
-    def add_node(key, label, subtitle, x, y, person):
-        filled = bool(
-            person
-            and (
-                person.get("condition_count", 0)
-                or person.get("answer_kind", "unknown")
-                not in ["unknown", "deferred", "declined"]
-            )
-        )
-        nodes.append(
-            dict(
-                key=key,
-                label=label,
-                subtitle=subtitle,
-                x=x,
-                y=y / height * 100,
-                art_y=y,
-                person=person,
-                filled=filled,
-                status=(
-                    "Ответ добавлен"
-                    if filled
-                    else "Черновик" if person else "Пока не заполнено"
-                ),
-            )
-        )
-
-    for key, (label, subtitle, relation, x, y) in SLOTS.items():
-        add_node(key, label, subtitle, x, y * 7.6, by_slot.get(key))
-    relations = {
-        "mother": "Мать",
-        "father": "Отец",
-        "sibling": "Брат / сестра",
-        "child": "Ребёнок",
-        "other": "Близкий",
-    }
-    for index, person in enumerate(extras):
-        add_node(
-            f"custom-{person['id']}",
-            person["name"],
-            relations.get(person["relation"], "Близкий"),
-            16 + (index % 4) * 22,
-            610 + (index // 4) * 160,
-            person,
-        )
-    positions = {
-        n["person"]["id"]: (n["x"] * 11, n["art_y"]) for n in nodes if n["person"]
-    }
-    connections = []
-    for node in nodes[6:]:
-        origin = positions.get(node["person"].get("parent_id"), (550, height - 75))
-        connections.append(
-            dict(
-                x1=origin[0],
-                y1=origin[1] + 40 if origin[1] < node["art_y"] else origin[1],
-                x2=node["x"] * 11,
-                y2=node["art_y"] + 50,
-            )
-        )
-    return dict(
-        family_nodes=nodes,
-        family_extras=extras,
-        family_filled=sum(n["filled"] for n in nodes[:6]),
-        family_height=height,
-        family_self_y=(height - 106) / height * 100,
-        family_connections=connections,
-    )
+    return layout(relatives, selected)
 
 
 def register_family(app, db, account, access, csrf_check, render, patient_context):
@@ -136,24 +67,8 @@ def register_family(app, db, account, access, csrf_check, render, patient_contex
 
     @app.get("/patients/{pid}/profile/family/summary")
     def family_summary(request: Request, pid: int):
-        context = patient_context(request, pid)
-        with db() as c:
-            conditions = [
-                dict(row)
-                for row in c.execute(
-                    "SELECT f.* FROM family_conditions f JOIN relatives r ON r.id=f.relative_id WHERE r.patient_id=? ORDER BY f.id",
-                    (pid,),
-                )
-            ]
-        return render(
-            request,
-            "family_summary.html",
-            section="family",
-            kinds=dict(KINDS),
-            conditions=conditions,
-            **family_tree(context["relatives"]),
-            **context,
-        )
+        patient_context(request, pid)
+        return RedirectResponse(f"/patients/{pid}/profile/family", status_code=303)
 
     @app.get("/patients/{pid}/profile/family/member/{key}")
     def member_page(request: Request, pid: int, key: str, tab: str = "about"):
@@ -166,6 +81,12 @@ def register_family(app, db, account, access, csrf_check, render, patient_contex
             details = c.execute(
                 "SELECT * FROM family_details WHERE relative_id=?", (person.get("id"),)
             ).fetchone()
+            meta = c.execute(
+                "SELECT * FROM family_person_meta WHERE relative_id=?",
+                (person.get("id"),),
+            ).fetchone()
+            if meta:
+                person.update(dict(meta))
             conditions = [
                 dict(r)
                 for r in c.execute(
@@ -234,8 +155,27 @@ def register_family(app, db, account, access, csrf_check, render, patient_contex
                 (rid, now()),
             )
             if tab == "about":
+                sex = str(form.get("sex", "unknown"))
+                age = str(form.get("age", "")).strip()
+                if (
+                    sex not in ("male", "female", "unknown")
+                    or age
+                    and (not age.isdigit() or not 0 <= int(age) <= 130)
+                ):
+                    raise HTTPException(422, "Проверьте пол и возраст близкого")
+                c.execute(
+                    "INSERT INTO family_person_meta(relative_id,sex,age,deceased,updated_by,updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(relative_id) DO UPDATE SET sex=excluded.sex,age=excluded.age,deceased=excluded.deceased,updated_by=excluded.updated_by,updated_at=excluded.updated_at",
+                    (
+                        rid,
+                        sex,
+                        int(age) if age else None,
+                        int(form.get("deceased") == "yes"),
+                        account(request)["id"],
+                        now(),
+                    ),
+                )
                 if not fields["name"]:
-                    raise HTTPException(422, "Укажите вымышленное имя или родство")
+                    raise HTTPException(422, "Укажите имя или родство")
                 c.execute(
                     "UPDATE relatives SET name=? WHERE id=?", (fields["name"], rid)
                 )

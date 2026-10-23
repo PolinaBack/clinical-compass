@@ -75,10 +75,22 @@ def test_added_relatives_have_leaves_and_keep_their_family_connection(client):
         )
     relatives = rows(client, "SELECT * FROM relatives")
     tree = family_tree(relatives)
-    assert len(tree["family_nodes"]) == 11 and tree["family_height"] == 1080
-    assert len(tree["family_connections"]) == 5
+    assert (
+        len(tree["family_nodes"]) == 12
+    )  # Six ancestors, proband and five extra relatives.
+    mother = next(n for n in tree["family_nodes"] if n["key"] == "mother")
+    extras = [n for n in tree["family_nodes"] if n["key"].startswith("custom-")]
+    assert len(extras) == 5
+    assert len({(n["px"], n["py"]) for n in extras}) == 5
+    assert all(n["generation"] == 3 for n in extras)
+    for n in extras:
+        assert any(
+            path.startswith(f'M{mother["px"]} ')
+            and path.endswith(f'H{n["px"]} V{n["py"]-40}')
+            for path in tree["family_connections"]
+        )
     html = client.get("/patients/1/profile/family").text
-    assert html.count('class="family-leaf ') == 11
+    assert html.count('class="family-node-leaf ') == 12
     assert "Учебный близкий 4" in html
     assert (
         len(rows(client, "SELECT * FROM relatives")) == 6
@@ -195,7 +207,7 @@ def test_dynamics_only_contains_completed_results_and_reports(client):
     assert f"/assessments/{draft}" not in html
     assert "Баллы PHQ-4" in html and "Баллы PHQ-9" not in html
     assert "Учебное решение" not in html and "PHQ-ADS" not in html
-    assert "reports" in html and "Не рассчитывается" not in html
+    assert "/reports" not in html and "Не рассчитывается" not in html
 
 
 def test_catalog_has_uniform_tiles_and_medicine_library_is_role_scoped(client):

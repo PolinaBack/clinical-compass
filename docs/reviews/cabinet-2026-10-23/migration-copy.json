@@ -1,0 +1,14 @@
+{
+  "old_tables": 65,
+  "old_rows": 537,
+  "all_previous_rows_unchanged": true,
+  "new_tables": [
+    "family_person_meta",
+    "resource_assignments",
+    "resource_events",
+    "resource_items"
+  ],
+  "integrity_check": "ok",
+  "foreign_key_check": [],
+  "resources": 12
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "id": 1,
+    "url": "https://www.mind.org.uk/information-support/types-of-mental-health-problems/panic-attacks/",
+    "status": "unavailable",
+    "reason": "URLError"
+  },
+  {
+    "id": 2,
+    "url": "https://www.mind.org.uk/information-support/types-of-mental-health-problems/anxiety-problems/how-to-manage-anxiety-and-worry/",
+    "status": "unavailable",
+    "reason": "URLError"
+  },
+  {
+    "id": 3,
+    "url": "https://www.nhsinform.scot/healthy-living/mental-wellbeing/breathing-and-relaxation-exercises/",
+    "status": "unavailable",
+    "reason": "URLError"
+  },
+  {
+    "id": 4,
+    "url": "https://www.nhs.uk/mental-health/self-help/guides-tools-and-activities/breathing-exercises-for-stress/",
+    "status": "unavailable",
+    "reason": "URLError"
+  },
+  {
+    "id": 5,
+    "url": "https://www.cci.health.wa.gov.au/~/media/CCI/Mental-Health-Professionals/Depression/Depression---Information-Sheets/Depression-Information-Sheet--05--Behavioural-Activation-Fun--Achievement.pdf",
+    "status": "unavailable",
+    "reason": "URLError"
+  },
+  {
+    "id": 6,
+    "url": "https://cuprum.media/mentalnoe/rumination",
+    "status": "unavailable",
+    "reason": "URLError"
+  },
+  {
+    "id": 7,
+    "url": "https://cuprum.media/mentalnoe/anhedonia",
+    "status": "unavailable",
+    "reason": "URLError"
+  },
+  {
+    "id": 8,
+    "url": "https://mental-health-russia.ru/idealov-ne-suschestvuet-kak-perfektsionizm-meshaet-nam-zhit/",
+    "status": "unavailable",
+    "reason": "URLError"
+  },
+  {
+    "id": 9,
+    "url": "https://slozhno.live/article/kak-zhit-i-rabotat-kogda-vokrug--neopredelennost/",
+    "status": "unavailable",
+    "reason": "URLError"
+  },
+  {
+    "id": 10,
+    "url": "https://slozhno.live/article/sindrom-samozvanca/",
+    "status": "unavailable",
+    "reason": "URLError"
+  },
+  {
+    "id": 11,
+    "url": "https://slozhno.live/article/vygoranie/",
+    "status": "unavailable",
+    "reason": "URLError"
+  },
+  {
+    "id": 12,
+    "url": "https://slozhno.live/article/regressiya/",
+    "status": "unavailable",
+    "reason": "URLError"
+  }
+]

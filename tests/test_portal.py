@@ -38,6 +38,18 @@ def test_profile_separates_patient_history_from_doctor_records(client):
         rows(client, "SELECT biography FROM patient_profiles")[0]["biography"]
         == "Синтетическая биография"
     )
+    login(client, "patient1")
+    assert (
+        post(
+            client, "/patients/1/profile", biography="Обновлённая биография"
+        ).status_code
+        == 200
+    )
+    assert (
+        rows(client, "SELECT family_context FROM patient_profiles")[0]["family_context"]
+        == "Не знаю; со слов родственника"
+    )
+    login(client, "doctor")
     # Choosing either demo persona must never broaden the assigned doctor's scope.
     from app.storage import connect
 
@@ -53,31 +65,17 @@ def test_profile_separates_patient_history_from_doctor_records(client):
         assert client.get(url).status_code == 403
 
 
-def test_reports_have_distinct_private_draft_and_published_states(client):
+def test_report_creation_and_publication_are_retired_for_both_roles(client):
     login(client, "doctor")
-    payload = dict(
-        title="Синтетический отчёт",
-        self_report="Рассказ пациента",
-        observations="Наблюдение специалиста",
-        conclusion="Учебное заключение",
-        plan="Учебный план",
-    )
-    assert post(client, "/patients/1/reports", **payload).status_code == 200
-    rid = rows(client, "SELECT id FROM specialist_reports")[0]["id"]
+    assert post(client, "/patients/1/reports", title="Не создавать").status_code == 410
+    assert post(client, "/patients/1/reports/1/publish").status_code == 410
+    assert not rows(client, "SELECT * FROM specialist_reports")
     login(client, "patient1")
-    assert "Учебное заключение" not in client.get("/patients/1/reports").text
-    assert post(client, f"/patients/1/reports/{rid}/publish").status_code == 403
-    login(client, "doctor")
-    assert post(client, f"/patients/2/reports/{rid}/publish").status_code == 404
-    assert post(client, f"/patients/1/reports/{rid}/publish").status_code == 200
-    login(client, "patient1")
-    profile = client.get("/patients/1/reports").text
-    for text in payload.values():
-        assert text in profile
-    assert "Учебный план" in client.get("/patients/1/reports").text
-    assert "Учебный план" not in client.get("/patients/1/results").text
+    assert post(client, "/patients/1/reports").status_code == 403
+    assert post(client, "/patients/1/reports/1/publish").status_code == 403
+    assert client.get("/patients/1/reports").status_code == 410
     login(client, "patient2")
-    assert client.get("/patients/1/profile").status_code == 403
+    assert client.get("/patients/1/reports").status_code == 403
 
 
 def test_diary_comment_is_linked_to_own_entry_and_visible_to_patient(client):

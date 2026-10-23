@@ -35,7 +35,7 @@
 {% if record.summary %}<section class="meeting-summary"><h3>{{ 'Проверенные итоги' if record.published_id == record.summary.id else 'Черновик итогов — виден только врачу' }}</h3>
 <div class="meeting-brief">
 {% for kind,label in groups.items() %}{% if user == 'doctor' or kind != 'clarifications' %}{% set visible_items=record.summary.data[kind]|selectattr('included')|list %}{% if visible_items %}
-<h4>{{ label }}</h4>{% if kind=='clarifications' %}<p class="caption">Возможные темы по доступной записи. Это предложения для проверки, а не установленная оценка работы врача.</p>{% endif %}
+<h4 id="{{ kind }}-{{ record.id }}">{{ label }}</h4>{% if kind=='clarifications' %}<p class="caption">Возможные темы по доступной записи. Это предложения для проверки, а не установленная оценка работы врача.</p>{% endif %}
 {% if kind == 'next_steps' %}<ul>{% endif %}
 {% for item in visible_items %}{% if kind == 'next_steps' %}<li class="meeting-preserve">{{ item.text }}</li>{% else %}<p class="meeting-preserve">{{ item.text }}</p>{% endif %}{% endfor %}
 {% if kind == 'next_steps' %}</ul>{% endif %}

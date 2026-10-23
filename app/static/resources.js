@@ -1,0 +1,1 @@
+(()=>{const input=document.querySelector('[data-resource-search]');if(!input)return;input.addEventListener('input',()=>{const words=input.value.toLocaleLowerCase('ru').split(/\s+/).filter(Boolean);document.querySelectorAll('[data-resource-card]').forEach(card=>card.hidden=!words.every(w=>card.textContent.toLocaleLowerCase('ru').includes(w)));});})();

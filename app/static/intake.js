@@ -2,7 +2,7 @@
 (() => {
   document.documentElement.classList.add('intake-enhanced');
   document.querySelectorAll('[data-intake-autosave],[data-intake-entity]').forEach(form => {
-    let dirty=false, busy=false, paused=false, conflict=false, timer;
+    let dirty=false, busy=false, paused=false, conflict=false, timer, edit=0;
     const status=form.querySelector('[data-intake-save-status]');
     const show=message=>{if(status) status.textContent=message;};
     const state=key=>{
@@ -24,13 +24,14 @@
     }
     async function save(){
       if(!dirty||busy||paused||!form.hasAttribute('data-intake-autosave'))return;
-      busy=true;dirty=false;show('Сохраняю черновик…');
+      busy=true;dirty=false;const savedEdit=edit;show('Сохраняю черновик…');
       try{
         const response=await fetch(form.action,{method:'POST',body:new FormData(form),credentials:'same-origin',headers:{Accept:'application/json'}});
         if(!response.ok){paused=true;conflict=response.status===409;dirty=true;show(response.status===409?'Анкета изменилась в другой вкладке. Автосохранение остановлено. Скопируйте последние правки и обновите страницу.':'Не удалось сохранить ответы. Они остаются в форме; используйте кнопку сохранения или проверьте связь.');return;}
         const data=await response.json();
+        if(data.progress&&edit===savedEdit){const root=form.closest('[data-intake-page]'),bar=root?.querySelector('[data-section-progress]'),label=root?.querySelector('[data-section-progress-label]');if(bar){bar.max=data.progress.total||1;bar.value=data.progress.done;}if(label)label.textContent=`${data.progress.done} из ${data.progress.total} вопросов`;}
         form.closest('[data-intake-page]')?.querySelectorAll('input[name="revision"]').forEach(e=>e.value=data.revision);
-        if(data.calculations){const root=form.closest('[data-intake-page]');[['age',data.calculations.age??'нужна дата рождения'],['bmi',data.calculations.bmi??'не рассчитывается'],['bmi-note',data.calculations.bmi_note]].forEach(([key,value])=>{const e=root?.querySelector('[data-intake-'+key+']');if(e)e.textContent=value;});}
+        if(data.calculations&&edit===savedEdit){const root=form.closest('[data-intake-page]');[['age',data.calculations.age??'нужна дата рождения'],['bmi',data.calculations.bmi??'не рассчитывается'],['bmi-inputs',data.calculations.bmi_inputs],['bmi-note',data.calculations.bmi_note]].forEach(([key,value])=>{const e=root?.querySelector('[data-intake-'+key+']');if(e)e.textContent=value;});}
         if(data.entity_id){
           const hidden=(name,value)=>{let e=form.querySelector(`[name="${name}"]`);if(!e){e=document.createElement('input');e.type='hidden';e.name=name;form.append(e);}e.value=value;};
           hidden('entity_id',data.entity_id);hidden('entity_version',data.entity_version);
@@ -38,9 +39,15 @@
           history.replaceState(null,'',path);
           const link=form.querySelector('[data-saved-entity-link]');if(link){link.href=path;link.hidden=false;}
         }
-        show('Черновик сохранён. Врач увидит его только после отправки анкеты.');
+        show(edit===savedEdit?'Черновик сохранён. Врач увидит его только после отправки анкеты.':'Сохраняю последние изменения…');
       }catch(_){dirty=true;show('Нет связи: изменения пока не сохранены. Оставьте страницу открытой или нажмите «Сохранить раздел».');}
       finally{busy=false;if(dirty&&!paused)timer=setTimeout(save,1500);}
+    }
+    function changed(){
+      dirty=true;edit++;
+      const root=form.closest('[data-intake-page]');
+      const bmi=root?.querySelector('[data-intake-bmi]');
+      if(bmi){bmi.textContent='обновляется…';root.querySelector('[data-intake-bmi-inputs]').textContent='';root.querySelector('[data-intake-bmi-note]').textContent='Расчёт появится после сохранения текущих значений.';}
     }
     form.addEventListener('input',event=>{
       const input=event.target;if(!conflict)paused=false;
@@ -48,9 +55,9 @@
         const choice=input.closest('[data-intake-field]')?.querySelector('[data-intake-state]');
         if(choice){const box=input.closest('[data-intake-field]');const filled=[...box.querySelectorAll('[name="'+input.name+'"]')].some(e=>e.type==='checkbox'?e.checked:e.value!=='');choice.value=filled?'answered':'unanswered';}
       }
-      branches();dirty=true;clearTimeout(timer);timer=setTimeout(save,700);
+      branches();changed();clearTimeout(timer);timer=setTimeout(save,700);
     });
-    form.addEventListener('change',()=>{if(!conflict)paused=false;branches();dirty=true;clearTimeout(timer);timer=setTimeout(save,300);});
+    form.addEventListener('change',()=>{if(!conflict)paused=false;branches();changed();clearTimeout(timer);timer=setTimeout(save,300);});
     form.addEventListener('submit',event=>{clearTimeout(timer);if(busy){event.preventDefault();show('Дождитесь текущего сохранения и нажмите кнопку ещё раз.');}else{dirty=false;paused=true;}});
     window.addEventListener('beforeunload',event=>{if((dirty||busy)&&form.hasAttribute('data-intake-autosave')){event.preventDefault();event.returnValue='';}});
     branches();

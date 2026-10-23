@@ -1,6 +1,8 @@
 """Versioned patient drafts, immutable submissions and clinician fact review."""
 
 import json
+from copy import deepcopy
+from decimal import Decimal, ROUND_HALF_UP
 from datetime import date
 from fastapi import HTTPException
 from app.intake_catalog import (
@@ -11,6 +13,7 @@ from app.intake_catalog import (
     ENTITY_CATEGORY,
     ENTITY_LABELS,
     STATES,
+    MEASUREMENT_KEYS,
 )
 from app.services.clinical_forms import parse_answers, visible, display, today
 from app.storage import now, audit
@@ -51,10 +54,19 @@ def preferences(c, pid):
     return dict(row) if row else dict(hide_weight=0, hide_nutrition=0, revision=0)
 
 
+def normalized_answers(answers):
+    answers = deepcopy(answers)
+    personal = answers.get("personal", {})
+    old = {k: personal.pop(k) for k in list(personal) if k in MEASUREMENT_KEYS}
+    if old:
+        answers["measurements"] = {**old, **answers.get("measurements", {})}
+    return answers
+
+
 def draft(c, pid):
     row = c.execute("SELECT * FROM intake_drafts WHERE patient_id=?", (pid,)).fetchone()
     return (
-        dict(row, answers=json.loads(row["answers_json"]))
+        dict(row, answers=normalized_answers(json.loads(row["answers_json"])))
         if row
         else dict(
             patient_id=pid,
@@ -395,12 +407,27 @@ def read_submission(c, pid, ident=None):
     return dict(row, data=json.loads(row["payload"])) if row else None
 
 
+def question_progress(fields, answers):
+    shown = [
+        f
+        for f in fields
+        if f["key"] not in ("comment", "discuss") and visible(f, answers)
+    ]
+    return dict(
+        done=sum(answers.get(f["key"], {}).get("status") == "answered" for f in shown),
+        total=len(shown),
+    )
+
+
 def categories_with_progress(data, prefs):
     result = []
     for category in data.get("catalog", {}).get("categories", CATEGORIES):
         answers = data.get("answers", {}).get(category["key"], {})
         applicable = [
-            field for field in category["fields"] if visible(field, answers, prefs)
+            field
+            for field in category["fields"]
+            if field["key"] not in ("comment", "discuss")
+            and visible(field, answers, prefs)
         ]
         done = sum(
             answers.get(f["key"], {}).get("status") == "answered" for f in applicable
@@ -414,9 +441,29 @@ def categories_with_progress(data, prefs):
         file_count = sum(
             f["category"] == category["key"] for f in data.get("attachments", [])
         )
+        for entity in data.get("entities", []):
+            if entity["kind"] not in category["kinds"]:
+                continue
+            ef = (
+                data.get("catalog", {})
+                .get("entity_fields", {})
+                .get(entity["kind"], ENTITY_FIELDS[entity["kind"]])
+            )
+            shown = [
+                f
+                for f in ef
+                if f["key"] not in ("comment", "discuss") and visible(f, entity["data"])
+            ]
+            done += sum(
+                entity["data"].get(f["key"], {}).get("status") == "answered"
+                for f in shown
+            )
+            applicable += shown
         result.append(
             dict(
-                category,
+                percent=round(done * 100 / len(applicable)) if applicable else 0,
+                category_marker=category["key"],
+                **category,
                 done=done,
                 deferred=deferred,
                 total=len(applicable),
@@ -430,56 +477,75 @@ def categories_with_progress(data, prefs):
 def computations(data, as_of=None):
     answers = data.get("answers", {})
     personal = answers.get("personal", {})
+    measurements = {
+        **{k: v for k, v in personal.items() if k in MEASUREMENT_KEYS},
+        **answers.get("measurements", {}),
+    }
 
     def value(key):
-        item = personal.get(key, {})
+        item = (measurements if key in MEASUREMENT_KEYS else personal).get(key, {})
         return item.get("value") if item.get("status") == "answered" else None
 
+    reference = as_of or today()
     result = dict(
         age=None,
         bmi=None,
-        bmi_note="Нужны подходящий контекст, дата рождения и исходные измерения.",
-        as_of=(as_of or today()).isoformat(),
+        bmi_inputs="",
+        bmi_note="Укажите дату рождения в личных данных, рост в сантиметрах и массу в килограммах.",
+        as_of=reference.isoformat(),
     )
-    reference = as_of or today()
-    if value("birth_date"):
-        birth = date.fromisoformat(value("birth_date"))
+    birth = date.fromisoformat(value("birth_date")) if value("birth_date") else None
+    if birth and birth <= reference:
         result["age"] = (
             reference.year
             - birth.year
             - ((reference.month, reference.day) < (birth.month, birth.day))
-            if birth <= reference
-            else None
         )
     pregnancy = answers.get("reproductive", {}).get("pregnancy", {}).get("value")
-    restricted = (
-        value("bmi_restriction") not in (None, "Ограничений не знаю")
-        or pregnancy in ("Беременность", "Возможна беременность")
-        or data.get("preferences", {}).get("hide_weight")
+    if data.get("preferences", {}).get("hide_weight"):
+        result["bmi_note"] = "Показ измерений скрыт специалистом."
+        return result
+    if value("bmi_restriction") not in (None, "Ограничений не знаю") or pregnancy in (
+        "Беременность",
+        "Возможна беременность",
+    ):
+        result["bmi_note"] = "Расчёт скрыт из-за указанного ограничения."
+        return result
+    if result["age"] is not None and result["age"] < 18:
+        result["bmi_note"] = "Взрослый расчёт ИМТ не применяется до 18 лет."
+        return result
+    measured = (
+        date.fromisoformat(value("measured_at")) if value("measured_at") else None
     )
-    measurement_age = None
-    if value("birth_date") and value("measured_at"):
-        measured = date.fromisoformat(value("measured_at"))
-        measurement_age = (
+    if (
+        birth
+        and measured
+        and (
             measured.year
             - birth.year
             - ((measured.month, measured.day) < (birth.month, birth.day))
         )
-    if (
-        result["age"] is not None
-        and result["age"] >= 18
-        and measurement_age is not None
-        and measurement_age >= 18
-        and not restricted
-        and value("height")
-        and value("weight")
+        < 18
     ):
-        result["bmi"] = round(
-            float(value("weight")) / (float(value("height")) / 100) ** 2, 1
-        )
         result["bmi_note"] = (
-            "Расчётный показатель по указанным измерениям; без оценки нормы и диагноза. Применимость проверяет врач."
+            "Измерение сделано до 18 лет; взрослый расчёт не применяется."
         )
+        return result
+    if result["age"] is not None and value("height") and value("weight"):
+        height = Decimal(str(value("height")))
+        weight = Decimal(str(value("weight")))
+        if height > 0 and weight > 0:
+            result["bmi"] = float(
+                (weight / (height / 100) ** 2).quantize(
+                    Decimal("0.1"), rounding=ROUND_HALF_UP
+                )
+            )
+            result["bmi_inputs"] = f"Рост: {height:g} см · масса: {weight:g} кг. "
+            result["bmi_note"] = "Масса (кг) / рост (м)². " + (
+                "Дата измерений: " + measured.isoformat() + "."
+                if measured
+                else "Дата измерений не указана."
+            )
     return result
 
 

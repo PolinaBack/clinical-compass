@@ -10,9 +10,9 @@
     {% include 'profile_nav.html' %}
     {% if not section %}
         <div class="profile-sections">
-            {% for key,label,description in [('about','Обо мне','Биография, цели и история состояния.'),('assessments','Анкеты','Назначенные и пройденные опросники.'),('family','Семейная история','Семейное дерево и сведения о близких.'),('video','Консультации и видеосвязь','Запись, время встречи и ссылка на видеоприём.')] %}
+            {% for key,label,description in [('about','Обо мне','Биография, цели и история состояния.'),('assessments','Анкеты','Назначенные и пройденные опросники.'),('video','Консультации и видеосвязь','Запись, время встречи и ссылка на видеоприём.')] %}
                 <a class="card profile-tile"
-                   href="/patients/{{ patient.id }}/profile/{{ key }}">
+                   href="/patients/{{ patient.id }}/{{ 'meetings' if key=='video' else 'profile/' ~ key }}">
                     <h2>{{ label }}</h2>
                     <p>{{ description }}</p>
                     <span>Открыть раздел</span></a>
@@ -26,7 +26,7 @@
                 {% if request.query_params.get('saved') %}<p class="success" role="status">Профиль сохранён.</p>{% endif %}
                 <form action="/patients/{{ patient.id }}/profile" method="post">
                     <input type="hidden" name="csrf" value="{{ csrf }}">
-                    {% for key,label,hint in profile_fields %}
+                    {% for key,label,hint in profile_fields if key!='family_context' %}
                         <label>
                             {{ label }}<textarea name="{{ key }}" maxlength="3000" placeholder="{{ hint }}">{{ profile.get(key,'') }}</textarea>
                         </label>
@@ -34,7 +34,7 @@
                     <button>Сохранить профиль</button>
                 </form>
             {% else %}
-                {% for key,label,hint in profile_fields %}
+                {% for key,label,hint in profile_fields if key!='family_context' %}
                     <h3>{{ label }}</h3>
                     <p class="text">{{ profile.get(key) or 'Пока не заполнено' }}</p>
                 {% endfor %}

@@ -175,7 +175,7 @@ def test_doctor_navigation_is_single_panel_inside_header_and_routes_remain(clien
         ("/doctor", "Пациенты"),
         ("/doctor/calendar", "Календарь"),
         ("/doctor/tasks", "Задачи"),
-        ("/doctor/library", "Библиотека"),
+        ("/doctor/resources", "Ресурсы"),
         ("/settings", "Настройки"),
     ]:
         assert f'href="{path}"' in header and label in header

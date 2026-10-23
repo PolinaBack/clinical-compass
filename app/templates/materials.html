@@ -1,11 +1,3 @@
-{% extends 'base.html' %}
-{% block title %}Материалы · Клинический компас{% endblock %}
-{% block content %}
-<div class="page-intro"><p class="eyebrow">ПОДДЕРЖКА И ИНФОРМАЦИЯ</p><h1>Полезные материалы</h1><p class="lead">Проверенные ссылки из библиотеки проекта. Рекомендации по лечению обсуждайте со специалистом.</p></div>
-<div class="grid two">
-{% for number,title,text,url,color in resources %}
-<article class="card category-materials"><h2>{% if url %}<a href="{{ url }}" {% if url.startswith('https://') %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ title }}{% if url.startswith('https://') %} <span class="caption">↗ внешний сайт</span>{% endif %}</a>{% else %}{{ title }}{% endif %}</h2><p>{{ text }}</p></article>
-{% endfor %}
-</div>
-<section class="card"><h2>Вопросы о работе приложения</h2><a href="/faq">Вопросы и ответы</a> · <a href="/me/start">С чего начать</a></section>
-{% endblock %}
+{% extends 'base.html' %}{% block title %}Материалы · Клинический компас{% endblock %}{% block content %}
+<h1>Материалы</h1><p class="caption">Ресурсы пока что никем не проверяются. Вопросы по материалу можно обсудить со специалистом.</p><h2>От моего специалиста</h2><div class="grid two">{% for item in resource_assignments %}<article class="card"><h3>{{ item.title }}</h3><p>{{ item.doctor_name }} · {{ resource_status[item.status] }}{% if item.due_day %} · прочитать до {{ item.due_day }}{% endif %}</p>{% if item.note %}<p>{{ item.note }}</p>{% endif %}<a class="button" href="/material-assignments/{{ item.id }}/open" target="_blank" rel="noopener noreferrer">Открыть статью ↗</a><form method="post" action="/material-assignments/{{ item.id }}/status"><input type="hidden" name="csrf" value="{{ csrf }}"><button name="status" value="read">Прочитано</button><button name="status" value="later" class="secondary">Вернусь позже</button></form></article>{% else %}<p>Когда специалист назначит материал, он появится здесь.</p>{% endfor %}</div>
+<details class="card"><summary>О приложении</summary>{% for number,title,text,url,color in resources if url!='/help-now' %}<h3>{{ title }}</h3><p>{{ text }}</p>{% if url %}<a href="{{ url }}">Подробнее</a>{% endif %}{% endfor %}<a href="/faq">Вопросы и ответы</a></details>{% endblock %}

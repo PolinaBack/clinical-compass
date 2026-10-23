@@ -35,7 +35,7 @@
         <label>Самочувствие, 0–10<input id="wellbeing-value" type="number" name="wellbeing" min="0" max="10" step="1" required inputmode="numeric" data-value></label>
         <p class="caption">Можно двигать стрелку мышью или пальцем, использовать ползунок, стрелки клавиатуры или ввести число.</p>
         <div class="dialog-actions"><button type="button" data-apply>Применить оценку</button><button type="button" class="secondary" data-cancel>Отмена</button></div>
-        <p><a href="/help-now">Экстренная помощь</a></p>
+        <p><span>Экстренная помощь — в правом верхнем углу.</span></p>
     </dialog>
     <dialog id="sleep-dialog" class="diary-dialog" aria-labelledby="sleep-heading" data-preview="sleep-preview">
         <h3 id="sleep-heading">Сон и восстановление</h3><p>Оцените качество сна: 0 — совсем не удалось отдохнуть, 10 — отлично выспались.</p>
@@ -46,13 +46,13 @@
         <label>Оценка качества сна, 0–10<input id="sleep-quality" type="number" name="sleep_quality" min="0" max="10" step="1" inputmode="numeric" data-value></label>
         <label>Продолжительность сна, часы<input type="number" name="sleep" min="0" max="24" step="0.5" required inputmode="decimal" data-value></label>
         <div class="dialog-actions"><button type="button" data-apply>Применить сон</button><button type="button" class="secondary" data-cancel>Отмена</button></div>
-        <p><a href="/help-now">Экстренная помощь</a></p>
+        <p><span>Экстренная помощь — в правом верхнем углу.</span></p>
     </dialog>
     <dialog id="treatment-dialog" class="diary-dialog" aria-labelledby="treatment-heading" data-preview="treatment-preview">
         <h3 id="treatment-heading">Лечение</h3><p>Отметьте выполнение назначенной схемы. Изменение лечения обсудите со специалистом.</p>
         <label for="diary-adherence">Выполнение назначения врача</label><select id="diary-adherence" name="adherence" data-value><option value="none">Нет назначения / не применимо</option><option value="taken">Выполнено</option><option value="missed">Был пропуск</option></select>
         <div class="dialog-actions"><button type="button" data-apply>Применить отметку</button><button type="button" class="secondary" data-cancel>Отмена</button></div>
-        <p><a href="/help-now">Экстренная помощь</a></p>
+        <p><span>Экстренная помощь — в правом верхнем углу.</span></p>
     </dialog>
     {% for metric in diary_metrics %}
         <dialog id="metric-dialog-{{ metric.id }}" class="diary-dialog" aria-labelledby="metric-heading-{{ metric.id }}" data-preview="metric-preview-{{ metric.id }}">
@@ -65,7 +65,7 @@
             {% if metric.required %}<p>Нужна отметка; можно выбрать «не знаю», «не помню» или личное обсуждение.</p>{% endif %}
             <details><summary>Комментарий и тема для приёма</summary><label>Комментарий · {{ metric.title }}<textarea name="comment_{{ metric.id }}" maxlength="1000"></textarea></label><label class="check"><input type="checkbox" name="discuss_{{ metric.id }}" value="yes">Хочу обсудить на приёме</label></details>
             <div class="dialog-actions"><button type="button" data-apply>Применить показатель</button><button type="button" class="secondary" data-cancel>Отмена</button></div>
-            <p><a href="/help-now">Экстренная помощь</a></p>
+            <p><span>Экстренная помощь — в правом верхнем углу.</span></p>
     </dialog>
     {% endfor %}
     <label>Заметка<textarea id="diary-note" name="note" maxlength="3000"></textarea></label>

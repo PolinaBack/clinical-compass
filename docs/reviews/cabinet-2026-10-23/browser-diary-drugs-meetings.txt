@@ -1,0 +1,3 @@
+PASS diary: physician-only metric, pointer compass 0/10, keyboard, Escape, sleep animation/reduced motion, persisted answers, doctor view and no-JS fallback
+Library browser acceptance passed: search/INN/suggestions, 3 drugs/3 pairs, Excel preview/reimport, patient denied, 4 viewport widths.
+PASS meetings UI: one patient settings form, no doctor/per-meeting consent forms, real MP4/doctor playback/seek, live progress polling without losing unsaved text, synthetic worker, corrections, cited draft, clinician review/withdrawal, patient denied progress/upload/player/direct media/full transcript, four widths.

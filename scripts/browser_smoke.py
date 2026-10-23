@@ -84,19 +84,20 @@ def run(
         patient.get_by_label("Логин", exact=True).fill(patient_user)
         patient.get_by_label("Пароль", exact=True).fill(patient_password)
         patient.get_by_role("button", name="Войти как пациент").click()
-        expect(patient.locator(".role-badge")).to_contain_text("Пациент")
+        expect(patient.locator(".portal-nav")).to_have_count(1)
         assert patient.url.endswith("/patients/1/diary")
         patient.goto(url + "/me/start")
         expect(
             patient.get_by_role("heading", name="Здесь можно отвечать честно")
         ).to_be_visible()
-        labels = patient.locator(".header-nav a").all_text_contents()
-        assert labels == [
-            "Анкеты",
-            "Специалист",
-            "Семейная история",
-            "Отчёты",
+        labels = patient.locator(".portal-nav a").all_text_contents()
+        assert [label.strip() for label in labels] == [
+            "Дневник",
+            "Статистика",
+            "Материалы",
+            "Профиль",
             "С чего начать",
+            "Настройки",
         ]
         expect(patient.locator(".trust-questions details")).to_have_count(3)
         expect(
@@ -195,11 +196,11 @@ def run(
 
         patient.goto(url + "/patients/1/diary")
         patient.locator('[data-open="wellbeing-dialog"]').click()
-        patient.get_by_label('Самочувствие, 0–10',exact=True).fill('6')
-        patient.get_by_role('button',name='Применить оценку',exact=True).click()
+        patient.get_by_label("Самочувствие, 0–10", exact=True).fill("6")
+        patient.get_by_role("button", name="Применить оценку", exact=True).click()
         patient.locator('[data-open="sleep-dialog"]').click()
-        patient.get_by_label('Продолжительность сна, часы',exact=True).fill('7.5')
-        patient.get_by_role('button',name='Применить сон',exact=True).click()
+        patient.get_by_label("Продолжительность сна, часы", exact=True).fill("7.5")
+        patient.get_by_role("button", name="Применить сон", exact=True).click()
         patient.get_by_label("Заметка", exact=True).fill(
             "Синтетическая браузерная запись"
         )
@@ -229,23 +230,8 @@ def run(
         expect(
             doctor.get_by_text("Учебная заметка к следующей консультации", exact=True)
         ).to_be_visible()
-        doctor.goto(url + "/patients/1/reports")
-        doctor.get_by_text("Подготовить отчёт", exact=True).click()
-        doctor.get_by_label("Название", exact=True).fill(
-            "Синтетический отчёт после встречи"
-        )
-        doctor.get_by_label("Заключение специалиста", exact=True).fill(
-            "Учебное заключение специалиста"
-        )
-        doctor.get_by_label("Дальнейший план", exact=True).fill(
-            "Учебный план наблюдения"
-        )
-        doctor.get_by_label("Поделиться с пациентом после сохранения").check()
-        doctor.get_by_role("button", name="Сохранить отчёт", exact=True).click()
-        patient.goto(url + "/patients/1/reports")
-        expect(
-            patient.get_by_text("Учебное заключение специалиста", exact=True)
-        ).to_be_visible()
+        assert doctor.goto(url + "/patients/1/reports").status == 410
+        assert patient.goto(url + "/patients/1/reports").status == 410
         patient.goto(url + "/patients/1/results")
         expect(patient.locator("#reports")).to_have_count(0)
         expect(patient.locator(".axis-label")).to_have_count(6)
@@ -257,14 +243,19 @@ def run(
         patient.goto(url + "/patients/1/profile")
         expect(patient.locator(".profile-tile")).to_have_count(0)
         assert patient.url.endswith("/profile/about")
-        expect(patient.get_by_label("Обо мне", exact=True)).to_be_visible()
+        expect(
+            patient.get_by_role(
+                "heading", name="Первичная анкета «Обо мне»", exact=True
+            )
+        ).to_be_visible()
         capture(patient, "profile-desktop")
         patient.goto(url + "/patients/1/profile/about")
+        patient.get_by_text("Прежние свободные заметки «Обо мне»", exact=True).click()
         patient.get_by_label("Обо мне", exact=True).fill("Учебная биография")
         patient.get_by_role("button", name="Сохранить профиль").click()
         patient.goto(url + "/patients/1/profile/family")
-        expect(patient.locator(".family-leaf")).to_have_count(6)
-        patient.locator('.family-leaf[href$="/mother"]').click()
+        expect(patient.locator("a.family-node-leaf")).to_have_count(6)
+        patient.locator('.family-node-leaf[href$="/mother"]').click()
         patient.get_by_label("Имя или родство", exact=True).fill("Учебная мама")
         patient.get_by_label("Что хотите рассказать о близком").fill(
             "Вымышленный контекст"
@@ -311,32 +302,24 @@ def run(
         patient.get_by_label("Что важно уточнить").fill("Учебная тема к консультации")
         patient.get_by_label("Хочу обсудить на консультации").check()
         patient.get_by_role("button", name="Сохранить сведения", exact=True).click()
-        patient.get_by_role("link", name="Посмотреть сводку", exact=True).click()
-        expect(
-            patient.get_by_role("heading", name="Сводка семейной истории")
-        ).to_be_visible()
-        expect(
-            patient.get_by_text("Учебная тема к консультации", exact=True)
-        ).to_be_visible()
         patient.get_by_role("link", name="К дереву", exact=True).click()
-        expect(patient.locator(".family-discuss")).to_have_count(1)
+        expect(patient.locator('.family-node-leaf[href$="/mother"]')).to_contain_text(
+            "Обсудить"
+        )
         patient.get_by_text("Добавить близкого", exact=True).click()
-        patient.get_by_label("Вымышленное имя", exact=True).fill("Учебная сестра")
-        patient.get_by_label("Отношение к пациенту").select_option("sibling")
+        patient.get_by_label("Имя", exact=True).fill("Учебная сестра")
+        patient.locator('[name="relation"]').select_option("sister")
         patient.get_by_label("Родитель этого участника").select_option(
             label="Учебная мама"
         )
         patient.get_by_role("button", name="Добавить участника", exact=True).click()
-        expect(patient.locator(".family-leaf")).to_have_count(7)
+        expect(patient.locator("a.family-node-leaf")).to_have_count(7)
         expect(
-            patient.locator(".family-leaf").filter(has_text="Учебная сестра")
+            patient.locator(".family-node-leaf").filter(has_text="Учебная сестра")
         ).to_be_visible()
         capture(patient, "family-desktop")
         patient.set_viewport_size({"width": 390, "height": 844})
         capture(patient, "family-mobile")
-        patient.get_by_role("link", name="Список", exact=True).click()
-        expect(patient.locator(".family-list-item")).to_have_count(7)
-        capture(patient, "family-list-mobile")
         patient.set_viewport_size({"width": 1280, "height": 900})
         patient.goto(url + "/patients/1/profile/video")
         patient.get_by_label("Желаемая дата").fill("2026-12-01")
@@ -460,14 +443,17 @@ def run(
         capture(doctor, "specialist-mobile")
         assert not errors, errors
         from scripts.browser_diary import check_diary
+
         check_diary(patient, doctor, url)
         from scripts.browser_e02 import check_interface
+
         check_interface(patient, doctor, url)
         from scripts.browser_medicines import check_medicines
+
         check_medicines(patient, doctor, url)
         browser.close()
     print(
-        "UI check passed: separate portals, trust/FAQ, teaching safety adaptation with hidden branches, stepped PHQ-4/9/GAD-7, PHQ-ADS assignment, safety events, synthetic audio, diary comments, separate profile pages, family tree/tabs, reports in a separate section, anonymous moderated FAQ, diary notes, consultation booking/video link, desktop/mobile; no JS errors."
+        "UI check passed: separate portals, trust/FAQ, teaching safety adaptation with hidden branches, stepped PHQ-4/9/GAD-7, PHQ-ADS assignment, safety events, synthetic audio, diary comments, separate profile pages, family tree/tabs, retired reports and a single family tree, anonymous moderated FAQ, diary notes, consultation booking/video link, desktop/mobile; no JS errors."
     )
 
 

@@ -2,7 +2,7 @@
 Definitions describe self-reports, never diagnostic rules or prescriptions.
 """
 
-VERSION = "anamnesis-2026-10-22-v1"
+VERSION = "anamnesis-2026-10-23-v2"
 STATES = {
     "unanswered": "Пока не отвечено",
     "answered": "Ответил(а)",
@@ -984,6 +984,45 @@ CATEGORIES = [
         [12, 38, 39],
     ),
 ]
+# Current UI separates identity from measurements; old snapshots keep v1 labels.
+MEASUREMENT_KEYS = {
+    "height",
+    "weight",
+    "measured_at",
+    "measurement_source",
+    "weight_change",
+    "weight_period",
+    "weight_amount",
+    "bmi_restriction",
+}
+personal = next(c for c in CATEGORIES if c["key"] == "personal")
+measurement_fields = [f for f in personal["fields"] if f["key"] in MEASUREMENT_KEYS]
+personal["fields"] = [f for f in personal["fields"] if f["key"] not in MEASUREMENT_KEYS]
+personal.update(
+    title="Личные данные", description="Имя, дата рождения и удобный способ обращения."
+)
+CATEGORIES.insert(
+    1,
+    category(
+        "measurements",
+        "Медицинские измерения",
+        "Рост, масса тела и расчёт ИМТ — по желанию.",
+        "Я и причина обращения",
+        "#EAF2FF",
+        "#3175D8",
+        "anthropometry",
+        measurement_fields,
+        [4, 24],
+    ),
+)
+family = next(c for c in CATEGORIES if c["key"] == "family")
+family.update(
+    title="Семейное дерево",
+    description="Близкие, родственные связи и сведения на листьях дерева.",
+    fields=[],
+    kinds=[],
+)
+
 BY_KEY = {c["key"]: c for c in CATEGORIES}
 
 ENTITY_FIELDS = {
@@ -1232,6 +1271,7 @@ CORE_KEYS = {
         "weight",
         "measured_at",
     },
+    "measurements": {"height", "weight", "measured_at"},
     "complaints": {"groups", "onset", "top_three", "impact"},
     "mental": {"mood", "anxiety", "past_help"},
     "health": {"known_conditions"},

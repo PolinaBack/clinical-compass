@@ -209,7 +209,8 @@ def test_genogram_and_foreign_parent(client):
         ).status_code
         == 200
     )
-    assert "Демо-мать" in client.get("/patients/1/profile/family").text
+    assert "Демо-мать" not in client.get("/patients/1/profile/family").text
+    assert "мать" in client.get("/patients/1/profile/family").text
     assert (
         post(
             client,

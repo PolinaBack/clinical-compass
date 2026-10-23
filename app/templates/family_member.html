@@ -2,7 +2,7 @@
 {% block content %}
     {% set can_edit = user != 'doctor' and consent %}
     <div class="section-page-heading">
-        <h1>Семейная история</h1>
+        <h1>Семейное дерево</h1>
         <a href="/patients/{{ patient.id }}/profile/family">К дереву</a>
     </div>
     {% if user == 'doctor' %}
@@ -39,6 +39,9 @@
                                {% if not can_edit %}readonly{% endif %}
                                required>
                     </label>
+                    <label>Пол для медицинской схемы<select name="sex" {% if not can_edit %}disabled{% endif %}>{% for key,label in [('unknown','Не указан'),('male','Мужской'),('female','Женский')] %}<option value="{{ key }}" {% if person.get('sex','unknown')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+                    <label>Возраст · если известен<input name="age" type="number" min="0" max="130" value="{{ person.get('age') if person.get('age') is not none else '' }}" {% if not can_edit %}readonly{% endif %}></label>
+                    <label class="check"><input type="checkbox" name="deceased" value="yes" {% if person.get('deceased') %}checked{% endif %}{% if not can_edit %}disabled{% endif %}>Умер(ла)</label>
                     <label>
                         Что хотите рассказать о близком<textarea name="about" maxlength="3000" {% if not can_edit %}readonly{% endif %}>{{ details.get('about','') }}</textarea>
                     </label>

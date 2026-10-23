@@ -1,7 +1,0 @@
-{% extends 'base.html' %}
-{% block title %}Отчёты специалиста · Клинический компас{% endblock %}
-{% block content %}
-<div class="section-page-heading"><h1>Отчёты специалиста</h1><a href="/patients/{{ patient.id }}/results">Вернуться к динамике опросников</a></div>
-{% if user == 'doctor' %}{% include 'specialist_nav.html' %}{% endif %}
-{% include 'reports_block.html' %}
-{% endblock %}

@@ -1,0 +1,9 @@
+{
+  "old_tables": 65,
+  "old_rows": 537,
+  "old_rows_preserved": true,
+  "total_tables": 69,
+  "resource_items": 12,
+  "integrity_check": "ok",
+  "foreign_key_check": []
+}

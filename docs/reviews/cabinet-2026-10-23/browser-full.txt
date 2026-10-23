@@ -1,0 +1,4 @@
+PASS diary: physician-only metric, pointer compass 0/10, keyboard, Escape, sleep animation/reduced motion, persisted answers, doctor view and no-JS fallback
+PASS E02: real portal links and data, retired reports and top navigation, durable UI controls, 320/390/768/1280px, keyboard and reduced motion
+Library browser acceptance passed: search/INN/suggestions, 3 drugs/3 pairs, Excel preview/reimport, patient denied, 4 viewport widths.
+UI check passed: separate portals, trust/FAQ, teaching safety adaptation with hidden branches, stepped PHQ-4/9/GAD-7, PHQ-ADS assignment, safety events, synthetic audio, diary comments, separate profile pages, family tree/tabs, retired reports and a single family tree, anonymous moderated FAQ, diary notes, consultation booking/video link, desktop/mobile; no JS errors.

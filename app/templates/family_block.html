@@ -1,109 +1,16 @@
-<section class="family-panel" id="family">
-    <div class="section-heading">
-        <div>
-            <p class="eyebrow">01 / ВАША СЕМЬЯ</p>
-            <h2>Узнаём, ветвь за ветвью</h2>
-        </div>
-        <div class="family-view-switch">
-            <a href="?view=tree"
-               {% if family_view != 'list' %}aria-current="page"{% endif %}>Дерево</a><a href="?view=list"
-   {% if family_view == 'list' %}aria-current="page"{% endif %}>Список</a>
-        </div>
-    </div>
-    {% if family_view == 'list' %}
-        <div class="family-list">
-            {% for node in family_nodes %}
-                <a class="family-list-item"
-                   href="/patients/{{ patient.id }}/profile/family/member/{{ node.key }}"><strong>{{ node.label }}</strong><span>{{ node.subtitle }}
-                    {% if node.person %}· {{ node.person.name }}{% endif %}
-                </span><span class="badge">{{ node.status }}</span></a>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="family-tree-scroll"
-             tabindex="0"
-             aria-label="Семейное дерево; можно прокрутить по горизонтали">
-            <div class="family-tree"
-                 id="genogram"
-                 style="--tree-height:{{ family_height }}">
-                <svg viewBox="0 0 1100 {{ family_height }}"
-                     aria-hidden="true"
-                     class="tree-art">
-                    <path class="tree-canopy" d="M85 465C-5 330 120 140 280 175C340 35 495 30 570 110C700 20 825 90 840 170C1040 145 1130 335 1010 480C1000 650 770 665 710 575C590 685 420 670 365 605C210 690 55 585 85 465Z" />
-                    <g class="tree-branches">
-                    {% if family_height > 760 %}<path d="M550 705V{{ family_height-55 }}" />{% endif %}
-                    {% for line in family_connections %}
-                        <path d="M{{ line.x1 }} {{ line.y1 }} Q{{ line.x1 }} {{ line.y2 }} {{ line.x2 }} {{ line.y2 }}" />
-                    {% endfor %}
-                    <path d="M550 705Q530 595 370 475Q260 380 198 220" />
-                    <path d="M550 650Q725 550 750 470Q805 350 902 220" />
-                    <path d="M370 475Q420 330 418 160" />
-                    <path d="M750 470Q695 305 682 160" />
-                    <path d="M550 660Q540 520 505 440M550 590Q610 535 625 465" />
-                    </g>
-                    <g class="tree-leaves">
-                    <path d="M500 495Q450 475 475 425Q530 430 500 495" />
-                    <path d="M604 520Q660 500 642 455Q590 465 604 520" />
-                    <path d="M232 380Q175 395 158 360Q190 325 232 380" />
-                    <path d="M848 338Q900 355 910 310Q865 295 848 338" />
-                    </g>
-                    <path d="M360 {{ family_height-18 }}Q550 {{ family_height-44 }} 740 {{ family_height-18 }}" class="tree-ground" />
-                </svg>
-                <span class="tree-branch-label maternal">МАМИНА ВЕТВЬ</span><span class="tree-branch-label paternal">ПАПИНА ВЕТВЬ</span>
-                {% for node in family_nodes %}
-                    <a class="family-leaf {{ 'leaf-filled' if node.filled else 'leaf-draft' if node.person else 'leaf-empty' }} {{ 'parent-leaf' if node.key in ['mother','father'] else '' }}"
-                       style="--leaf-x:{{ node.x }}%;
-                              --leaf-y:{{ node.y }}%"
-                       href="/patients/{{ patient.id }}/profile/family/member/{{ node.key }}"><strong>{{ node.label }}</strong><span>{{ node.subtitle }}</span><small>{{ node.status }}</small>
-                        {% if node.person and node.person.get('discuss') %}
-                            <span class="family-discuss" aria-label="Тема для обсуждения">!</span>
-                        {% endif %}
-                    </a>
-                {% endfor %}
-                <div class="tree-self" style="top:{{ family_self_y }}%">Я</div>
-                <span class="tree-root-caption">С ВАС НАЧИНАЕТСЯ ИСТОРИЯ</span>
-            </div>
-        </div>
-        <p class="caption">
-            Нажмите на лист, чтобы добавить информацию о близком.
-            Дерево можно прокручивать вбок или переключиться на список.
-        </p>
-    {% endif %}
-    <div class="family-legend" aria-label="Обозначения дерева">
-        <span><i class="legend-filled" aria-hidden="true"></i>Ответ добавлен</span>
-        <span><i class="legend-empty" aria-hidden="true"></i>Пока не заполнено</span>
-        <span><i class="legend-discuss" aria-hidden="true">!</i>Обсудить</span>
-    </div>
-    {% include 'family_progress.html' %}
-    {% if user != 'doctor' and consent %}
-        <details class="inset">
-            <summary>Добавить близкого</summary>
-            <form action="/patients/{{ patient.id }}/relatives" method="post">
-                <input name="csrf" type="hidden" value="{{ csrf }}">
-                <label>
-                    Вымышленное имя
-                    <input name="name" maxlength="80" required>
-                </label>
-                <label>
-                    Отношение к пациенту
-                    <select name="relation">
-                        {% for key,label in [('mother','Мать'),('father','Отец'),('sibling','Брат/сестра'),('child','Ребёнок'),('other','Другой близкий')] %}
-                            <option value="{{ key }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label>
-                    Родитель этого участника
-                    <select name="parent_id">
-                        <option value="">Не указан</option>
-                        {% for relative in relatives %}<option value="{{ relative.id }}">{{ relative.name }}</option>{% endfor %}
-                    </select>
-                </label>
-                <button>Добавить участника</button>
-            </form>
-        </details>
-    {% endif %}
-    <p class="caption">
-        Описательная семейная история. Диагнозы родственникам и наследственные риски автоматически не определяются.
-    </p>
+<section class="family-panel" id="family"><div class="section-heading"><h2>{{ 'Медицинская родословная' if user=='doctor' else 'Семейное дерево' }}</h2><a href="/patients/{{ patient.id }}/profile/about">К первичной анкете</a></div>
+{% if user=='doctor' %}<form method="get"><label>Показать состояние на схеме<select name="condition"><option value="">Выберите состояние</option>{% for label in family_condition_labels %}<option {% if selected_condition==label %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label><button>Показать</button></form>{% endif %}
+<div class="family-tree-scroll" tabindex="0" role="region" aria-label="{{ 'Медицинская родословная' if user=='doctor' else 'Семейное дерево' }}; горизонтальная прокрутка"><div class="family-diagram {{ 'medical' if user=='doctor' else 'leaves' }}" style="width:{{ family_width }}px;height:{{ family_height }}px">
+<svg class="family-connectors" viewBox="0 0 {{ family_width }} {{ family_height }}" aria-hidden="true">{% for path in family_connections %}<path d="{{ path }}" />{% endfor %}</svg>
+{% if user=='doctor' %}{% for generation,y in [('I',95),('II',365),('III',655),('IV',955)] if generation!='IV' or family_nodes|selectattr('generation','equalto',4)|list %}<span class="generation-label" style="top:{{ y }}px">{{ generation }}</span>{% endfor %}{% endif %}
+{% for node in family_nodes %}
+{% if user=='doctor' %}<div class="pedigree-node" style="left:{{ node.px }}px;top:{{ node.py }}px"><span class="pedigree-number">{{ node.number }}</span><svg width="90" height="90" viewBox="-45 -45 90 90" aria-hidden="true" class="{{ 'affected' if node.affected else '' }}">{% if node.sex=='male' %}<rect x="-36" y="-36" width="72" height="72"/>{% elif node.sex=='female' %}<circle r="36"/>{% else %}<path d="M0 -38L38 0L0 38L-38 0Z"/>{% endif %}{% if node.unknown %}<text text-anchor="middle" y="10">?</text>{% endif %}{% if node.deceased %}<path class="deceased-line" d="M-42 42L42 -42"/>{% endif %}</svg>
+{% if node.key=='self' %}<span class="proband-arrow" role="img" aria-label="Пробанд"><svg width="55" height="50" viewBox="0 0 55 50" aria-hidden="true"><path d="M3 47L48 5M32 7L48 5L45 21"/></svg></span>{% endif %}<strong>{% if node.person %}<a href="/patients/{{ patient.id }}/profile/family/member/{{ node.key }}">{{ node.display_name }}</a>{% else %}{{ 'Пробанд' if node.key=='self' else node.label }}{% endif %}</strong>{% if node.person and node.display_name!=node.label %}<span>{{ node.label }}</span>{% endif %}<span>{{ node.age ~ ' лет' if node.age is not none else 'Возраст не указан' }}</span>{% if node.affected %}<span>со слов{% if node.uncertain %} · требует уточнения{% endif %}</span>{% if node.age_text %}<span>сообщено: {{ node.age_text }}</span>{% endif %}{% endif %}</div>
+{% else %}{% if node.key!='self' %}<a class="family-node-leaf {{ 'leaf-filled' if node.filled else '' }}" href="/patients/{{ patient.id }}/profile/family/member/{{ node.key }}" style="left:{{ node.px }}px;top:{{ node.py }}px"><strong>{{ node.label }}</strong>{% if node.person %}<span>{{ node.display_name }}</span>{% endif %}{% if node.age is not none %}<span>{{ node.age }} лет{% if node.deceased %} · умер(ла){% endif %}</span>{% endif %}<small>{{ node.brief or node.status }}</small>{% if node.person and node.person.get('discuss') %}<span>! Обсудить</span>{% endif %}</a>{% else %}<div class="family-node-leaf self-leaf" style="left:{{ node.px }}px;top:{{ node.py }}px"><strong>Я</strong>{% if node.age is not none %}<span>{{ node.age }} лет</span>{% endif %}</div>{% endif %}{% endif %}
+{% endfor %}</div></div>
+{% if user=='doctor' %}<p class="caption">Квадрат — мужчина, круг — женщина, ромб — пол не указан. Заливка — выбранное состояние сообщено пользователем; ? — сведений недостаточно. Черта — умер(ла), стрелка — пробанд.</p>{% else %}<p>Нажмите на лист, чтобы добавить сведения. Краткая информация появится на самом дереве.</p>{% endif %}
+{% include 'family_progress.html' %}
+{% if family_archived_parents %}<details class="card"><summary>Ранее созданные записи родителей</summary><p>Старые записи сохранены отдельно, чтобы не создавать на схеме ещё одну мать или отца.</p>{% for r in family_archived_parents %}<p><a href="/patients/{{ patient.id }}/profile/family/member/custom-{{ r.id }}">{{ r.display_name or r.name }}</a></p>{% endfor %}</details>{% endif %}
+{% if user!='doctor' and consent %}<details class="card"><summary>Добавить близкого</summary><form method="post" action="/patients/{{ patient.id }}/relatives"><input type="hidden" name="csrf" value="{{ csrf }}"><label>Имя<input name="name" maxlength="80" required></label><label>Родство<select name="relation">{% for key,label in [('brother','Брат'),('sister','Сестра'),('child','Ребёнок'),('other','Другой близкий'),('custom','Своя категория')] %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label><label>Своя категория · для соответствующего варианта<input name="custom_relation" maxlength="80" placeholder="Например, двоюродная сестра"></label><label>Родитель этого участника<select name="parent_id"><option value="">Не указан</option>{% for relative in relatives %}<option value="{{ relative.id }}">{{ relative.display_name or relative.name }}</option>{% endfor %}</select></label><button>Добавить участника</button></form></details>{% endif %}
+{% if intake_data.answers.get('family') or intake_data.entities|selectattr('kind','equalto','family')|list or profile.get('family_context') %}<details class="card"><summary>Ранее сохранённые семейные сведения</summary><p>Оригиналы прежней анкеты сохранены. Новые сведения о близких добавляйте на листьях дерева.</p>{% for key,answer in intake_data.answers.get('family',{}).items() if answer.status=='answered' %}<p>{{ intake_display(answer) }}</p>{% endfor %}{% for e in intake_data.entities if e.kind=='family' %}{% for key,answer in e.data.items() if answer.status=='answered' %}<p>{{ intake_display(answer) }}</p>{% endfor %}{% endfor %}{% if profile.get('family_context') %}<p>{{ profile.family_context }}</p>{% endif %}</details>{% endif %}
 </section>

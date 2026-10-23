@@ -108,6 +108,9 @@ def test_v3_upgrade_keeps_private_history_and_adds_family_slots_without_duplicat
             "forum_questions",
         ]:
             c.execute(f"DROP TABLE {table}")
+        # A v3 database predates the new parent-protection triggers.
+        c.execute("DROP TRIGGER IF EXISTS no_additional_parents")
+        c.execute("DROP TRIGGER IF EXISTS no_additional_parents_on_update")
         c.execute("DROP INDEX relative_slot")
         c.execute("ALTER TABLE relatives DROP COLUMN slot")
     for _ in range(2):

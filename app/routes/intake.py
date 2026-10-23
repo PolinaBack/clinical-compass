@@ -85,7 +85,22 @@ def intake_context(c, user, pid, view="summary", submission_id=None, as_of=None)
             (pid,),
         )
     ]
+    progress = service.categories_with_progress(data, prefs)
+    counted = [c for c in progress if c["total"]]
+    complete = sum(c["done"] == c["total"] for c in counted)
+    quotes = [
+        "Можно заполнять в своём темпе — даже несколько ответов помогут начать разговор.",
+        "Каждый сохранённый ответ помогает лучше подготовиться к встрече.",
+        "Не обязательно вспоминать всё сразу. К любому вопросу можно вернуться.",
+    ]
     return dict(
+        intake_overall=dict(
+            completed=complete,
+            total=len(counted),
+            done=sum(c["done"] for c in counted),
+            questions=sum(c["total"] for c in counted),
+            quote=quotes[sum(c["done"] for c in counted) % len(quotes)],
+        ),
         intake_review_history=review_history,
         intake_groups=list(
             dict.fromkeys(
@@ -98,7 +113,7 @@ def intake_context(c, user, pid, view="summary", submission_id=None, as_of=None)
         intake_draft=current,
         intake_submission=submission,
         intake_preferences=prefs,
-        intake_categories=service.categories_with_progress(data, prefs),
+        intake_categories=progress,
         intake_blocks=blocks,
         intake_deferred=deferred,
         intake_calculations=service.computations(data, reference),
@@ -159,6 +174,8 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
         request: Request, pid: int, category: str, submission_id: int | None = None
     ):
         data = context(request, pid, submission_id=submission_id)
+        if category == "family" and submission_id is None:
+            return RedirectResponse(f"/patients/{pid}/profile/family", status_code=303)
         category_definition = next(
             (c for c in data["intake_categories"] if c["key"] == category), None
         )
@@ -183,10 +200,23 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
             c.execute("BEGIN IMMEDIATE")
             revision = service.save_category(c, pid, account(request), category, form)
             reference = date.fromisoformat(str(form.get("as_of", today().isoformat())))
-            calculations = service.computations(service.snapshot(c, pid), reference)
+            snapshot = service.snapshot(c, pid)
+            calculations = service.computations(snapshot, reference)
+            progress = next(
+                item
+                for item in service.categories_with_progress(
+                    snapshot, snapshot["preferences"]
+                )
+                if item["key"] == category
+            )
         if "application/json" in request.headers.get("accept", ""):
             return JSONResponse(
-                dict(saved=True, revision=revision, calculations=calculations)
+                dict(
+                    saved=True,
+                    revision=revision,
+                    calculations=calculations,
+                    progress=dict(done=progress["done"], total=progress["total"]),
+                )
             )
         return redirect(pid, "/" + category + "?saved=1")
 
@@ -210,6 +240,7 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
             entity_kind=kind,
             entity_fields=entity_definitions,
             entity_answers={},
+            entity_progress=service.question_progress(entity_definitions, {}),
             related=[related] if related is not None else [],
             **data,
         )
@@ -240,6 +271,9 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
             entity_kind=entity["kind"],
             entity_fields=entity_definitions,
             entity_answers=entity["data"],
+            entity_progress=service.question_progress(
+                entity_definitions, entity["data"]
+            ),
             related=related,
             **data,
         )
@@ -259,6 +293,10 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
             c.execute("BEGIN IMMEDIATE")
             eid = service.save_entity(c, pid, account(request), kind, form, eid)
             current = service.draft(c, pid)
+            saved_entity = next(e for e in service.entities(c, pid) if e["id"] == eid)
+            entity_progress = service.question_progress(
+                service.entity_fields(c, pid, kind), saved_entity["data"]
+            )
             version = c.execute(
                 "SELECT version FROM intake_entities WHERE id=?", (eid,)
             ).fetchone()[0]
@@ -269,6 +307,7 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
                     revision=current["revision"],
                     entity_id=eid,
                     entity_version=version,
+                    progress=entity_progress,
                 )
             )
         return RedirectResponse(

@@ -48,13 +48,6 @@ def portal_data(db, pid, doctor=False):
                 (pid,),
             )
         ]
-        reports = [
-            dict(r)
-            for r in c.execute(
-                "SELECT r.*,d.name author FROM specialist_reports r JOIN accounts a ON a.id=r.author_id JOIN doctors d ON d.id=a.doctor_id WHERE r.patient_id=? AND (r.published=1 OR ?=1) ORDER BY r.id DESC",
-                (pid, int(doctor)),
-            )
-        ]
         notes = [
             dict(r)
             for r in c.execute(
@@ -134,7 +127,6 @@ def portal_data(db, pid, doctor=False):
         profile=dict(profile) if profile else {},
         profile_fields=PROFILE_FIELDS,
         diary_comments=comments,
-        reports=reports,
         diary_notes=notes,
         bookings=bookings,
         appointments=visits,
@@ -195,11 +187,36 @@ def register_portal(
                 )
         if section == "family":
             from .family import family_tree
+            from .routes.intake import intake_context
 
             context.update(
-                family_tree(context["relatives"]),
+                family_tree(
+                    context["relatives"], request.query_params.get("condition", "")
+                ),
                 family_view="list" if view == "list" else "tree",
+                family_condition_labels=sorted(
+                    {
+                        c["label"]
+                        for r in context["relatives"]
+                        for c in r.get("conditions", [])
+                    }
+                ),
             )
+            with db() as c:
+                # Earlier intake family answers stay private or submitted as before.
+                context.update(intake_context(c, account(request), pid))
+            for node in context["family_nodes"]:
+                if node["key"] == "self":
+                    node["age"] = context["intake_calculations"]["age"]
+                    value = (
+                        context["intake_data"]
+                        .get("answers", {})
+                        .get("personal", {})
+                        .get("sex", {})
+                    )
+                    node["sex"] = {"Мужской": "male", "Женский": "female"}.get(
+                        value.get("value"), "unknown"
+                    )
         return render(request, "profile.html", section=section, **context)
 
     @app.get("/patients/{pid}/diary")
@@ -283,7 +300,15 @@ def register_portal(
         access(request, pid, True)
         form = await request.form()
         csrf_check(request, str(form.get("csrf", "")))
-        values = [str(form.get(key, "")).strip() for key, _, _ in PROFILE_FIELDS]
+        # Hidden legacy fields remain stored when the current form omits them.
+        with db() as c:
+            previous = c.execute(
+                "SELECT * FROM patient_profiles WHERE patient_id=?", (pid,)
+            ).fetchone()
+        values = [
+            str(form.get(key, previous[key] if previous else "")).strip()
+            for key, _, _ in PROFILE_FIELDS
+        ]
         if any(len(value) > 3000 for value in values):
             raise HTTPException(422, "Каждое поле — до 3000 символов")
         with db() as c:
@@ -319,58 +344,12 @@ def register_portal(
         return redirect(pid, f"/diary#diary-entry-{did}")
 
     @app.post("/patients/{pid}/reports")
-    def report(
-        request: Request,
-        pid: int,
-        csrf: str = Form(...),
-        title: str = Form(..., min_length=1, max_length=120),
-        self_report: str = Form("", max_length=3000),
-        observations: str = Form("", max_length=3000),
-        conclusion: str = Form(..., min_length=1, max_length=3000),
-        plan: str = Form(..., min_length=1, max_length=3000),
-        published: bool = Form(False),
-    ):
-        user = specialist(request, pid)
-        csrf_check(request, csrf)
-        if not all(value.strip() for value in [title, conclusion, plan]):
-            raise HTTPException(422, "Заполните название, заключение и план")
-        with db() as c:
-            rid = c.execute(
-                "INSERT INTO specialist_reports(patient_id,author_id,title,self_report,observations,conclusion,plan,published,created_at) VALUES(?,?,?,?,?,?,?,?,?)",
-                (
-                    pid,
-                    user["id"],
-                    title.strip(),
-                    self_report.strip(),
-                    observations.strip(),
-                    conclusion.strip(),
-                    plan.strip(),
-                    int(published),
-                    now(),
-                ),
-            ).lastrowid
-            audit(
-                c,
-                user["id"],
-                "report_published" if published else "report_drafted",
-                pid,
-                rid,
-            )
-        return redirect(pid, "/reports#reports")
-
     @app.post("/patients/{pid}/reports/{rid}/publish")
-    def publish_report(request: Request, pid: int, rid: int, csrf: str = Form(...)):
-        user = specialist(request, pid)
-        csrf_check(request, csrf)
-        with db() as c:
-            result = c.execute(
-                "UPDATE specialist_reports SET published=1 WHERE id=? AND patient_id=? AND published=0",
-                (rid, pid),
-            )
-            if not result.rowcount:
-                raise HTTPException(404, "Черновик не найден")
-            audit(c, user["id"], "report_published", pid, rid)
-        return redirect(pid, "/reports#reports")
+    async def retired_reports(request: Request, pid: int, rid: int = 0):
+        specialist(request, pid)
+        form = await request.form()
+        csrf_check(request, str(form.get("csrf", "")))
+        raise HTTPException(410, "Создание и публикация отчётов отключены.")
 
     @app.get("/patients/{pid}/contact")
     def old_contact(request: Request, pid: int):

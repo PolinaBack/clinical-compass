@@ -165,3 +165,21 @@ html:has(.minimal-ui) { scroll-behavior: auto; }
   .specialist-space .header-inner > .portal-nav a { flex: 1 1 0; padding: 6px 0; min-height: 56px; font-size: 10px; gap: 3px; }
   .specialist-space .portal-nav .category-icon { width: 22px; height: 22px; flex-basis: 22px; }
 }
+
+/* One patient navigation row in the sticky header; emergency access stays top right. */
+.signed-in.patient-space .site-header { position:sticky;top:0;z-index:45; }
+.signed-in.patient-space .header-inner { display:grid;grid-template-columns:minmax(0,1fr) auto;position:relative;gap:10px; }
+.signed-in.patient-space .header-inner>.brand { display:none; }
+.signed-in.patient-space .portal-nav { position:static;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:0;border:0;gap:4px;background:transparent; }
+.signed-in.patient-space .portal-nav a { padding:8px 4px;min-width:0;font-size:13px; }
+.signed-in.patient-space .header-actions .help-link { display:inline-flex;position:static;bottom:auto;right:auto;min-height:44px;background:#fff; }
+.signed-in.patient-space .header-actions { margin:0; }
+.signed-in.patient-space .site-footer { padding-bottom:24px; }
+.resource-card[hidden] { display:none; }
+@media(max-width:760px) {
+ .signed-in.patient-space .header-inner { display:block;padding:54px 6px 6px; }
+ .signed-in.patient-space .header-actions { position:absolute;right:10px;top:6px; }
+ .signed-in.patient-space .portal-nav a { font-size:10px;flex-direction:column;min-height:56px;padding:4px 1px; }
+ .signed-in.patient-space .portal-nav .category-icon { width:22px;height:22px;flex-basis:22px; }
+ .signed-in.patient-space { padding-bottom:0; }
+}

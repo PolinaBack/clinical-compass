@@ -80,6 +80,9 @@ def create_app(db_path=None):
         with db() as c:
             c.execute("BEGIN IMMEDIATE")
             bootstrap_drug_library(c)
+            from .services.materials import bootstrap
+
+            bootstrap(c)
         yield
 
     app = FastAPI(title="Клинический компас — демо", lifespan=lifespan)
@@ -323,16 +326,34 @@ def create_app(db_path=None):
             }
         with db() as c:
             for relative in data["relatives"]:
+                from .services.family_layout import (
+                    name as family_display_name,
+                    RELATIONS,
+                )
+
+                relative["display_name"] = family_display_name(
+                    relative, RELATIONS.get(relative["relation"], "Близкий")
+                )
                 details = c.execute(
                     "SELECT * FROM family_details WHERE relative_id=?",
                     (relative["id"],),
                 ).fetchone()
                 if details:
                     relative.update(dict(details))
-                relative["condition_count"] = c.execute(
-                    "SELECT count(*) FROM family_conditions WHERE relative_id=?",
+                meta = c.execute(
+                    "SELECT * FROM family_person_meta WHERE relative_id=?",
                     (relative["id"],),
-                ).fetchone()[0]
+                ).fetchone()
+                if meta:
+                    relative.update(dict(meta))
+                relative["conditions"] = [
+                    dict(r)
+                    for r in c.execute(
+                        "SELECT * FROM family_conditions WHERE relative_id=? ORDER BY id",
+                        (relative["id"],),
+                    )
+                ]
+                relative["condition_count"] = len(relative["conditions"])
         ordered = sorted(data["diary"], key=lambda r: (r["day"], r["id"]))
         points = " ".join(
             f'{30+i*540/max(len(ordered)-1,1):.1f},{170-r["wellbeing"]*14}'
@@ -381,6 +402,9 @@ def create_app(db_path=None):
 
     register_community(app, db, identity, account, csrf_check, render)
     register_interface(app, db, account, render, patient_context)
+    from .routes.materials import register_materials
+
+    register_materials(app, db, account, csrf_check, render)
     register_diary(app, db, account, access, csrf_check, render, patient_context)
     register_intake(app, db, account, access, csrf_check, render, patient_context)
     register_portal(
@@ -435,7 +459,9 @@ def create_app(db_path=None):
                 )
         if (
             sum(len(items) for items in prepared.values()) > 10
-            or sum(len(content) for items in prepared.values() for _, content, _ in items)
+            or sum(
+                len(content) for items in prepared.values() for _, content, _ in items
+            )
             > 3 * attachment_files.file_limit()
         ):
             raise HTTPException(422, "Слишком много вложений в одной записи")
@@ -503,6 +529,7 @@ def create_app(db_path=None):
         name: str = Form(..., min_length=1, max_length=80),
         relation: str = Form(...),
         parent_id: str = Form(""),
+        custom_relation: str = Form("", max_length=80),
     ):
         access(request, pid, True)
         csrf_check(request, csrf)
@@ -511,11 +538,34 @@ def create_app(db_path=None):
             "mother",
             "father",
             "sibling",
+            "brother",
+            "sister",
+            "custom",
             "child",
             "other",
         ]:
             raise HTTPException(422, "Проверьте участника семьи")
         with db() as c:
+            c.execute("BEGIN IMMEDIATE")
+            if (
+                relation in ("mother", "father")
+                and c.execute(
+                    "SELECT 1 FROM relatives WHERE patient_id=? AND (relation=? OR slot=?)",
+                    (pid, relation, relation),
+                ).fetchone()
+            ):
+                raise HTTPException(
+                    409, "Этот родитель уже есть в дереве. Откройте существующий лист."
+                )
+            if relation == "custom" and (
+                not custom_relation.strip()
+                or custom_relation.strip().casefold()
+                in ("мама", "папа", "мать", "отец")
+            ):
+                raise HTTPException(
+                    422,
+                    "Для матери и отца используйте существующие листья; для другого родства укажите свою категорию",
+                )
             parent = None
             if parent_id:
                 if (
@@ -536,10 +586,20 @@ def create_app(db_path=None):
                 ).fetchone()
                 else None
             )
-            c.execute(
+            rid = c.execute(
                 "INSERT INTO relatives(patient_id,name,relation,parent_id,slot) VALUES(?,?,?,?,?)",
                 (pid, name.strip(), relation, parent, slot),
+            ).lastrowid
+            c.execute(
+                "INSERT INTO family_person_meta(relative_id,custom_relation,updated_by,updated_at) VALUES(?,?,?,?)",
+                (
+                    rid,
+                    custom_relation.strip() if relation == "custom" else "",
+                    account(request)["id"],
+                    now(),
+                ),
             )
+            audit(c, account(request)["id"], "family_member_added", pid, rid)
         return RedirectResponse(f"/patients/{pid}/profile/family", status_code=303)
 
     @app.post("/patients/{pid}/risks")

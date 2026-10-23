@@ -640,3 +640,49 @@ def test_local_ollama_adapter_checks_model_and_citations(monkeypatch, cloud):
             "/api/show",
             "/api/chat",
         ]
+
+
+def test_meeting_list_shows_brief_without_exposing_private_sources(client, meeting):
+    rid = processed(client, meeting)
+    doctor = client.get("/patients/1/meetings")
+    assert doctor.status_code == 200
+    assert "Итоги" in doctor.text and "Следующие шаги" in doctor.text
+    assert "Обсуждался сон." in doctor.text and "Черновик — проверить" in doctor.text
+    assert "Уточнить детали сна." not in doctor.text
+    assert "Синтетический разговор о сне." not in doctor.text
+    login(client, "patient1")
+    assert "Обсуждался сон." not in client.get("/patients/1/meetings").text
+    login(client, "doctor")
+    assert (
+        client.post(
+            f"/meeting-recordings/{rid}/summary", data=summary_form(client, rid)
+        ).status_code
+        == 200
+    )
+    login(client, "patient1")
+    html = client.get("/patients/1/meetings").text
+    assert "Обсуждался сон." in html and "Записывать время сна." in html
+    assert (
+        "Уточнить детали сна." not in html
+        and "Синтетический разговор о сне." not in html
+    )
+    assert f"/meeting-recordings/{rid}/media" not in html
+    login(client, "patient2")
+    assert client.get("/patients/1/meetings").status_code == 403
+    login(client, "doctor")
+    assert (
+        client.post(
+            f"/meeting-recordings/{rid}/summary",
+            data={"csrf": token(client), "intent": "withdraw"},
+        ).status_code
+        == 200
+    )
+    login(client, "patient1")
+    assert "Обсуждался сон." not in client.get("/patients/1/meetings").text
+    with connect(client.app.state.db_path) as c:
+        c.execute(
+            "UPDATE meeting_recordings SET expires_at='2000-01-01T00:00:00+00:00' WHERE id=?",
+            (rid,),
+        )
+    login(client, "doctor")
+    assert "Обсуждался сон." not in client.get("/patients/1/meetings").text
