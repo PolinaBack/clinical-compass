@@ -166,20 +166,38 @@ html:has(.minimal-ui) { scroll-behavior: auto; }
   .specialist-space .portal-nav .category-icon { width: 22px; height: 22px; flex-basis: 22px; }
 }
 
-/* One patient navigation row in the sticky header; emergency access stays top right. */
+/* One horizontal patient header. Navigation scrolls inside its row on small screens. */
 .signed-in.patient-space .site-header { position:sticky;top:0;z-index:45; }
-.signed-in.patient-space .header-inner { display:grid;grid-template-columns:minmax(0,1fr) auto;position:relative;gap:10px; }
+.signed-in.patient-space .header-inner { display:flex;flex-wrap:nowrap;align-items:center;gap:8px;padding:8px 16px; }
 .signed-in.patient-space .header-inner>.brand { display:none; }
-.signed-in.patient-space .portal-nav { position:static;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:0;border:0;gap:4px;background:transparent; }
-.signed-in.patient-space .portal-nav a { padding:8px 4px;min-width:0;font-size:13px; }
-.signed-in.patient-space .header-actions .help-link { display:inline-flex;position:static;bottom:auto;right:auto;min-height:44px;background:#fff; }
-.signed-in.patient-space .header-actions { margin:0; }
+.signed-in.patient-space .portal-nav { position:static;display:flex;flex:1 1 auto;min-width:0;overflow-x:auto;overscroll-behavior-inline:contain;flex-wrap:nowrap;justify-content:flex-start;padding:0;border:0;gap:4px;background:transparent;scroll-padding-inline:4px; }
+.signed-in.patient-space .portal-nav a { flex:1 0 auto;white-space:nowrap;padding:8px;min-height:48px;font-size:13px;flex-direction:row; }
+.signed-in.patient-space .header-actions { display:flex;position:static;flex:0 0 auto;flex-wrap:nowrap;align-items:center;margin:0;gap:4px; }
+.signed-in.patient-space .header-actions .help-link { display:inline-flex;position:static;bottom:auto;right:auto;min-height:44px;background:#fff;white-space:nowrap; }
+.portal-shell .header-actions form { margin:0; }
+.portal-shell .logout-button { display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:44px;min-height:44px;white-space:nowrap; }
+.help-short { display:none; }
+.signed-in.patient-space { padding-bottom:0; }
 .signed-in.patient-space .site-footer { padding-bottom:24px; }
+.signed-in.patient-space :is(:target,a,button,input,select,textarea,summary) { scroll-margin-top:100px;scroll-margin-bottom:16px; }
 .resource-card[hidden] { display:none; }
-@media(max-width:760px) {
- .signed-in.patient-space .header-inner { display:block;padding:54px 6px 6px; }
- .signed-in.patient-space .header-actions { position:absolute;right:10px;top:6px; }
- .signed-in.patient-space .portal-nav a { font-size:10px;flex-direction:column;min-height:56px;padding:4px 1px; }
- .signed-in.patient-space .portal-nav .category-icon { width:22px;height:22px;flex-basis:22px; }
- .signed-in.patient-space { padding-bottom:0; }
+.consultation-panel > section { margin-block:24px; }
+.consultation-panel h4 { font-size:1.05rem; }
+@media(max-width:1000px) {
+ .signed-in.patient-space .header-inner { padding:6px;gap:4px; }
+ .signed-in.patient-space .portal-nav a { font-size:10px;flex-direction:column;gap:2px;min-height:52px;padding:4px 7px; }
+ .signed-in.patient-space .portal-nav .category-icon { width:20px;height:20px;flex-basis:20px; }
+ .signed-in.patient-space .header-actions .help-full,.signed-in.patient-space .logout-label { display:none; }
+ .signed-in.patient-space .header-actions .help-short { display:inline; }
+ .signed-in.patient-space .header-actions .help-link { font-size:11px;padding:6px; }
 }
+
+@media(max-width:600px) {
+ .signed-in.patient-space .portal-nav { gap:0;overflow:visible; }
+ .signed-in.patient-space .portal-nav a { flex:1 1 0;min-width:28px;padding:4px 2px; }
+ .signed-in.patient-space .portal-nav a > span { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap; }
+ .signed-in.patient-space .header-actions .help-link { font-size:10px;padding:4px; }
+}
+/* Navigation symbols remain functional controls even when decorative art is off. */
+.signed-in.patient-space .portal-nav .category-icon { display:block; }
+.portal-shell .portal-nav a:focus-visible { outline-offset:-3px; }

@@ -68,13 +68,13 @@ def check_diary(patient, doctor, url):
     patient.get_by_role("button", name="Применить показатель", exact=True).click()
     patient.get_by_label("Заметка", exact=True).fill("Браузер: компас и сон")
     patient.get_by_role("button", name="Сохранить запись", exact=True).click()
-    expect(patient.locator("#diary")).to_contain_text("качество 10/10")
-    expect(patient.locator("#diary")).to_contain_text(
+    expect(patient.locator("#diary-history")).to_contain_text("качество 10/10")
+    expect(patient.locator("#diary-history")).to_contain_text(
         "Энергия · браузерная проверка: 9"
     )
     doctor.reload()
-    expect(doctor.locator("#diary")).to_contain_text("Браузер: компас и сон")
-    expect(doctor.locator("#diary")).to_contain_text("Сообщён пропуск")
+    expect(doctor.locator("#diary-history")).to_contain_text("Браузер: компас и сон")
+    expect(doctor.locator("#diary-history")).to_contain_text("Сообщён пропуск")
 
     import json
     import os
@@ -118,7 +118,7 @@ def check_diary(patient, doctor, url):
         page.get_by_label("Продолжительность сна, часы", exact=True).fill("7")
         page.get_by_label("Заметка", exact=True).fill("Без JavaScript")
         page.get_by_role("button", name="Сохранить запись", exact=True).click()
-        expect(page.locator("#diary")).to_contain_text("Без JavaScript")
+        expect(page.locator("#diary-history")).to_contain_text("Без JavaScript")
     except Exception:
         page.screenshot(path="artifacts/diary-no-js-failure.png", full_page=True)
         raise

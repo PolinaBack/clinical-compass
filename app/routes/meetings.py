@@ -70,54 +70,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
     @app.get("/patients/{pid}/meetings")
     def index(request: Request, pid: int):
         access(request, pid)
-        user = account(request)
-        with db() as c:
-            patient = c.execute("SELECT * FROM patients WHERE id=?", (pid,)).fetchone()
-            visits = [
-                dict(r)
-                for r in c.execute(
-                    "SELECT a.*,m.id meeting_id FROM appointments a LEFT JOIN meeting_sessions m ON m.appointment_id=a.id WHERE a.patient_id=? ORDER BY a.starts_at DESC,a.id DESC",
-                    (pid,),
-                )
-            ]
-            for visit in visits:
-                visit["briefs"] = []
-                if not visit["meeting_id"]:
-                    continue
-                scope(c, visit["meeting_id"], user)
-                for record in c.execute(
-                    "SELECT id FROM meeting_recordings WHERE meeting_id=? AND deleted_at IS NULL AND expires_at>? ORDER BY id DESC",
-                    (visit["meeting_id"], now()),
-                ):
-                    summary = (
-                        service.latest(c, record["id"], "summary")
-                        if user["role"] == "doctor"
-                        else service.published(c, record["id"])
-                    )
-                    if summary:
-                        payload = json.loads(summary["payload"])
-                        visit["briefs"].append(
-                            dict(
-                                record_id=record["id"],
-                                confirmed=bool(
-                                    (published := service.published(c, record["id"]))
-                                    and published["id"] == summary["id"]
-                                ),
-                                summary=[
-                                    i["text"]
-                                    for i in payload["summary"]
-                                    if i["included"]
-                                ],
-                                next_steps=[
-                                    i["text"]
-                                    for i in payload["next_steps"]
-                                    if i["included"]
-                                ],
-                            )
-                        )
-        response = render(request, "meetings.html", patient=patient, visits=visits)
-        response.headers["Cache-Control"] = "no-store"
-        return response
+        return RedirectResponse(f"/patients/{pid}/profile/video", status_code=303)
 
     @app.post("/patients/{pid}/appointments/{vid}/meeting")
     async def prepare(request: Request, pid: int, vid: int):
@@ -205,6 +158,8 @@ def register_meetings(app, db, account, access, csrf_check, render):
             request,
             "meeting.html",
             meeting=meeting,
+            patient={"id": meeting["patient_id"]},
+            section="video",
             records=records,
             consent_docs=docs,
             approvals=approvals,

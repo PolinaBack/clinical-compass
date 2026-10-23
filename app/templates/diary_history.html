@@ -1,0 +1,5 @@
+<section class="card" id="diary-history"><h2>Последняя запись дневника</h2>
+{% set ordered = diary|sort(attribute='id',reverse=true)|sort(attribute='day',reverse=true) %}
+{% if ordered %}{% with row=ordered[0] %}{% include 'diary_history_entry.html' %}{% endwith %}
+{% if ordered|length > 1 %}<details id="diary-older"><summary>Ещё записи ({{ ordered|length - 1 }})</summary>{% for row in ordered[1:] %}{% include 'diary_history_entry.html' %}{% endfor %}</details>{% endif %}
+{% else %}<p>Записей пока нет.</p>{% endif %}</section>

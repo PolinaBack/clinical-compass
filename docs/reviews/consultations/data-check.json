@@ -1,0 +1,17 @@
+{
+  "original_tables": 69,
+  "original_rows": 541,
+  "all_original_fields_unchanged": true,
+  "new_tables": [
+    "consultation_slots",
+    "consultation_slot_events"
+  ],
+  "integrity": "ok",
+  "foreign_keys": "ok",
+  "migration": "010_consultation_slots.sql",
+  "restarts": 2,
+  "records_content_omitted": true,
+  "live_database_upgraded": true,
+  "live_original_fields_unchanged": true,
+  "original_migration_rows_preserved": 9
+}

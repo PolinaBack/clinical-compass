@@ -2,6 +2,7 @@
 {% block title %}{{ 'Календарь' if calendar else 'Задачи' }} · Клинический компас{% endblock %}
 {% block content %}
 <div class="page-intro"><p class="eyebrow">РАБОЧЕЕ ПРОСТРАНСТВО</p><h1>{{ 'Календарь консультаций' if calendar else 'Задачи специалиста' }}</h1><p class="lead">Только записи ваших пациентов. Действия выполняются в соответствующей карточке.</p></div>
+{% if calendar %}{% include 'availability.html' %}{% endif %}
 {% if not calendar %}
 <section class="card safety-card"><h2>Клинические события</h2><p>Статусы доставки, подтверждения и действия врача отображаются отдельно.</p><div id="workflow-alerts" data-csrf="{{ csrf }}" aria-live="polite">Проверяем события…</div><div id="live-alerts" aria-live="polite">Проверяем сообщения о самочувствии…</div></section>
 <section class="card"><h2>Незавершённые анкеты пациентов</h2>

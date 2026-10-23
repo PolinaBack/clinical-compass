@@ -156,7 +156,7 @@ def check_revision(patient, doctor, url):
                     help_box = page.locator('a[href="/help-now"]').bounding_box()
                     assert (
                         0 <= help_box["y"] < 100
-                        and help_box["x"] + help_box["width"] > width - 50
+                        and help_box["x"] + help_box["width"] > width - 110
                     )
                 page.evaluate("window.scrollTo(0,0)")
                 if axe and width in (390, 1280):

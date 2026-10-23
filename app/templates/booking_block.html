@@ -1,45 +1,15 @@
-<section class="card" id="booking">
-    <h2>Запись на консультацию</h2>
-    {% if user != 'doctor' and consent %}
-        <p>Выберите удобное время. Запись появится здесь после подтверждения специалистом.</p>
-        <form action="/patients/{{ patient.id }}/consultations" method="post">
-            <input type="hidden" name="csrf" value="{{ csrf }}">
-            <label>
-                Желаемая дата
-                <input name="preferred_day"
-                       type="date"
-                       min="{{ today }}"
-                       value="{{ today }}"
-                       required>
-            </label>
-            <label>
-                Удобное время
-                <input name="time_window"
-                       placeholder="Например, с 14:00 до 17:00"
-                       maxlength="100"
-                       required>
-            </label>
-            <label>
-                Часовой пояс
-                <input name="timezone_label" value="Москва (UTC+3)" maxlength="80" required>
-            </label>
-            <button>Записаться на консультацию</button>
-        </form>
-    {% endif %}
-    {% for booking in bookings %}
-        <article><strong>{{ booking.preferred_day }} · {{ booking.time_window }} · {{ booking.timezone_label }}</strong>
-            <p>
-                <span class="badge">{{ 'Ожидает подтверждения времени' if booking.status == 'requested' else 'Время подтверждено' }}</span>
-            </p>
-            {% if booking.status == 'confirmed' %}
-                <p>Подтверждённые дата и время указаны в карточке видеовстречи ниже.</p>
-            {% endif %}
-            {% if user == 'doctor' and booking.status == 'requested' %}
-                <p>Подтвердите заявку, назначив видеоприём ниже.</p>
-            {% endif %}
-        </article>
-    {% else %}
-        <p class="empty">Заявок на консультацию пока нет.</p>
-    {% endfor %}
-    {% if not consent and user != 'doctor' %}<a href="/consent">Посмотреть условия участия</a>{% endif %}
-</section>
+<div id="booking">
+<h2>Консультации и итоги встреч</h2>
+<h3>Запись на консультацию</h3>
+{% if user == 'doctor' %}<p><a href="/doctor/calendar#availability">Опубликовать свободное время в календаре</a></p>{% endif %}
+{% if available_slots and (user == 'doctor' or consent) %}
+<form method="post" action="/patients/{{ patient.id }}/consultations">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Свободное время врача<select name="slot_id" required><option value="">Выберите время</option>{% for slot in available_slots %}<option value="{{ slot.id }}">{{ slot.label }}</option>{% endfor %}</select></label>
+<p class="caption">Показаны только свободные окна. Запись подтверждается сразу; время указано в часовом поясе врача.</p>
+<button>{{ 'Записать пациента' if user == 'doctor' else 'Записаться на консультацию' }}</button>
+</form>
+{% else %}<p>Сейчас у врача нет опубликованных свободных окон.</p>{% endif %}
+{% if not consent and user != 'doctor' %}<a href="/consent">Посмотреть условия участия</a>{% endif %}
+{% if bookings|selectattr('status','equalto','requested')|list %}<details><summary>Прежние заявки на согласование времени</summary>{% for booking in bookings if booking.status == 'requested' %}<p>{{ booking.preferred_day }} · {{ booking.time_window }} · {{ booking.timezone_label }} · Ожидает подтверждения времени</p>{% endfor %}{% if user == 'doctor' %}<p>Согласуйте доступное окно выше. Прежняя заявка останется в истории.</p>{% endif %}</details>{% endif %}
+</div>

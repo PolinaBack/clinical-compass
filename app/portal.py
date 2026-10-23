@@ -1,6 +1,6 @@
 """Patient history, diary notes, reports and consultation scheduling."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urlsplit
 
 from fastapi import Request, Form, HTTPException
@@ -167,6 +167,11 @@ def register_portal(
         if section not in ["about", "assessments", "family", "video"]:
             raise HTTPException(404, "Раздел не найден")
         context = patient_context(request, pid)
+        if section == "video":
+            from .services.consultations import profile_context
+
+            with db() as c:
+                context.update(profile_context(c, account(request), pid))
         if section == "about":
             from .routes.intake import intake_context
 
@@ -217,7 +222,9 @@ def register_portal(
                     node["sex"] = {"Мужской": "male", "Женский": "female"}.get(
                         value.get("value"), "unknown"
                     )
-        return render(request, "profile.html", section=section, **context)
+        response = render(request, "profile.html", section=section, **context)
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.get("/patients/{pid}/diary")
     def diary_page(request: Request, pid: int):
@@ -260,40 +267,17 @@ def register_portal(
         request: Request,
         pid: int,
         csrf: str = Form(...),
-        preferred_day: str = Form(...),
-        time_window: str = Form(..., min_length=1, max_length=100),
-        timezone_label: str = Form(..., min_length=1, max_length=80),
+        slot_id: int = Form(..., gt=0, le=2**63 - 1),
     ):
-        access(request, pid, True)
+        user = account(request)
+        access(request, pid, user["role"] == "patient")
         csrf_check(request, csrf)
-        from datetime import date
+        from .services.consultations import book
 
-        try:
-            day = date.fromisoformat(preferred_day)
-        except ValueError:
-            raise HTTPException(422, "Проверьте дату")
-        if day < date.today() or not time_window.strip() or not timezone_label.strip():
-            raise HTTPException(422, "Выберите будущую дату, время и часовой пояс")
         with db() as c:
             c.execute("BEGIN IMMEDIATE")
-            existing = c.execute(
-                "SELECT id FROM consultation_requests WHERE patient_id=? AND preferred_day=? AND time_window=? AND timezone_label=? AND status='requested'",
-                (pid, day.isoformat(), time_window.strip(), timezone_label.strip()),
-            ).fetchone()
-            if existing:
-                return redirect(pid, "/profile/video#booking")
-            c.execute(
-                "INSERT INTO consultation_requests(patient_id,preferred_day,time_window,timezone_label,created_at) VALUES(?,?,?,?,?)",
-                (
-                    pid,
-                    day.isoformat(),
-                    time_window.strip(),
-                    timezone_label.strip(),
-                    now(),
-                ),
-            )
-            audit(c, account(request)["id"], "consultation_requested", pid)
-        return redirect(pid, "/profile/video#booking")
+            book(c, user, pid, slot_id)
+        return redirect(pid, "/profile/video#video")
 
     @app.post("/patients/{pid}/profile")
     async def profile_save(request: Request, pid: int):
@@ -402,6 +386,28 @@ def register_portal(
                 422, "Укажите местное время и его часовой пояс отдельно"
             )
         with db() as c:
+            c.execute("BEGIN IMMEDIATE")
+            from .services import consultations
+
+            start = consultations.local_start(dt.isoformat(), timezone_label.strip())
+            if start > consultations.utc_now():
+                # Legacy API remains usable, but cannot overwrite published availability.
+                day_start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+                if c.execute(
+                    "SELECT 1 FROM consultation_slots WHERE doctor_id=? AND status IN ('open','booked') AND starts_at<? AND ends_at>?",
+                    (
+                        user["doctor_id"],
+                        consultations.stamp(day_start + timedelta(days=1)),
+                        consultations.stamp(day_start),
+                    ),
+                ).fetchone():
+                    raise HTTPException(
+                        409,
+                        "Выберите опубликованное окно; у прежнего формата приёма не задана длительность",
+                    )
+                consultations.conflict(
+                    c, user["doctor_id"], start, start + timedelta(minutes=1)
+                )
             if (
                 booking_id is not None
                 and not c.execute(
@@ -449,6 +455,7 @@ def register_portal(
         if intent not in ["ready", "completed", "cancelled"]:
             raise HTTPException(422, "Неизвестное действие")
         with db() as c:
+            c.execute("BEGIN IMMEDIATE")
             visit = c.execute(
                 "SELECT * FROM appointments WHERE id=? AND patient_id=?", (vid, pid)
             ).fetchone()
@@ -466,6 +473,10 @@ def register_portal(
                 "UPDATE appointments SET status=?,preparation_confirmed_at=CASE WHEN ?='ready' THEN ? ELSE preparation_confirmed_at END WHERE id=?",
                 (intent, intent, now(), vid),
             )
+            if intent == "cancelled":
+                from .services.consultations import release
+
+                release(c, user, visit)
             audit(c, user["id"], "appointment_" + intent, pid, vid)
         return redirect(pid, "/profile/video#video")
 

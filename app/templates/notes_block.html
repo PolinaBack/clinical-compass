@@ -10,11 +10,8 @@
             <button>Сохранить заметку</button>
         </form>
     {% endif %}
-    {% for note in diary_notes %}
-        <article><small>{{ note.created_at }} (UTC)</small>
-            <p class="text">{{ note.body }}</p>
-        </article>
-    {% else %}
-        <p class="empty">Заметок пока нет.</p>
-    {% endfor %}
+    {% if diary_notes %}
+        {% with note=diary_notes[0] %}{% include 'note_entry.html' %}{% endwith %}
+        {% if diary_notes|length > 1 %}<details id="notes-older"><summary>Ещё заметки ({{ diary_notes|length - 1 }})</summary>{% for note in diary_notes[1:] %}{% include 'note_entry.html' %}{% endfor %}</details>{% endif %}
+    {% else %}<p class="empty">Заметок пока нет.</p>{% endif %}
 </section>

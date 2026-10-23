@@ -647,7 +647,10 @@ def test_meeting_list_shows_brief_without_exposing_private_sources(client, meeti
     doctor = client.get("/patients/1/meetings")
     assert doctor.status_code == 200
     assert "Итоги" in doctor.text and "Следующие шаги" in doctor.text
-    assert "Обсуждался сон." in doctor.text and "Черновик — проверить" in doctor.text
+    assert (
+        "Обсуждался сон." in doctor.text
+        and "Черновик · ожидает проверки врачом" in doctor.text
+    )
     assert "Уточнить детали сна." not in doctor.text
     assert "Синтетический разговор о сне." not in doctor.text
     login(client, "patient1")

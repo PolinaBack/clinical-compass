@@ -45,6 +45,14 @@ def test_upgrade_v2_preserves_accounts_assessments_and_adds_care_sections(tmp_pa
         old_password_hash = c.execute(
             "SELECT password_hash FROM accounts WHERE username='patient1'"
         ).fetchone()[0]
+        c.execute("DROP TABLE consultation_slot_events")
+        c.execute("DROP TABLE consultation_slots")
+        c.execute("ALTER TABLE resource_assignments DROP COLUMN cancelled_at")
+        c.execute("ALTER TABLE resource_assignments DROP COLUMN cancelled_by")
+        c.execute("ALTER TABLE resource_events DROP COLUMN payload")
+        c.execute(
+            "DELETE FROM schema_migrations WHERE version='010_consultation_slots.sql'"
+        )
         for table in [
             "patient_profiles",
             "diary_comments",

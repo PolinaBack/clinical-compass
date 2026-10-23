@@ -1,84 +1,24 @@
-<section class="card" id="video">
-    <p class="eyebrow">ЛИЧНАЯ ВСТРЕЧА</p>
-    <h2>Видеоприём</h2>
-    <p><a href="/patients/{{ patient.id }}/meetings">{{ 'Записи встреч, расшифровки и проверенные итоги' if user == 'doctor' else 'Согласия и проверенные итоги встреч' }}</a></p>
-    {% for visit in appointments %}
-        <article>
-            <div class="section-heading">
-                <h3>{{ visit.starts_at|replace('T', ' · ') }} · {{ visit.timezone_label }}</h3>
-                <span class="badge">{{ {'planned':'Запланирован','ready':'Подготовка подтверждена','completed':'Завершён','cancelled':'Отменён'}[visit.status] }}</span>
-            </div>
-            {% if visit.status in ['planned','ready'] %}
-                <p>
-                    Вы перейдёте в сервис видеосвязи, который выбрал специалист. Камера и микрофон в «Компасе» не включаются, запись звонка не ведётся.
-                </p>
-                <a class="button"
-                   href="{{ visit.url }}"
-                   target="_blank"
-                   rel="noopener noreferrer">Открыть видеоприём</a>
-            {% endif %}
-            <p class="text">
-                <strong>Если связь прервётся:</strong> {{ visit.fallback }}
-            </p>
-            {% if user == 'doctor' and visit.status in ['planned','ready'] %}
-                <details class="inset">
-                    <summary>Подготовка и завершение приёма</summary>
-                    <form action="/patients/{{ patient.id }}/appointments/{{ visit.id }}/status"
-                          method="post">
-                        <input type="hidden" name="csrf" value="{{ csrf }}">
-                        {% for key,label in [('identity_checked','Личность пациента подтверждена'),('location_checked','Текущее местонахождение уточнено'),('privacy_checked','Условия приватности и подходящий формат обсуждены'),('fallback_checked','План при обрыве связи согласован')] %}
-                            <label class="check">
-                                <input type="checkbox" name="{{ key }}" value="true">
-                                {{ label }}
-                            </label>
-                        {% endfor %}
-                        <div class="button-row">
-                            <button name="intent" value="ready">Подтвердить подготовку</button>
-                            <button name="intent" value="completed" class="secondary">Завершить приём</button>
-                            <button name="intent" value="cancelled" class="secondary">Отменить приём</button>
-                        </div>
-                    </form>
-                </details>
-            {% endif %}
-        </article>
-    {% else %}
-        <p class="empty">Видеовстреча пока не назначена. Выберите удобное время в форме записи на консультацию.</p>
-    {% endfor %}
-    {% if user == 'doctor' %}
-        <details class="inset">
-            <summary>Назначить видеоприём</summary>
-            <form action="/patients/{{ patient.id }}/appointments" method="post">
-                <input type="hidden" name="csrf" value="{{ csrf }}">
-                <label>
-                    Заявка пациента
-                    <select name="booking_id">
-                        <option value="">Без заявки</option>
-                        {% for booking in bookings if booking.status == 'requested' %}
-                            <option value="{{ booking.id }}">{{ booking.preferred_day }} · {{ booking.time_window }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label>
-                    Дата и время
-                    <input type="datetime-local" name="starts_at" required>
-                </label>
-                <label>
-                    Часовой пояс
-                    <input name="timezone_label" value="Москва (UTC+3)" maxlength="80" required>
-                </label>
-                <label>
-                    HTTPS-ссылка согласованного сервиса
-                    <input name="url"
-                           type="url"
-                           placeholder="https://…"
-                           maxlength="2000"
-                           required>
-                </label>
-                <label>
-                    Как связаться при обрыве<textarea name="fallback" maxlength="1000" required></textarea>
-                </label>
-                <button>Сохранить видеоприём</button>
-            </form>
-        </details>
-    {% endif %}
+<div id="video">
+<h3>Назначенные консультации</h3>
+{% for visit in appointments if visit.status in ['planned','ready'] %}
+<article class="worklist-item"><h4>{{ visit.starts_at|replace('T',' · ') }} · {{ visit.timezone_label }}</h4><p><span class="badge">Время подтверждено</span> · {{ 'Подготовка подтверждена' if visit.status=='ready' else 'Запланирован' }}</p>
+<a class="button" href="{{ visit.url }}" rel="noopener noreferrer">Открыть видеоприём</a><p class="caption">Откроется сервис видеосвязи, выбранный врачом. Камера и микрофон здесь не включаются.</p><p><strong>Если связь прервётся:</strong> {{ visit.fallback }}</p>
+{% if user == 'doctor' %}
+{% if visit.meeting_id %}<a href="/meetings/{{ visit.meeting_id }}">Запись, расшифровка и подробности встречи</a>{% else %}<form method="post" action="/patients/{{ patient.id }}/appointments/{{ visit.id }}/meeting"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary">Загрузить запись и подготовить итоги</button></form>{% endif %}
+<details class="inset"><summary>Подготовка, завершение или отмена приёма</summary><form method="post" action="/patients/{{ patient.id }}/appointments/{{ visit.id }}/status"><input type="hidden" name="csrf" value="{{ csrf }}">
+{% for key,label in [('identity_checked','Личность пациента подтверждена'),('location_checked','Текущее местонахождение уточнено'),('privacy_checked','Условия приватности и подходящий формат обсуждены'),('fallback_checked','План при обрыве связи согласован')] %}<label class="check"><input type="checkbox" name="{{ key }}" value="true">{{ label }}</label>{% endfor %}
+<div class="button-row"><button name="intent" value="ready">Подтвердить подготовку</button><button name="intent" value="completed" class="secondary">Завершить приём</button><button name="intent" value="cancelled" class="secondary">Отменить приём</button></div></form></details>
+{% endif %}</article>
+{% else %}<p>Предстоящих консультаций пока нет.</p>{% endfor %}
+</div>
+<section id="latest-meeting"><h3>Последняя встреча</h3>
+{% if latest_brief %}{% set brief=latest_brief %}<p>{{ brief.visit.starts_at|replace('T',' · ') }} · {{ 'Одобрено врачом' if brief.confirmed else 'Черновик · ожидает проверки врачом' }}</p>
+<h4>Итоги</h4>{% for text in brief.summary %}<p class="text">{{ text }}</p>{% else %}<p>Итоги ещё не заполнены.</p>{% endfor %}
+<h4>Следующие шаги</h4>{% if brief.next_steps %}<ul>{% for text in brief.next_steps %}<li>{{ text }}</li>{% endfor %}</ul>{% else %}<p>Следующие шаги не указаны.</p>{% endif %}
+<a href="/meetings/{{ brief.visit.meeting_id }}#record-{{ brief.record_id }}">{{ 'Открыть подробности и проверить итоги' if user=='doctor' else 'Подробности встречи' }}</a>
+{% else %}<p>{{ 'Итогов пока нет. Откройте встречу, чтобы загрузить запись или подготовить итоги.' if user=='doctor' else 'Здесь появятся итоги и следующие шаги, одобренные врачом.' }}</p>{% endif %}
 </section>
+<details id="meeting-history"><summary>Другие встречи и подробности</summary>
+{% for visit in appointments %}<article class="worklist-item"><h3>{{ visit.starts_at|replace('T',' · ') }} · {{ visit.timezone_label }}</h3><p>{{ {'planned':'Запланирован','ready':'Подготовка подтверждена','completed':'Завершён','cancelled':'Отменён'}[visit.status] }}</p>
+{% if visit.meeting_id %}<a href="/meetings/{{ visit.meeting_id }}">Подробности встречи{{ ' и запись' if user=='doctor' else '' }}</a>{% elif user == 'doctor' %}<form method="post" action="/patients/{{ patient.id }}/appointments/{{ visit.id }}/meeting"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="secondary">Загрузить запись и подготовить итоги</button></form>{% else %}<p>Одобренные итоги ещё не опубликованы.</p>{% endif %}</article>{% else %}<p>Других встреч пока нет.</p>{% endfor %}
+</details>

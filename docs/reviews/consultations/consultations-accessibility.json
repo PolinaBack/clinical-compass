@@ -1,0 +1,74 @@
+[
+  {
+    "role": "patient",
+    "path": "/patients/1/diary",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/profile/video",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/settings",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/diary",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/patients/1/profile/video",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "patient",
+    "path": "/settings",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/doctor/calendar",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/profile/video",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/doctor/resources",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/doctor/calendar",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/patients/1/profile/video",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "path": "/doctor/resources",
+    "width": 1280,
+    "violations": []
+  }
+]

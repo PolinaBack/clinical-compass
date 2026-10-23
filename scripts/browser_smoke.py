@@ -321,27 +321,26 @@ def run(
         patient.set_viewport_size({"width": 390, "height": 844})
         capture(patient, "family-mobile")
         patient.set_viewport_size({"width": 1280, "height": 900})
+        from datetime import datetime, timedelta
+
+        doctor.goto(url + "/doctor/calendar")
+        form = doctor.locator('form[action="/doctor/calendar/slots"]')
+        form.locator('[name="starts_at"]').fill(
+            (datetime.now() + timedelta(days=15))
+            .replace(hour=10, minute=30)
+            .isoformat(timespec="minutes")
+        )
+        form.locator('[name="url"]').fill("https://example.org/synthetic-video")
+        form.locator('[name="fallback"]').fill("Учебный резервный канал")
+        form.get_by_role(
+            "button", name="Опубликовать свободное окно", exact=True
+        ).click()
         patient.goto(url + "/patients/1/profile/video")
-        patient.get_by_label("Желаемая дата").fill("2026-12-01")
-        patient.get_by_label("Удобное время", exact=True).fill("10:00–12:00")
+        patient.get_by_label("Свободное время врача").select_option(index=1)
         patient.get_by_role(
             "button", name="Записаться на консультацию", exact=True
         ).click()
-        expect(
-            patient.get_by_text("Ожидает подтверждения времени", exact=True)
-        ).to_be_visible()
-        doctor.goto(url + "/patients/1/profile/video")
-        doctor.get_by_text("Назначить видеоприём", exact=True).click()
-        booking = doctor.locator('select[name="booking_id"] option').last.get_attribute(
-            "value"
-        )
-        doctor.locator('select[name="booking_id"]').select_option(booking)
-        doctor.get_by_label("Дата и время", exact=True).fill("2026-12-01T10:30")
-        doctor.get_by_label("HTTPS-ссылка согласованного сервиса").fill(
-            "https://example.org/synthetic-video"
-        )
-        doctor.get_by_label("Как связаться при обрыве").fill("Учебный резервный канал")
-        doctor.get_by_role("button", name="Сохранить видеоприём").click()
+        expect(patient.get_by_text("Время подтверждено", exact=True)).to_be_visible()
         patient.reload()
         expect(
             patient.get_by_role("link", name="Открыть видеоприём")

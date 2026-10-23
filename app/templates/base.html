@@ -32,13 +32,11 @@
                 <b>компас</b></span></a>
             {% if user %}{% include 'portal_nav.html' %}{% else %}<nav class="header-nav" aria-label="Основная навигация"><a href="/#how">Как это работает</a><a href="/faq">Вопросы и ответы</a></nav>{% endif %}
             <div class="header-actions">
-                {% if user == 'doctor' %}<details class="header-tools"><summary>Ещё</summary><nav aria-label="Инструменты специалиста"><a href="/doctor/resources">Ресурсы</a><a href="/clinical-tools">Анкеты</a><a href="/medicines">Лекарства</a><a href="/doctor/faq">FAQ-форум</a></nav></details>{% endif %}
-                {% if user and user != 'doctor' %}<a class="help-link" href="/help-now">Экстренная помощь</a>{% endif %}
-                {% if user == 'doctor' %}
-                    <span class="role-badge">{{ 'Специалист' if user == 'doctor' else 'Пациент' }}</span>
+                {% if user and user != 'doctor' %}<a class="help-link" href="/help-now" aria-label="Экстренная помощь"><span class="help-full">Экстренная помощь</span><span class="help-short" aria-hidden="true">Помощь</span></a>{% endif %}
+                {% if user %}
                     <form action="/logout" method="post">
                         <input type="hidden" name="csrf" value="{{ csrf }}">
-                        <button class="text-button">Выйти</button>
+                        <button class="text-button logout-button" aria-label="Выйти из кабинета"><svg class="category-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4H4v16h6M14 7l5 5-5 5M8 12h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="logout-label">Выйти</span></button>
                     </form>
                 {% elif not user %}
                     <a class="button small" href="/login/patient">Войти</a>

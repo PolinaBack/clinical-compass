@@ -79,3 +79,15 @@ if (alerts) {
   refresh();
   setInterval(refresh, 10000);
 }
+
+// A link to an older entry opens its history before moving focus to the entry.
+function revealHistoryAnchor() {
+  let target;
+  try { target = document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch { return; }
+  if (!target) return;
+  let parent = target.parentElement;
+  while (parent) { if (parent.tagName === 'DETAILS') parent.open = true; parent = parent.parentElement; }
+  if (location.hash) target.scrollIntoView({block: 'start'});
+}
+window.addEventListener('hashchange', revealHistoryAnchor);
+window.addEventListener('DOMContentLoaded', revealHistoryAnchor);

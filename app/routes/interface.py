@@ -56,6 +56,9 @@ def register_interface(app, db, account, render, patient_context):
                 for r in rows("assessments", "t.due_day,t.id")
                 if r["status"] != "completed"
             ]
+            from app.services.consultations import calendar_context
+
+            availability = calendar_context(c, user)
         response = render(
             request,
             "doctor_worklist.html",
@@ -63,6 +66,7 @@ def register_interface(app, db, account, render, patient_context):
             appointments=appointments,
             bookings=bookings,
             assignments=assessments,
+            **availability,
         )
         response.headers["Cache-Control"] = "no-store"
         return response

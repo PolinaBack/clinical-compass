@@ -1,0 +1,2 @@
+PASS meetings UI: one patient settings form, no doctor/per-meeting consent forms, real MP4/doctor playback/seek, live progress polling without losing unsaved text, synthetic worker, corrections, cited draft, clinician review/withdrawal, patient denied progress/upload/player/direct media/full transcript, four widths.
+PASS consultations: actual slot publish/book/cancel/release, shared profile tabs, note/diary latest+history+deep-link, material cancellation, one-row sticky header/logout, both roles at four widths, keyboard and accessibility.

@@ -39,7 +39,6 @@ def test_specialist_sections_are_separate_and_patient_cannot_enter(client):
     expected = {
         "safety": 'id="safety"',
         "assessments": 'id="assessments"',
-        "care": 'id="care"',
         "conversation": 'id="conversation"',
     }
     for section, marker in expected.items():
@@ -53,6 +52,8 @@ def test_specialist_sections_are_separate_and_patient_cannot_enter(client):
             r'<nav class="tab-nav specialist-nav".*?</nav>', html, re.S
         ).group()
         assert 'href="#' not in nav
+    assert client.get("/patients/1/workspace/care").status_code == 410
+    assert "Риски и решения" not in html
     assert client.get("/patients/1/audit").status_code == 404
     login(client, "patient1")
     assert client.get("/patients/1/workspace/assessments").status_code == 403

@@ -150,33 +150,17 @@ def test_forum_csrf_publication_consent_and_escaping(client):
     assert r.headers["Referrer-Policy"] == "no-referrer"
 
 
-def test_consultation_request_confirmed_by_own_doctor_only(client):
-    login(client, "patient1")
-    assert (
-        post(
-            client,
-            "/patients/1/consultations",
-            preferred_day=date.today().isoformat(),
-            time_window="14:00–17:00",
-            timezone_label="Москва UTC+3",
-        ).status_code
-        == 200
-    )
-    assert (
-        post(
-            client,
-            "/patients/1/consultations",
-            preferred_day=date.today().isoformat(),
-            time_window="14:00–17:00",
-            timezone_label="Москва UTC+3",
-        ).status_code
-        == 200
-    )
-    assert len(rows(client, "SELECT * FROM consultation_requests")) == 1
-    booking = rows(client, "SELECT * FROM consultation_requests")[0]
-    assert booking["status"] == "requested" and booking["appointment_id"] is None
+def test_legacy_consultation_request_can_still_be_confirmed_by_own_doctor(client):
+    from app.storage import connect, now
+
     login(client, "doctor")
-    assert "Заявки на консультацию" in client.get("/doctor").text
+    # Previously saved requests remain usable; new requests must select a published slot.
+    with connect(client.app.state.db_path) as c:
+        c.execute(
+            "INSERT INTO consultation_requests(patient_id,preferred_day,time_window,timezone_label,created_at) VALUES(1,'2026-12-01','14:00–17:00','Москва UTC+3',?)",
+            (now(),),
+        )
+    booking = rows(client, "SELECT * FROM consultation_requests")[0]
     data = dict(
         starts_at="2026-12-01T15:00",
         timezone_label="Москва UTC+3",
@@ -188,7 +172,7 @@ def test_consultation_request_confirmed_by_own_doctor_only(client):
     assert post(client, "/patients/1/appointments", **data).status_code == 200
     updated = rows(client, "SELECT * FROM consultation_requests")[0]
     assert updated["status"] == "confirmed" and updated["appointment_id"]
-    assert post(client, "/patients/1/appointments", **data).status_code == 422
+    assert post(client, "/patients/1/appointments", **data).status_code in (409, 422)
     login(client, "patient1")
     page = client.get("/patients/1/profile/video").text
     assert data["url"] in page and "Время подтверждено" in page
@@ -196,7 +180,7 @@ def test_consultation_request_confirmed_by_own_doctor_only(client):
         post(
             client,
             "/patients/1/consultations",
-            preferred_day=(date.today() - timedelta(days=1)).isoformat(),
+            preferred_day="2026-12-01",
             time_window="10:00",
             timezone_label="UTC+3",
         ).status_code

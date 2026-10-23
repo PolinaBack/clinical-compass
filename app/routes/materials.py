@@ -75,7 +75,7 @@ def register_materials(app, db, account, csrf_check, render):
             assignments = [
                 dict(r)
                 for r in c.execute(
-                    "SELECT r.*,d.name doctor_name FROM resource_assignments r JOIN accounts a ON a.id=r.assigned_by JOIN doctors d ON d.id=a.doctor_id WHERE r.patient_id=? ORDER BY r.id DESC",
+                    "SELECT r.*,d.name doctor_name FROM resource_assignments r JOIN accounts a ON a.id=r.assigned_by JOIN doctors d ON d.id=a.doctor_id WHERE r.patient_id=? AND r.cancelled_at IS NULL ORDER BY r.id DESC",
                     (user["patient_id"],),
                 )
             ]
@@ -85,6 +85,16 @@ def register_materials(app, db, account, csrf_check, render):
             resource_assignments=assignments,
             resource_status=service.STATUS,
         )
+
+    @app.post("/material-assignments/{aid}/cancel")
+    async def cancel(request: Request, aid: int):
+        user = account(request)
+        form = await request.form()
+        csrf_check(request, str(form.get("csrf", "")))
+        with db() as c:
+            c.execute("BEGIN IMMEDIATE")
+            pid = service.cancel(c, user, aid)
+        return reply(pid)
 
     @app.get("/material-assignments/{aid}/open")
     def open_resource(request: Request, aid: int):

@@ -181,8 +181,10 @@ def test_doctor_navigation_is_single_panel_inside_header_and_routes_remain(clien
         assert f'href="{path}"' in header and label in header
         assert client.get(path).status_code == 200
     for path in ("/clinical-tools", "/medicines", "/doctor/faq"):
-        assert f'href="{path}"' in header
+        assert f'href="{path}"' not in header
+        assert f'href="{path}"' in client.get("/doctor/resources").text
         assert client.get(path).status_code == 200
+    assert "Ещё" not in header and "Специалист" not in header
     assert header.count('href="/settings"') == 1
     login(client, "patient1")
     patient = client.get("/patients/1/diary").text

@@ -12,7 +12,7 @@
         <div class="profile-sections">
             {% for key,label,description in [('about','Обо мне','Биография, цели и история состояния.'),('assessments','Анкеты','Назначенные и пройденные опросники.'),('video','Консультации и видеосвязь','Запись, время встречи и ссылка на видеоприём.')] %}
                 <a class="card profile-tile"
-                   href="/patients/{{ patient.id }}/{{ 'meetings' if key=='video' else 'profile/' ~ key }}">
+                   href="/patients/{{ patient.id }}/profile/{{ key }}">
                     <h2>{{ label }}</h2>
                     <p>{{ description }}</p>
                     <span>Открыть раздел</span></a>
@@ -45,7 +45,7 @@
     {% elif section == 'family' %}
         {% include 'family_block.html' %}
     {% elif section == 'video' %}
-        {% include 'booking_block.html' %}
-        {% include 'video_block.html' %}
+        <section class="card consultation-panel" id="consultations">{% include 'booking_block.html' %}
+        {% include 'video_block.html' %}</section>
     {% endif %}
 {% endblock %}

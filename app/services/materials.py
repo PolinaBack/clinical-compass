@@ -1,6 +1,7 @@
 """Named external resources and durable clinician assignments, separate from drugs."""
 
 import ipaddress
+import json
 from urllib.parse import urlsplit, urlunsplit
 from fastapi import HTTPException
 from app.storage import now, audit
@@ -58,6 +59,7 @@ STATUS = {
     "opened": "Открыто",
     "read": "Прочитано",
     "later": "Вернуться позже",
+    "cancelled": "Назначение отменено",
 }
 
 
@@ -170,10 +172,17 @@ def assign(c, user, rid, pid, form):
                 422, "Срок чтения должен быть сегодня или позже"
             ) from None
     old = c.execute(
-        "SELECT id FROM resource_assignments WHERE resource_id=? AND patient_id=?",
+        "SELECT * FROM resource_assignments WHERE resource_id=? AND patient_id=?",
         (rid, pid),
     ).fetchone()
     if old:
+        if old["cancelled_at"]:
+            event(c, user, old["id"], "reassigned", dict(old))
+            c.execute(
+                "UPDATE resource_assignments SET status='assigned',assigned_by=?,title=?,url=?,note=?,due_day=?,cancelled_at=NULL,cancelled_by=NULL,updated_at=? WHERE id=?",
+                (user["id"], item["title"], item["url"], note, due, now(), old["id"]),
+            )
+            audit(c, user["id"], "resource_reassigned", pid, old["id"])
         return old["id"]
     aid = c.execute(
         "INSERT INTO resource_assignments(resource_id,patient_id,assigned_by,title,url,note,due_day,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)",
@@ -184,10 +193,16 @@ def assign(c, user, rid, pid, form):
     return aid
 
 
-def event(c, user, aid, kind):
+def event(c, user, aid, kind, payload=None):
     c.execute(
-        "INSERT INTO resource_events(assignment_id,actor_id,kind,created_at) VALUES(?,?,?,?)",
-        (aid, user["id"], kind, now()),
+        "INSERT INTO resource_events(assignment_id,actor_id,kind,created_at,payload) VALUES(?,?,?,?,?)",
+        (
+            aid,
+            user["id"],
+            kind,
+            now(),
+            json.dumps(payload, ensure_ascii=False) if payload else "",
+        ),
     )
 
 
@@ -196,4 +211,22 @@ def assignment(c, user, aid, write=False):
     if not row:
         raise HTTPException(404, "Назначение не найдено")
     check_scope(c, user, row["patient_id"], write=write)
+    if row["cancelled_at"]:
+        raise HTTPException(410, "Специалист отменил назначение этого материала")
     return dict(row)
+
+
+def cancel(c, user, aid):
+    doctor(c, user)
+    row = c.execute("SELECT * FROM resource_assignments WHERE id=?", (aid,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Назначение не найдено")
+    check_scope(c, user, row["patient_id"], doctor=True)
+    if not row["cancelled_at"]:
+        event(c, user, aid, "cancelled", dict(row))
+        c.execute(
+            "UPDATE resource_assignments SET cancelled_at=?,cancelled_by=?,updated_at=? WHERE id=?",
+            (now(), user["id"], now(), aid),
+        )
+        audit(c, user["id"], "resource_cancelled", row["patient_id"], aid)
+    return row["patient_id"]

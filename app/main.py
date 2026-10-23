@@ -393,7 +393,9 @@ def create_app(db_path=None):
     def specialist_section(request: Request, pid: int, section: str):
         if access(request, pid) != "doctor":
             raise HTTPException(403, "Раздел специалиста")
-        if section not in ["safety", "assessments", "care", "conversation"]:
+        if section == "care":
+            raise HTTPException(410, "Раздел рисков и решений удалён из кабинета")
+        if section not in ["safety", "assessments", "conversation"]:
             raise HTTPException(404, "Раздел не найден")
         return render(
             request,
@@ -407,6 +409,9 @@ def create_app(db_path=None):
     from .routes.materials import register_materials
 
     register_materials(app, db, account, csrf_check, render)
+    from .routes.consultations import register_consultations
+
+    register_consultations(app, db, account, access, csrf_check)
     register_diary(app, db, account, access, csrf_check, render, patient_context)
     register_intake(app, db, account, access, csrf_check, render, patient_context)
     register_portal(
@@ -649,7 +654,7 @@ def create_app(db_path=None):
                 "INSERT INTO decisions(patient_id,day,category,body,source,confirmed) VALUES(?,?,?,?,?,1)",
                 (pid, date.today().isoformat(), category, body.strip(), source.strip()),
             )
-        return RedirectResponse(f"/patients/{pid}/workspace/care", status_code=303)
+        return RedirectResponse(f"/patients/{pid}/workspace/safety", status_code=303)
 
     @app.get("/api/alerts")
     def alerts(request: Request):
@@ -685,7 +690,7 @@ def create_app(db_path=None):
                 "INSERT INTO acknowledgements VALUES(?,?) ON CONFLICT(patient_id) DO UPDATE SET risk_id=MAX(acknowledgements.risk_id,excluded.risk_id)",
                 (pid, last_id),
             )
-        return RedirectResponse(f"/patients/{pid}/workspace/care", status_code=303)
+        return RedirectResponse(f"/patients/{pid}/workspace/safety", status_code=303)
 
     def doctor_reference_access(request):
         if identity(request) != "doctor":

@@ -14,18 +14,24 @@ def check_meetings(patient, doctor, url, run_job):
     errors = []
     for page in (doctor, patient):
         page.on("pageerror", lambda error: errors.append(str(error)))
-    doctor.goto(url + "/patients/1/profile/video")
-    doctor.get_by_text("Назначить видеоприём", exact=True).click()
-    form = doctor.locator('form[action="/patients/1/appointments"]')
-    form.locator('[name="starts_at"]').fill("2026-10-21T15:00")
+    from datetime import datetime, timedelta
+
+    doctor.goto(url + "/doctor/calendar")
+    form = doctor.locator('form[action="/doctor/calendar/slots"]')
+    form.locator('[name="starts_at"]').fill(
+        (datetime.now() + timedelta(days=20))
+        .replace(hour=15, minute=0)
+        .isoformat(timespec="minutes")
+    )
     form.locator('[name="url"]').fill("https://example.org/synthetic-meeting")
     form.locator('[name="fallback"]').fill("Синтетический резервный способ связи")
-    form.get_by_role("button", name="Сохранить видеоприём", exact=True).click()
-    doctor.get_by_role(
-        "link", name="Записи встреч, расшифровки и проверенные итоги", exact=True
-    ).click()
-    doctor.get_by_role(
-        "button", name="Подготовить расшифровку встречи", exact=True
+    form.get_by_role("button", name="Опубликовать свободное окно", exact=True).click()
+    doctor.goto(url + "/patients/1/profile/video")
+    form = doctor.locator('form[action="/patients/1/consultations"]')
+    form.locator('[name="slot_id"]').select_option(index=1)
+    form.get_by_role("button", name="Записать пациента", exact=True).click()
+    doctor.locator("#video").get_by_role(
+        "button", name="Загрузить запись и подготовить итоги", exact=True
     ).first.click()
     meeting_path = doctor.url.removeprefix(url)
     mid = meeting_path.split("/")[-1]
@@ -150,7 +156,27 @@ def check_meetings(patient, doctor, url, run_job):
     doctor.get_by_role(
         "button", name="Подтвердить итоги и показать пациенту", exact=True
     ).click()
-    patient.reload()
+    patient.goto(url + "/patients/1/profile/video")
+    Path("artifacts").mkdir(exist_ok=True)
+    patient.screenshot(
+        path="artifacts/consultations-approved-patient-1280.png", full_page=True
+    )
+    doctor.goto(url + "/patients/1/profile/video")
+    expect(doctor.locator("#latest-meeting")).to_contain_text("Обсуждался сон.")
+    doctor.screenshot(
+        path="artifacts/consultations-approved-doctor-1280.png", full_page=True
+    )
+    doctor.goto(url + meeting_path)
+    expect(
+        patient.locator("#latest-meeting").get_by_text("Обсуждался сон.", exact=True)
+    ).to_be_visible()
+    expect(
+        patient.get_by_role("heading", name="Личный профиль", exact=True)
+    ).to_be_visible()
+    expect(
+        patient.get_by_role("navigation", name="Разделы личного профиля")
+    ).to_be_visible()
+    patient.goto(url + meeting_path)
     expect(patient.get_by_text("Обсуждался сон.", exact=True)).to_be_visible()
     expect(patient.get_by_text("Уточнить детали сна.", exact=True)).to_have_count(0)
     expect(
