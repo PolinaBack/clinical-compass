@@ -1,0 +1,16 @@
+{
+  "baseline": "98d60d706f06e2e0fc114d921771e94534b18c95",
+  "requirements": 806,
+  "same_ids_descriptions_priorities_dependencies_stages": true,
+  "all_existing_app_python_files_unchanged": 43,
+  "source_questions_options_scoring_routes_access_and_schema_unchanged": true,
+  "catalogue_tools": 9,
+  "source_sha256": {
+    "app/scales.py": "d000ca7b5195d483bf9a3a221ee285b63eefcce5118157aae00eada160a9a6d9",
+    "app/safety.py": "05889b0e37b6fcfb2eb460617d4110e290c4c4deac5b3b77ef751513e29ec905",
+    "app/workflows.py": "3eb73b2d1a1d9de0649afe41fceb00bf7cd4a89376328da73e72a2c61d49f436",
+    "app/catalog.py": "e10f87515786b8c16c21b65a39fe6d3fcd72e8b1cca5a93615c14a2e6521e73a",
+    "app/storage.py": "593a89452f57e55901277fb15ec86a15b1af13be9bbb7dfdff753ec11a4b555d"
+  },
+  "no_migration_needed": true
+}

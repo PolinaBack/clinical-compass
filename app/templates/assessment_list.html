@@ -1,4 +1,5 @@
-<section class="card" id="assessments">
+{% from 'questionnaire_choices.html' import tile_heading %}
+<section class="card questionnaire-page" id="assessments">
     {% if request.query_params.get('assigned') %}<p class="success" role="status">Назначение сохранено.</p>{% endif %}
     <div class="section-heading">
         <div>
@@ -10,13 +11,15 @@
     {% if user != 'doctor' %}
         <p>Здесь собраны рекомендованные и пройденные опросники. Они помогают подготовить разговор со специалистом.</p>
     {% endif %}
+    <div class="questionnaire-catalog">
     {% if user != 'doctor' %}
         <div class="grid two initial-assessments">
             {% for key,name,description,endpoint in [('safety6','C-SSRS · учебная адаптация','Вопросы о безопасности. Можно оставить пояснение или сделать паузу.','/safety/start'),('phq4','PHQ-4','Короткая анкета о настроении и тревоге.','/assessments/start')] %}
                 {% if not assessment_data.assessments|selectattr('scale','equalto',key)|list %}
                     <article class="inset initial-assessment">
-                        <h3>{{ name }}</h3>
-                        <p>{{ description }}</p>
+                        {{ tile_heading(name) }}
+                        <p class="questionnaire-tile-description">{{ description }}</p>
+                        <div class="questionnaire-tile-footer">
                         {% if consent %}
                             <form action="{{ endpoint }}" method="post">
                                 <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -25,6 +28,7 @@
                         {% else %}
                             <a class="button" href="/consent">Посмотреть условия участия</a>
                         {% endif %}
+                        </div>
                     </article>
                 {% endif %}
             {% endfor %}
@@ -33,7 +37,7 @@
     {% for a in assessment_data.assessments %}
         <div class="assessment-row">
             <div>
-                <strong>{{ a.name }}</strong>
+                {{ tile_heading(a.name) }}
                 <p class="caption">
                     {{ a.period_label }} · {{ a.result.answered }}/{{ a.result.count }} ответов
                     {% if a.due_day %}· срок: {{ a.due_day }}{% endif %}
@@ -42,7 +46,7 @@
                 {% if user == 'doctor' and not a.seen_at %}<span class="badge new">Новое</span>{% endif %}
                 {% if a.topics %}<span class="badge discuss">! Обсудить: {{ a.topics }}</span>{% endif %}
             </div>
-            <div>
+            <div class="questionnaire-tile-footer">
                 <span class="badge">{{ {'draft':'Рекомендовано · можно продолжить','incomplete':'Не завершено','completed':'Пройдено'}[a.status] }}</span><a class="button secondary small"
    href="/assessments/{{ a.id }}{{ '?review=1' if a.status == 'completed' and user != 'doctor' else '' }}">{{ 'Посмотреть ответы' if user == 'doctor' else 'Продолжить' if a.status != 'completed' else 'Мои ответы' }}</a>
             </div>
@@ -65,6 +69,7 @@
             </div>
         {% endif %}
     {% endfor %}
+    </div>
     {% if user == 'doctor' %}
         <form action="/patients/{{ patient.id }}/repeat" method="post">
             <input type="hidden" name="csrf" value="{{ csrf }}">

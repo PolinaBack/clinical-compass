@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
+{% from 'questionnaire_choices.html' import choices as answer_choices,state_badge %}
 {% block title %}{{ definition.name }} · Клинический компас{% endblock %}
 {% block content %}
+<div class="questionnaire-page questionnaire-review">
     <div class="assessment-intro">
         <a href="{{ '/patients/' ~ assessment.patient_id ~ ('/workspace/assessments' if user == 'doctor' else '/profile/assessments') }}">{{ 'Карточка пациента' if user == 'doctor' else 'Мои анкеты' }}</a>
         <p class="eyebrow">{{ 'ИСХОДНЫЙ САМООТЧЁТ · СПЕЦИАЛИСТ' if user == 'doctor' else 'ВАШИ СОХРАНЁННЫЕ ОТВЕТЫ' }}</p>
@@ -56,14 +58,15 @@
         {% for question in definition['items'] %}
             {% set key = loop.index|string %}{% set answer = answers.get(key,{}) %}
             {% if user == 'doctor' or answer.get('state') != 'not_asked_by_rule' %}
-                <article id="item-{{ key }}"><strong>{{ '6а' if assessment.scale == 'safety6' and key == '7' else key }}. {{ question }}</strong>
-                    <p>
+                <article id="item-{{ key }}" class="questionnaire-readonly-question" data-questionnaire-question><div class="questionnaire-question-heading"><h3>{{ '6а' if assessment.scale == 'safety6' and key == '7' else key }}. {{ question }}</h3>{{ state_badge(answer) }}</div>
+                    <p class="questionnaire-answer-note">
                         {% if answer.get('state') == 'answered' %}
                             Ответ: {{ (['Нет','Да'][answer.value] if assessment.scale in ['hcl33','safety6'] else options[answer.value][1]) }}
                         {% else %}
                             {{ {'unanswered':'Не отвечено','deferred':'Отложено','declined':'Не готов(а) отвечать','not_asked_by_rule':'Не задано по правилу'}.get(answer.get('state'),'Не отвечено') }} · значение отсутствует
                         {% endif %}
                     </p>
+                    {{ answer_choices('answer_' ~ key,[(0,'Нет'),(1,'Да')] if assessment.scale in ['hcl33','safety6'] else options,answer,readonly=true) }}
                     {% if answer.get('comment') %}<p class="text">Комментарий: {{ answer.comment }}</p>{% endif %}
                     {% if answer.get('discuss') %}
                         <span class="badge discuss">{{ 'Обсуждено' if answer.get("discussed") else '! Обсудить' }}</span>
@@ -83,14 +86,13 @@
             <h3>Контекст отдельно от суммы</h3>
             {% for key,label,choices in hcl_context %}
                 {% set answer = answers.get('ctx_' ~ key,{}) %}
-                <p>
-                    {{ label }} —
+                <article class="questionnaire-readonly-question"><h4>{{ label }}</h4><p class="questionnaire-answer-note">
                     {% if answer.get('state') == 'answered' %}
                         {{ choices[answer.value] if choices else answer.value }}
                     {% else %}
                         {{ {'unanswered':'Не отвечено','deferred':'Отложено','declined':'Не готов(а) отвечать','not_asked_by_rule':'Не задано по правилу'}.get(answer.get('state'),'Не отвечено') }}
                     {% endif %}
-                </p>
+                </p>{% if choices %}{{ answer_choices('context_' ~ key,choices,answer,readonly=true,indexed=true) }}{% endif %}</article>
             {% endfor %}
         {% endif %}
         {% if user == 'doctor' %}
@@ -142,4 +144,5 @@
     <p>{{ definition.validation }}</p>
     <a href="/assessments/{{ assessment.id }}/history">История изменений ответов</a>
 </details>
+</div>
 {% endblock %}

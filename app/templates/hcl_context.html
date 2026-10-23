@@ -1,28 +1,20 @@
+{% from 'questionnaire_choices.html' import choices as answer_choices, state_badge %}
 {% for key,label,choices in context_rows %}
     {% set answer = answers.get('ctx_' ~ key,{}) %}
-    <label>
-        {{ label }}
+    <fieldset class="questionnaire-context-card" data-questionnaire-question>
+        <legend>
+            <span class="questionnaire-question-heading">
+                <span class="questionnaire-question-title">{{ label }}</span>
+                {% if choices %}{{ state_badge(answer) }}{% endif %}
+            </span>
+        </legend>
         {% if choices %}
-            <select name="context_{{ key }}" aria-label="{{ label }}">
-                <option value="">Пока без ответа</option>
-                <option value="declined"
-                        {% if answer.get('state') == 'declined' %}selected{% endif %}>Не готов(а) отвечать</option>
-                <option value="deferred"
-                        {% if answer.get('state') == 'deferred' %}selected{% endif %}>Отложить</option>
-                {% for choice in choices %}
-                    <option value="{{ loop.index0 }}"
-                            {% if answer.get('state') == 'answered' and answer.get('value') == loop.index0 %}selected{% endif %}>
-                        {{ choice }}
-                    </option>
-                {% endfor %}
-            </select>
+            {{ answer_choices('context_' ~ key,choices,answer,indexed=true) }}
         {% else %}
-            <input name="context_{{ key }}"
-                   type="number"
-                   min="0"
-                   max="366"
-                   value="{{ answer.value if answer.get("state") == 'answered' else '' }}">
-            <small>Если в предыдущем вопросе «нет», это поле не включается и не превращается в 0.</small>
+            <label class="sr-only" for="context-{{ key }}-value">{{ label }}</label>
+            <input id="context-{{ key }}-value" name="context_{{ key }}" type="number"
+                   min="0" max="366" value="{{ answer.value if answer.get('state') == 'answered' else '' }}">
+            <p class="caption">Если в предыдущем вопросе «нет», это поле не включается и не превращается в 0.</p>
         {% endif %}
-    </label>
+    </fieldset>
 {% endfor %}

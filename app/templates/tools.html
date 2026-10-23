@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
+{% from 'questionnaire_choices.html' import tile_heading %}
 {% block content %}
+<div class="questionnaire-page">
     <div class="section-page-heading">
         <h1>Библиотека анкет</h1>
     </div>
@@ -7,7 +9,7 @@
         <form method="get" action="/clinical-tools">
             <label>
                 Пациент
-                <select name="patient_id" required>
+                <select id="questionnaire-patient-picker" name="patient_id" required>
                     <option value="">Выберите пациента</option>
                     {% for p in patients %}
                         <option value="{{ p.id }}"
@@ -23,14 +25,14 @@
             </p>
         {% endif %}
     </section>
-    <div class="grid two tool-catalog">
+    <div class="grid two tool-catalog questionnaire-catalog">
         {% for tool in tools %}
             <section class="card tool-tile" data-tool="{{ tool.key }}">
+                {{ tile_heading(tool.name,'Специалист' if tool.key in ['madrs','hdrs17'] else 'Пациент',heading=2) }}
                 <span class="badge">{{ 'Учебная адаптация' if tool.key == 'safety6' else 'По назначению специалиста' if tool.active else 'Требуется исходная форма' }}</span>
-                <h2>{{ tool.name }}</h2>
-                <p>{{ tool.description }}</p>
+                <p class="questionnaire-tile-description">{{ tool.description }}</p>
                 {% if not tool.active %}
-                    <button disabled>Назначение пока недоступно</button>
+                    <div class="questionnaire-tile-footer"><button disabled>Назначение пока недоступно</button></div>
                 {% elif patient %}
                     <form action="/patients/{{ patient.id }}/assign" method="post">
                         <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -38,6 +40,8 @@
                         <input type="hidden"
                                name="assignment_token"
                                value="{{ assignment_token }}-{{ tool.key }}">
+                        <details class="questionnaire-assignment" open data-questionnaire-assignment>
+                        <summary>Сессия и срок заполнения</summary>
                         <label>
                             Оценочная сессия
                             <select name="session_id" required>
@@ -57,12 +61,22 @@
                                    value="{{ today }}"
                                    required>
                         </label>
-                        <button>Назначить {{ tool.name }}</button>
+                        </details>
+                        <div class="questionnaire-tile-footer">
+                            {% set existing = assessment_data.assessments|selectattr('scale','equalto',tool.key)|list %}
+                            <span class="questionnaire-tile-meta">
+                                {% if existing %}Последняя: {{ existing[0].result.answered }} / {{ existing[0].result.count }} ответов
+                                {% elif tool.key == 'phqads' %}Две формы
+                                {% else %}Ещё не назначено{% endif %}
+                            </span>
+                            <button>Назначить {{ tool.name }}</button>
+                        </div>
                     </form>
                 {% else %}
-                    <p class="caption">Для назначения выберите пациента выше.</p>
+                    <div class="questionnaire-tile-footer"><a href="#questionnaire-patient-picker">Выбрать пациента →</a></div>
                 {% endif %}
             </section>
         {% endfor %}
     </div>
+</div>
 {% endblock %}

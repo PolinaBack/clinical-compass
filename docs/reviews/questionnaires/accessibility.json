@@ -1,0 +1,82 @@
+[
+  {
+    "page": "patient-catalog",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "patient-catalog",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "patient-question",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "patient-question",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "patient-safety",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "patient-safety",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "patient-context",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "patient-context",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "doctor-catalog",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "doctor-catalog",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "doctor-assessments",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "doctor-assessments",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "doctor-answers",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "doctor-answers",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "doctor-safety",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "doctor-safety",
+    "width": 1280,
+    "violations": []
+  }
+]

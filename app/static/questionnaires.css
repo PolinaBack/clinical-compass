@@ -1,0 +1,72 @@
+/* Shared questionnaire appearance. Scoring, source wording and routes are unchanged. */
+.questionnaire-page {max-width:1120px;margin:24px 0;overflow-wrap:anywhere;}
+.questionnaire-page .assessment-intro {max-width:none;margin:24px 0;}
+.questionnaire-page .assessment-intro h1,.questionnaire-page>.section-page-heading h1 {font-size:clamp(28px,3.4vw,42px);line-height:1.2;color:#17264c;margin:14px 0;}
+.questionnaire-page .eyebrow {color:#7156af;font-size:12px;letter-spacing:.12em;}
+.questionnaire-page .assessment-intro .lead {font-size:16px;line-height:1.7;color:#626a7d;}
+.questionnaire-page .questionnaire {max-width:none;margin:0;}
+.questionnaire-page .question-card,.questionnaire-page .questionnaire-context-card,.questionnaire-page .questionnaire-readonly-question {background:#fff;border:1px solid #eeecf3;border-radius:22px;padding:26px 28px;margin:20px 0;min-width:0;}
+.questionnaire-page .question-card legend,.questionnaire-page .questionnaire-context-card legend {float:left;width:100%;max-width:100%;padding:0;margin:0 0 22px;color:#23304f;font-size:17px;font-weight:700;line-height:1.55;}
+.questionnaire-page fieldset>legend~* {clear:both;}
+.questionnaire-question-heading {display:flex;align-items:flex-start;justify-content:space-between;gap:18px;}
+.questionnaire-question-title {min-width:0;}
+.questionnaire-state {display:inline-block;flex-shrink:0;max-width:170px;padding:6px 10px;background:#f5f3fa;color:#625b75;border-radius:24px;font-size:12px;line-height:1.5;font-weight:600;}
+.questionnaire-state[data-answer-state=answered] {background:#eee8fb;color:#584198;}
+.questionnaire-page .question-number {background:#f0eafa;color:#65509f;min-width:28px;height:28px;margin-right:9px;}
+.questionnaire-page .questionnaire-options {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 0;padding:0;list-style:none;}
+.questionnaire-page .questionnaire-options[data-choice-count="2"] {grid-template-columns:repeat(2,minmax(0,1fr));}
+.questionnaire-page .questionnaire-option {display:flex;position:relative;justify-content:center;align-items:center;gap:6px;min-width:0;min-height:52px;margin:0;padding:13px 14px;border:1px solid #dedde8;border-radius:14px;background:#fff;color:#59637b;font-size:14px;font-weight:500;line-height:1.5;text-align:center;}
+.questionnaire-page label.questionnaire-option {cursor:pointer;}
+.questionnaire-page .questionnaire-option input,.questionnaire-page .questionnaire-state-choice input {position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;max-width:none;min-width:0;min-height:0;margin:0;padding:0;border:0;}
+.questionnaire-check {display:none;}
+.questionnaire-option:has(input:checked),.questionnaire-page .questionnaire-option.is-selected {background:#eee9fc;border-color:#8b73d3;color:#584191;}
+.questionnaire-option:has(input:checked) .questionnaire-check,.questionnaire-option.is-selected .questionnaire-check {display:inline;}
+.questionnaire-option:has(input:focus-visible),.questionnaire-state-choice:has(input:focus-visible) {outline:3px solid #5b438f;outline-offset:3px;}
+.questionnaire-page .questionnaire-option-readonly {cursor:default;}
+.questionnaire-answer-footer {display:flex;flex-wrap:wrap;gap:10px;padding-top:18px;margin-top:20px;border-top:1px solid #eeedf3;}
+.questionnaire-page .questionnaire-state-choice {position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin:0;padding:10px 14px;border:1px solid transparent;border-radius:12px;background:#f6f4fb;color:#4c5874;font-size:13px;font-weight:700;cursor:pointer;}
+.questionnaire-state-choice:has(input:checked) {background:#eae2fa;border-color:#9a80d3;color:#49367d;}
+.questionnaire-page .question-extra {padding:14px 0 0;margin:18px 0 0;border-top:1px solid #eeedf3;}
+.questionnaire-page .question-extra summary {font-size:13px;line-height:1.5;color:#65509f;}
+.questionnaire-page .section-fold>summary {font-family:inherit;font-size:16px;line-height:1.6;color:#23304f;}
+.questionnaire-page input:not([type=radio]):not([type=checkbox]),.questionnaire-page textarea,.questionnaire-page select {border-color:#dedde8;border-radius:13px;max-width:100%;min-width:0;}
+.questionnaire-page .save-bar {position:static;border:1px solid #eeecf3;border-radius:20px;padding:18px 22px;background:#fff;box-shadow:none;}
+.questionnaire-page .save-bar button {border-radius:14px;min-height:48px;}
+.questionnaire-page .questionnaire-readonly-question h3 {margin:0;font-size:17px;line-height:1.55;color:#23304f;}
+.questionnaire-review .questionnaire-answer-note {font-size:14px;color:#59637b;margin:14px 0;}
+.questionnaire-page .card {border-color:#eeecf3;border-radius:22px;}
+.questionnaire-page .caption {color:#696478;}
+.questionnaire-catalog {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch;}
+.questionnaire-page .initial-assessments {display:contents;}
+.questionnaire-catalog>.notice {grid-column:1/-1;}
+.questionnaire-page .tool-catalog.questionnaire-catalog {grid-template-columns:repeat(3,minmax(0,1fr));}
+.questionnaire-page .tool-tile,.questionnaire-page .initial-assessment,.questionnaire-page .assessment-row {display:flex;flex-direction:column;align-items:stretch;gap:0;min-width:0;margin:0;padding:24px;border:1px solid #e7e1f0;border-radius:24px;background:linear-gradient(135deg,#fff,#f8f4ff);box-shadow:0 4px 15px #35234d05;}
+.questionnaire-tile-top {display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:20px;}
+.questionnaire-tile-icon {display:grid;place-items:center;flex-shrink:0;width:48px;height:48px;border-radius:15px;background:#eee6fc;color:#7150b2;}
+.questionnaire-tile-icon svg {width:24px;height:24px;}
+.questionnaire-role {font-size:12px;font-weight:700;line-height:1.5;color:#65509f;background:#efe9fb;border-radius:24px;padding:6px 11px;}
+.questionnaire-page .questionnaire-tile-title {font-size:25px;line-height:1.3;color:#26204c;margin:0 0 14px;}
+.questionnaire-tile-description {font-size:14px;line-height:1.65;color:#625c73;margin:0 0 18px;}
+.questionnaire-tile-meta {font-size:13px;line-height:1.6;color:#696478;}
+.questionnaire-tile-footer {border-top:1px solid #e9e3f1;margin-top:auto;padding-top:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.questionnaire-page .assessment-row>div:last-child {text-align:initial;}
+.questionnaire-page .assessment-row .questionnaire-tile-footer {margin-top:auto;}
+.questionnaire-page .questionnaire-tile-footer .button,.questionnaire-page .questionnaire-tile-footer button {font-size:13px;border-radius:12px;min-height:44px;}
+.questionnaire-page .tool-tile>form {margin-top:auto;}
+.questionnaire-page .questionnaire-assignment {border:0;padding:0;background:transparent;margin:0 0 16px;}
+.questionnaire-assignment summary {font-size:13px;color:#65509f;}
+.questionnaire-page .questionnaire-provider-form label {font-size:14px;color:#23304f;}
+.questionnaire-page .sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+.minimal-ui .questionnaire-page .tool-tile,.minimal-ui .questionnaire-page .initial-assessment,.minimal-ui .questionnaire-page .assessment-row {background:#fff;box-shadow:none;}
+@media(max-width:1000px) {.questionnaire-catalog,.questionnaire-page .tool-catalog.questionnaire-catalog {grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:640px) {
+ .questionnaire-catalog,.questionnaire-page .tool-catalog.questionnaire-catalog {grid-template-columns:1fr;}
+ .questionnaire-page .question-card,.questionnaire-page .questionnaire-context-card,.questionnaire-page .questionnaire-readonly-question {padding:20px 16px;border-radius:20px;}
+ .questionnaire-question-heading {flex-direction:column;gap:12px;}
+ .questionnaire-page .question-card legend,.questionnaire-page .questionnaire-context-card legend,.questionnaire-page .questionnaire-readonly-question h3 {font-size:16px;}
+ .questionnaire-page .questionnaire-options {grid-template-columns:repeat(2,minmax(0,1fr));}
+ .questionnaire-page .questionnaire-option {font-size:13px;padding:12px 10px;}
+ .questionnaire-page .assessment-row,.questionnaire-page .initial-assessment,.questionnaire-page .tool-tile {padding:22px;}
+ .questionnaire-page .save-bar {padding:16px;}
+}
+@media(max-width:360px) {.questionnaire-page .questionnaire-options:not([data-choice-count="2"]) {grid-template-columns:1fr;}}

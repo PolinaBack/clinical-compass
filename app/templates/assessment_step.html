@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% from 'questionnaire_choices.html' import choices,state_badge %}
 {% block title %}{{ definition.name }} · Клинический компас{% endblock %}
 {% block content %}
-    <div class="assessment-shell">
+    <div class="assessment-shell questionnaire-page">
         <a href="/patients/{{ assessment.patient_id }}/profile/assessments">Мои анкеты</a>
         <div class="assessment-intro">
             <p class="eyebrow">В ВАШЕМ ТЕМПЕ</p>
@@ -64,23 +65,11 @@
                 </section>
             {% endif %}
             {% set key = step|string %}{% set answer = answers.get(key,{}) %}
-            <fieldset class="question-card" id="item-{{ key }}">
+            <fieldset class="question-card" id="item-{{ key }}" data-questionnaire-question>
                 <legend>
-                    <span class="question-number">{{ '6а' if assessment.scale == 'safety6' and step == 7 else step }}</span>{{ definition['items'][step-1] }}
+                    <span class="questionnaire-question-heading"><span class="questionnaire-question-title"><span class="question-number">{{ '6а' if assessment.scale == 'safety6' and step == 7 else step }}</span>{{ definition['items'][step-1] }}</span>{{ state_badge(answer) }}</span>
                 </legend>
-                <div> class="answer-options"
-                     {% if assessment.scale == 'phq9' and step == 9 %}data-safety-answer{% endif %}
-                     {% if assessment.scale == 'safety6' and step == 6 %}data-safety-recent{% endif %}>
-                    {% for value,label in ([(0,'Нет'),(1,'Да')] if assessment.scale in ['hcl33','safety6'] else options) %}
-                        <label class="answer-option">
-                            <input> type="radio"
-                                   name="answer_{{ key }}"
-                                   value="{{ value }}"
-                                   {% if answer.get('state') == 'answered' and answer.get('value') == value %}checked{% endif %}>
-                            <span>{{ label }}</span>
-                        </label>
-                    {% endfor %}
-                </div>
+                {{ choices('answer_' ~ key,[(0,'Нет'),(1,'Да')] if assessment.scale in ['hcl33','safety6'] else options,answer,safety='phq9' if assessment.scale=='phq9' and step==9 else 'recent' if assessment.scale=='safety6' and step==6 else '') }}
                 <details class="question-extra">
                     <summary>Зачем этот вопрос?</summary>
                     <p>
@@ -92,8 +81,7 @@
                     </p>
                     <p class="caption">Ответ описывает переживание, а не вашу личность. Он сам по себе не устанавливает диагноз.</p>
                 </details>
-                <details class="question-extra">
-                         {% if answer.get('comment') or answer.get('discuss') %}open{% endif %}>
+                <details class="question-extra" {% if answer.get('comment') or answer.get('discuss') %}open{% endif %}>
                     <summary>Добавить комментарий или обсудить</summary>
                     <label>
                         Комментарий к вопросу {{ key }}<textarea name="comment_{{ key }}" maxlength="3000">{{ answer.get('comment','') }}</textarea>
@@ -101,27 +89,13 @@
                     <label class="check">
                         <input type="checkbox"
                                name="discuss_{{ key }}"
-                               value="true">
-                               {% if answer.get('discuss') %}checked{% endif %}
+                               value="true"
+                               {% if answer.get('discuss') %}checked{% endif %}>
                         ! Хочу обсудить этот вопрос со специалистом
                     </label>
                     <p class="caption">
                         Можно рассказать свою историю. {{ 'Баллы по этой форме не рассчитываются.' if assessment.scale == 'safety6' else 'Комментарий не меняет выбранный балл.' }} Комментарий можно обсудить на консультации.
                     </p>
-                </details>
-                <details class="question-extra">
-                    <summary>Пока не готов(а) отвечать</summary>
-                    <div class="skip-options">
-                        {% for state,label in [('unanswered','Пока без ответа'),('deferred','Отложить'),('declined','Не готов(а) отвечать')] %}
-                            <label>
-                                <input type="radio"
-                                       name="answer_{{ key }}"
-                                       value="{{ state }}">
-                                       {% if answer.get('state','unanswered') == state %}checked{% endif %}>
-                                {{ label }}
-                            </label>
-                        {% endfor %}
-                    </div>
                 </details>
             </fieldset>
             {% if assessment.scale == 'hcl33' and step == result.count %}

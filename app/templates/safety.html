@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
+<div class="questionnaire-page">
     <div class="page-intro">
         <p class="eyebrow">ПЕРВЫЙ ШАГ · БЕЗОПАСНОСТЬ</p>
         <h1>
@@ -65,7 +66,7 @@
             <p>
                 Для учебного сценария с внешней официальной формой. Запись заключения не создаёт ответов пациента и не имитирует самостоятельное прохождение.
             </p>
-            <form action="/patients/{{ patient.id }}/safety-review" method="post">
+            <form action="/patients/{{ patient.id }}/safety-review" method="post" class="questionnaire-provider-form">
                 <input type="hidden" name="csrf" value="{{ csrf }}">
                 <label>
                     Точное название и версия использованной формы
@@ -85,4 +86,5 @@
             </form>
         </section>
     {% endif %}
+</div>
 {% endblock %}

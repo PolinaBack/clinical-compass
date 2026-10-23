@@ -1,0 +1,11 @@
+{
+  "same_schema": true,
+  "all_rows_and_fields_unchanged": true,
+  "tables": 71,
+  "rows": 551,
+  "integrity_check": "ok",
+  "foreign_key_check": [],
+  "after_app_restart": true,
+  "source_contents_in_report": false,
+  "backup_outside_git": true
+}
