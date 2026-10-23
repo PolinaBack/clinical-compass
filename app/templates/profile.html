@@ -10,7 +10,7 @@
     {% include 'profile_nav.html' %}
     {% if not section %}
         <div class="profile-sections">
-            {% for key,label,description in [('about','Обо мне','Биография, цели и история состояния.'),('assessments','Анкеты','Назначенные и пройденные опросники.'),('video','Консультации и видеосвязь','Запись, время встречи и ссылка на видеоприём.')] %}
+            {% for key,label,description in [('about','Обо мне','Личные и медицинские сведения для консультации.'),('assessments','Анкеты','Назначенные и пройденные опросники.'),('video','Консультации и видеосвязь','Запись, время встречи и ссылка на видеоприём.')] %}
                 <a class="card profile-tile"
                    href="/patients/{{ patient.id }}/profile/{{ key }}">
                     <h2>{{ label }}</h2>
@@ -20,26 +20,6 @@
         </div>
     {% elif section == 'about' %}
         {% if intake_version is defined %}{% include 'intake_overview.html' %}{% endif %}
-        <details class="card" id="about"><summary>Прежние свободные заметки «Обо мне»</summary><p>Этот прежний раздел сохраняется отдельно и по-прежнему доступен ведущему специалисту сразу. Режим личного черновика относится к новой первичной анкете выше.</p>
-            {% if user != 'doctor' and consent %}
-                <p>Все поля необязательные. Можно написать «не знаю» или обсудить лично.</p>
-                {% if request.query_params.get('saved') %}<p class="success" role="status">Профиль сохранён.</p>{% endif %}
-                <form action="/patients/{{ patient.id }}/profile" method="post">
-                    <input type="hidden" name="csrf" value="{{ csrf }}">
-                    {% for key,label,hint in profile_fields if key!='family_context' %}
-                        <label>
-                            {{ label }}<textarea name="{{ key }}" maxlength="3000" placeholder="{{ hint }}">{{ profile.get(key,'') }}</textarea>
-                        </label>
-                    {% endfor %}
-                    <button>Сохранить профиль</button>
-                </form>
-            {% else %}
-                {% for key,label,hint in profile_fields if key!='family_context' %}
-                    <h3>{{ label }}</h3>
-                    <p class="text">{{ profile.get(key) or 'Пока не заполнено' }}</p>
-                {% endfor %}
-            {% endif %}
-        </details>
     {% elif section == 'assessments' %}
         {% include 'assessment_list.html' %}
     {% elif section == 'family' %}

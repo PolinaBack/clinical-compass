@@ -44,10 +44,10 @@ def entity(client, kind, **fields):
 def test_catalogue_pages_and_private_draft_publication_versions(client):
     login(client, "patient1")
     html = client.get("/patients/1/profile/about").text
-    assert "Первичная анкета" in html and 'name="biography"' in html
+    assert "Первичная анкета" in html and 'name="biography"' not in html
     for category in CATEGORIES:
         r = client.get("/patients/1/profile/about/" + category["key"])
-        assert r.status_code == 200, r.text
+        assert r.status_code == (404 if category["key"] == "reproductive" else 200), r.text
     assert (
         save(
             client,

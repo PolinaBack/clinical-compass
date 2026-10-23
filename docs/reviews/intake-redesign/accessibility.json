@@ -1,0 +1,42 @@
+[
+  {
+    "role": "overview",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "overview",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "personal",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "personal",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "mental",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "mental",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "role": "doctor",
+    "width": 1280,
+    "violations": []
+  }
+]

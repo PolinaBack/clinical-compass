@@ -38,11 +38,11 @@ def test_initial_page_and_profile_sections_load_separately(client):
     assert client.get("/patients/1").status_code == 403
     login(client, "patient1")
     index = client.get("/patients/1/profile").text
-    assert 'name="biography"' in index and 'id="family"' not in index
+    assert 'id="intake-overview"' in index and 'name="biography"' not in index and 'id="family"' not in index
     assert client.get("/patients/1/profile").url.path == "/patients/1/profile/about"
     assert 'id="reports"' not in index and "Полезно каждому пациенту" not in index
     for section, present, absent in [
-        ("about", 'name="biography"', 'id="family"'),
+        ("about", 'id="intake-overview"', 'name="biography"'),
         ("family", 'id="family"', 'name="biography"'),
         ("assessments", 'id="assessments"', 'id="video"'),
         ("video", 'id="video"', 'id="family"'),

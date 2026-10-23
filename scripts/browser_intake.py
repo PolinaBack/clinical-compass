@@ -62,10 +62,12 @@ def check_intake(patient, doctor, url):
         0, timeout=15000
     )
     patient.locator('[name="a_name"]').fill("Условный сообщённый препарат")
+    patient.locator('[name="a_name"]').blur()
     expect(patient.locator("[data-intake-save-status]")).to_contain_text(
         "Черновик сохранён", timeout=20000
     )
     patient.goto(url + "/patients/1/profile/about/exams")
+    patient.locator(".intake-attachments > summary").click()
     patient.get_by_text(
         "Добавить документ, фото или голосовую заметку", exact=True
     ).click()

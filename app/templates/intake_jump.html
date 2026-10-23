@@ -1,0 +1,10 @@
+{% set jump_editable=jump_editable|default(false) %}
+{% set jump_current=jump_current|default('') %}
+{% if not jump_editable %}<form class="intake-jump" method="get" action="/patients/{{ patient.id }}/intake/navigate" data-intake-jump>{% if intake_readonly and intake_submission %}<input type="hidden" name="submission_id" value="{{ intake_submission.id }}">{% endif %}{% else %}<div class="intake-jump" data-intake-jump>{% endif %}
+<label for="intake-jump-select">Перейти к разделу:</label>
+<select id="intake-jump-select" name="jump_to" {% if jump_editable %}form="intake-answer-form"{% endif %} data-intake-jump-select required>
+<option value="" {% if not jump_current %}selected{% endif %} disabled>Выберите раздел</option>
+{% for item in intake_categories if not item.optional %}<option value="{{ item.key }}" {% if item.key==jump_current %}selected{% endif %}>{{ item.title }}</option>{% endfor %}
+</select>
+<button class="secondary" {% if jump_editable %}type="submit" form="intake-answer-form" name="navigate" value="jump"{% endif %} data-intake-jump-button>Перейти</button>
+{% if not jump_editable %}</form>{% else %}</div>{% endif %}

@@ -119,6 +119,8 @@ def save_category(c, pid, user, key, form):
     check_scope(c, user, pid, write=True)
     current = draft(c, pid)
     revision_check(current, form)
+    if key == "reproductive" and not reproductive_suggested(current):
+        raise HTTPException(422, "Сначала укажите женский пол в личных данных")
     fields = BY_KEY[key]["fields"]
     data = parse_answers(
         fields, form, current["answers"].get(key, {}), preferences(c, pid)
@@ -461,7 +463,7 @@ def categories_with_progress(data, prefs):
             applicable += shown
         result.append(
             dict(
-                percent=round(done * 100 / len(applicable)) if applicable else 0,
+                percent=done * 100 // len(applicable) if applicable else 0,
                 category_marker=category["key"],
                 **category,
                 done=done,
@@ -477,19 +479,9 @@ def categories_with_progress(data, prefs):
 
 
 def reproductive_suggested(data):
-    """Suggest the section without assuming menstruation or losing old answers."""
+    """Current UI condition only; stored history is never removed by this rule."""
     sex = data.get("answers", {}).get("personal", {}).get("sex", {})
-    return bool(
-        # Sent versions keep their own catalogue and remain reproducible.
-        data.get("catalog")
-        or sex.get("status") == "answered"
-        and sex.get("value") == "Женский"
-        or any(
-            answer.get("status") not in (None, "unanswered")
-            for answer in data.get("answers", {}).get("reproductive", {}).values()
-        )
-        or any(f["category"] == "reproductive" for f in data.get("attachments", []))
-    )
+    return sex.get("status") == "answered" and sex.get("value") == "Женский"
 
 
 def next_section(data, current):

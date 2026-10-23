@@ -24,12 +24,12 @@ def test_profile_separates_patient_history_from_doctor_records(client):
         ).status_code
         == 200
     )
-    assert "Синтетическая биография" in client.get("/patients/1/profile/about").text
+    assert "Синтетическая биография" not in client.get("/patients/1/profile/about").text
     assert (
         post(client, "/patients/2/profile", biography="Чужие данные").status_code == 403
     )
     login(client, "doctor")
-    assert "Синтетическая биография" in client.get("/patients/1/profile/about").text
+    assert "Синтетическая биография" not in client.get("/patients/1/profile/about").text
     assert (
         post(client, "/patients/1/profile", biography="Подмена врачом").status_code
         == 403

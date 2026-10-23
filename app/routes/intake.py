@@ -88,6 +88,8 @@ def intake_context(c, user, pid, view="summary", submission_id=None, as_of=None)
     progress = service.categories_with_progress(data, prefs)
     counted = [c for c in progress if c["total"] and not c["optional"]]
     complete = sum(c["done"] == c["total"] for c in counted)
+    answered = sum(c["done"] for c in counted)
+    questions = sum(c["total"] for c in counted)
     quotes = [
         "Можно заполнять в своём темпе — даже несколько ответов помогут начать разговор.",
         "Каждый сохранённый ответ помогает лучше подготовиться к встрече.",
@@ -97,8 +99,9 @@ def intake_context(c, user, pid, view="summary", submission_id=None, as_of=None)
         intake_overall=dict(
             completed=complete,
             total=len(counted),
-            done=sum(c["done"] for c in counted),
-            questions=sum(c["total"] for c in counted),
+            done=answered,
+            questions=questions,
+            percent=answered * 100 // questions if questions else 0,
             quote=quotes[sum(c["done"] for c in counted) % len(quotes)],
         ),
         intake_review_history=review_history,
@@ -130,6 +133,7 @@ def intake_context(c, user, pid, view="summary", submission_id=None, as_of=None)
         intake_entity_fields=data.get("catalog", {}).get("entity_fields", {}),
         intake_systems=SYSTEMS,
         intake_specialties=SPECIALTIES,
+        intake_cycle_visible=service.reproductive_suggested(data),
     )
 
 
@@ -179,17 +183,34 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
         category_definition = next(
             (c for c in data["intake_categories"] if c["key"] == category), None
         )
-        if not category_definition:
+        if not category_definition or category_definition["optional"]:
             raise HTTPException(404, "Раздел анкеты не найден")
         return render(
             request,
             "intake_section.html",
             category=category_definition,
-            next_category=service.next_section(data["intake_data"], category)
-            if category in BY_KEY
-            else None,
+            next_category=(
+                service.next_section(data["intake_data"], category)
+                if category in BY_KEY
+                else None
+            ),
             **data,
         )
+
+    @app.get("/patients/{pid}/intake/navigate")
+    def navigate(
+        request: Request, pid: int, jump_to: str, submission_id: int | None = None
+    ):
+        data = context(request, pid, submission_id=submission_id)
+        if not any(
+            item["key"] == jump_to and not item["optional"]
+            for item in data["intake_categories"]
+        ):
+            raise HTTPException(404, "Раздел анкеты не найден")
+        tail = "/" + jump_to
+        if submission_id is not None:
+            tail += "?submission_id=" + str(submission_id)
+        return redirect(pid, tail)
 
     @app.post("/patients/{pid}/intake/sections/{category}")
     async def save_section(request: Request, pid: int, category: str):
@@ -215,6 +236,16 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
                 )
                 if item["key"] == category
             )
+            destination = None
+            if form.get("navigate") == "jump":
+                destination = str(form.get("jump_to", ""))
+                if not any(
+                    item["key"] == destination and not item["optional"]
+                    for item in service.categories_with_progress(
+                        snapshot, snapshot["preferences"]
+                    )
+                ):
+                    raise HTTPException(422, "Выберите доступный раздел анкеты")
         if "application/json" in request.headers.get("accept", ""):
             return JSONResponse(
                 dict(
@@ -222,8 +253,17 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
                     revision=revision,
                     calculations=calculations,
                     progress=dict(done=progress["done"], total=progress["total"]),
+                    sections=[
+                        dict(key=item["key"], title=item["title"])
+                        for item in service.categories_with_progress(
+                            snapshot, snapshot["preferences"]
+                        )
+                        if not item["optional"]
+                    ],
                 )
             )
+        if destination:
+            return redirect(pid, "/" + destination)
         if form.get("navigate") == "next":
             next_category = service.next_section(snapshot, category)
             return redirect(

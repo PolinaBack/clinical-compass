@@ -18,6 +18,8 @@
         box.hidden=!active;
         box.querySelectorAll('input,textarea,select').forEach(e=>e.disabled=!active);
         const choice=box.querySelector('[data-intake-state]');
+        const label=box.querySelector('[data-intake-state-label]');
+        if(label&&choice)label.textContent=['unanswered','answered'].includes(choice.value)?'Пропустить или уточнить ответ':choice.selectedOptions[0].textContent;
         const inputs=box.querySelector('[data-intake-inputs]');
         if(inputs){const enabled=active&&['unanswered','answered'].includes(choice?.value);inputs.hidden=!enabled;inputs.querySelectorAll('input,textarea,select').forEach(e=>e.disabled=!enabled);}
       });
@@ -29,7 +31,8 @@
         const response=await fetch(form.action,{method:'POST',body:new FormData(form),credentials:'same-origin',headers:{Accept:'application/json'}});
         if(!response.ok){paused=true;conflict=response.status===409;dirty=true;show(response.status===409?'Анкета изменилась в другой вкладке. Автосохранение остановлено. Скопируйте последние правки и обновите страницу.':'Не удалось сохранить ответы. Они остаются в форме; используйте кнопку сохранения или проверьте связь.');return;}
         const data=await response.json();
-        if(data.progress&&edit===savedEdit){const root=form.closest('[data-intake-page]'),bar=root?.querySelector('[data-section-progress]'),label=root?.querySelector('[data-section-progress-label]');if(bar){bar.max=data.progress.total||1;bar.value=data.progress.done;}if(label)label.textContent=`${data.progress.done} из ${data.progress.total} вопросов`;}
+        if(data.progress&&edit===savedEdit){const root=form.closest('[data-intake-page]'),bar=root?.querySelector('[data-section-progress]'),label=root?.querySelector('[data-section-progress-label]');const percent=data.progress.total?Math.floor(100*data.progress.done/data.progress.total):0;if(bar){bar.max=100;bar.value=percent;bar.textContent=`${percent}%`;}if(label)label.textContent=`${percent}% заполнено`;}
+        if(data.sections&&edit===savedEdit){const select=document.querySelector('[data-intake-jump-select]');if(select){const selected=select.value;select.replaceChildren(...data.sections.map(item=>{const option=document.createElement('option');option.value=item.key;option.textContent=item.title;return option;}));if(data.sections.some(item=>item.key===selected))select.value=selected;}}
         form.closest('[data-intake-page]')?.querySelectorAll('input[name="revision"]').forEach(e=>e.value=data.revision);
         if(data.calculations&&edit===savedEdit){const root=form.closest('[data-intake-page]');[['age',data.calculations.age??'нужна дата рождения'],['bmi',data.calculations.bmi??'не рассчитывается'],['bmi-inputs',data.calculations.bmi_inputs],['bmi-note',data.calculations.bmi_note]].forEach(([key,value])=>{const e=root?.querySelector('[data-intake-'+key+']');if(e)e.textContent=value;});}
         if(data.entity_id){
@@ -50,6 +53,7 @@
     }
     function changed(){
       dirty=true;edit++;
+      if(!conflict)show('Есть изменения. Сохраняю черновик…');
       const root=form.closest('[data-intake-page]');
       const bmi=root?.querySelector('[data-intake-bmi]');
       if(bmi){bmi.textContent='обновляется…';root.querySelector('[data-intake-bmi-inputs]').textContent='';root.querySelector('[data-intake-bmi-note]').textContent='Расчёт появится после сохранения текущих значений.';}
@@ -67,6 +71,10 @@
     window.addEventListener('beforeunload',event=>{if((dirty||busy)&&form.hasAttribute('data-intake-autosave')){event.preventDefault();event.returnValue='';}});
     branches();
   });
+  document.querySelectorAll('[data-intake-jump-select]').forEach(select=>select.addEventListener('change',()=>{
+    const button=select.closest('[data-intake-jump]').querySelector('[data-intake-jump-button]');
+    if(button.form)button.form.requestSubmit(button);
+  }));
   document.querySelectorAll('[data-memory-search]').forEach(input=>input.addEventListener('input',()=>{
     const words=input.value.toLocaleLowerCase('ru').replaceAll('ё','е').split(/\s+/).filter(Boolean);
     input.closest('details').querySelectorAll('[data-memory-item]').forEach(item=>{const text=item.textContent.toLocaleLowerCase('ru').replaceAll('ё','е');item.hidden=!words.every(word=>text.includes(word));});

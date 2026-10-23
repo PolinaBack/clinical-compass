@@ -1,0 +1,1 @@
+PASS redesign: reference-style cards, intro/privacy order, percentages, no legacy notes, strict female condition with preserved answers, jump during autosave, no-JS keyboard jump, clinician snapshot, 320/390/768/1280, eight axe checks, no JavaScript errors.

@@ -54,46 +54,49 @@ def test_sex_is_visible_and_cycle_appears_without_inventing_answers(client):
         assert cycle(restarted)["optional"]
 
 
-def test_manual_cycle_and_old_answers_survive_sex_changes_and_publication(client):
+def test_cycle_history_survives_sex_changes_without_showing_a_hidden_section(client):
     login(client, "patient1")
-    save(client, "personal", a_sex="Мужской")
-    assert cycle(client)["optional"]
-    assert client.get("/patients/1/profile/about/reproductive").status_code == 200
+    save(client, "personal", a_sex="Женский")
     assert (
         save(client, "reproductive", a_menstruation="Да", a_cycle_days="28").status_code
         == 303
     )
-    assert not cycle(client)["optional"]
-    save(client, "personal", a_sex="Предпочитаю обсудить лично")
-    assert not cycle(client)["optional"]
     with connect(client.app.state.db_path) as c:
-        before = intake.draft(c, 1)
+        rev = intake.draft(c, 1)["revision"]
     assert (
         client.post(
             "/patients/1/intake/submit",
-            data=dict(
-                csrf=token(client), revision=before["revision"], catalog_version=VERSION
-            ),
+            data=dict(csrf=token(client), revision=rev, catalog_version=VERSION),
         ).status_code
         == 200
     )
-    save(client, "personal", a_sex="Женский")
+    save(client, "personal", a_sex="Мужской")
+    assert cycle(client)["optional"]
+    assert client.get("/patients/1/profile/about/reproductive").status_code == 404
+    assert save(client, "reproductive", a_menstruation="Нет").status_code == 422
     with connect(client.app.state.db_path) as c:
         assert (
             intake.draft(c, 1)["answers"]["reproductive"]["cycle_days"]["value"] == "28"
         )
     login(client, "doctor")
-    page = client.get("/patients/1/profile/about/personal")
-    assert "Предпочитаю обсудить лично" in page.text
-    assert "data-intake-next" not in page.text
-    reproductive = client.get("/patients/1/profile/about/reproductive")
+    # The clinician sees the sent female snapshot, not the later private draft.
     assert (
-        reproductive.context["intake_data"]["answers"]["reproductive"]["cycle_days"][
-            "value"
-        ]
-        == "28"
+        client.get("/patients/1/profile/about/reproductive?submission_id=1").status_code
+        == 200
     )
     assert save(client, "personal", a_sex="Мужской").status_code == 403
+    login(client, "patient1")
+    save(client, "personal", a_sex="Женский")
+    assert not cycle(client)["optional"]
+    with TestClient(create_app(client.app.state.db_path)) as restarted:
+        login(restarted, "patient1")
+        page = restarted.get("/patients/1/profile/about/reproductive")
+        assert (
+            page.context["intake_data"]["answers"]["reproductive"]["cycle_days"][
+                "value"
+            ]
+            == "28"
+        )
 
 
 def test_next_saves_before_redirect_and_follows_relevant_sections(client):
@@ -219,7 +222,7 @@ def test_optional_cycle_statuses_do_not_assume_menstruation():
         data["answers"]["reproductive"] = dict(
             menstruation=dict(status="discuss", value=None)
         )
-        assert intake.reproductive_suggested(data)
+        assert not intake.reproductive_suggested(data)
     assert not intake.reproductive_suggested(
         dict(answers=dict(personal=dict(sex=dict(status="declined", value="Женский"))))
     )
