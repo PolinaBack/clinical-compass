@@ -33,6 +33,7 @@ from .portal import register_portal, portal_data
 from .community import register_community, public_forum_data
 from .family import register_family
 from .routes.drug_library import register_drug_library
+from .routes.medicine_drafts import register_medicine_drafts
 from .services.drug_library import bootstrap as bootstrap_drug_library
 from .routes.meetings import register_meetings
 from .routes.experimental_ai import register_experimental_ai
@@ -672,6 +673,8 @@ def create_app(db_path=None):
         if identity(request) != "doctor":
             raise HTTPException(403, "Библиотека лекарств доступна специалисту")
 
+    # Fixed draft routes must precede the drug-card /{slug} catch-all.
+    register_medicine_drafts(app, db, account, doctor_reference_access, csrf_check, render)
     register_drug_library(app, db, account, doctor_reference_access, csrf_check, render)
 
     @app.get("/reference/aviandr/archive")

@@ -47,11 +47,22 @@ def cipher(db_path, c):
         patient_ai = c.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='patient_ai_runs'"
         ).fetchone()
+        medicine_drafts = c.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='medicine_drafts'"
+        ).fetchone()
         if (
-            patient_ai and c.execute("SELECT 1 FROM patient_ai_runs LIMIT 1").fetchone()
-        ) or c.execute(
-            "SELECT 1 FROM clinical_attachments WHERE content IS NOT NULL LIMIT 1"
-        ).fetchone():
+            (
+                patient_ai
+                and c.execute("SELECT 1 FROM patient_ai_runs LIMIT 1").fetchone()
+            )
+            or (
+                medicine_drafts
+                and c.execute("SELECT 1 FROM medicine_drafts LIMIT 1").fetchone()
+            )
+            or c.execute(
+                "SELECT 1 FROM clinical_attachments WHERE content IS NOT NULL LIMIT 1"
+            ).fetchone()
+        ):
             raise HTTPException(
                 503,
                 "Не найден прежний ключ вложений. Восстановите ключ из защищённой резервной копии; новый ключ не создаётся.",

@@ -1,0 +1,1 @@
+PASS: live search/manufacturer, independent catalogue actions; inline add/return with 3 pairs; manual-only required fields, custom format, real encrypted saves/reload/two cards/check/back; patient denied. 25 axe A/AA audits at 320/390/768/1280/1920, no overflow or JS errors. Fictional temporary DB, no models.

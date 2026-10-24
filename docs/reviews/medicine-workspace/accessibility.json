@@ -1,0 +1,127 @@
+[
+  {
+    "width": 320,
+    "page": "catalogue",
+    "violations": []
+  },
+  {
+    "width": 320,
+    "page": "card",
+    "violations": []
+  },
+  {
+    "width": 320,
+    "page": "comparison",
+    "violations": []
+  },
+  {
+    "width": 320,
+    "page": "draft",
+    "violations": []
+  },
+  {
+    "width": 320,
+    "page": "history",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "catalogue",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "card",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "comparison",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "draft",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "history",
+    "violations": []
+  },
+  {
+    "width": 768,
+    "page": "catalogue",
+    "violations": []
+  },
+  {
+    "width": 768,
+    "page": "card",
+    "violations": []
+  },
+  {
+    "width": 768,
+    "page": "comparison",
+    "violations": []
+  },
+  {
+    "width": 768,
+    "page": "draft",
+    "violations": []
+  },
+  {
+    "width": 768,
+    "page": "history",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "catalogue",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "card",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "comparison",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "draft",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "history",
+    "violations": []
+  },
+  {
+    "width": 1920,
+    "page": "catalogue",
+    "violations": []
+  },
+  {
+    "width": 1920,
+    "page": "card",
+    "violations": []
+  },
+  {
+    "width": 1920,
+    "page": "comparison",
+    "violations": []
+  },
+  {
+    "width": 1920,
+    "page": "draft",
+    "violations": []
+  },
+  {
+    "width": 1920,
+    "page": "history",
+    "violations": []
+  }
+]

@@ -25,16 +25,20 @@ def check_medicines(patient, doctor, url):
     )
     query.fill("эсциталопрам")
     doctor.get_by_role("button", name="Найти", exact=True).click()
-    expect(doctor.locator(".medicine-catalog a")).to_have_count(1)
-    expect(doctor.locator(".medicine-catalog a")).to_contain_text("Ципралекс")
+    expect(doctor.locator(".medicine-catalog .medicine-product")).to_have_count(1)
+    expect(doctor.locator(".medicine-catalog .medicine-product")).to_contain_text(
+        "Эсциталопрам"
+    )
     doctor.goto(url + "/medicines/aviandr")
     expect(
         doctor.get_by_text("Подтверждённых данных в нашей базе нет.", exact=False).first
     ).to_be_visible()
     doctor.goto(url + "/medicines/combinations")
     for code in ("D01", "D02", "D04"):
-        doctor.locator(f'input[name="drug"][value="{code}"]').check()
-    doctor.get_by_role("button", name="Проверить сочетания", exact=True).click()
+        form = doctor.locator("#medicine-picker form").filter(
+            has=doctor.locator(f'input[name="code"][value="{code}"]')
+        )
+        form.get_by_role("button", name="+ Добавить", exact=True).click()
     expect(doctor.locator(".medicine-pair")).to_have_count(3)
     expect(
         doctor.get_by_text(
@@ -68,8 +72,18 @@ def check_medicines(patient, doctor, url):
     sheet.append(
         ["warnings", "СИНТЕТИЧЕСКИЙ ТЕКСТ ДЛЯ БРАУЗЕРНОГО ТЕСТА", "Тестовый раздел"]
     )
-    w.create_sheet("Взаимодействия").append(
+    interactions = w.create_sheet("Взаимодействия")
+    interactions.append(
         ["Препарат A", "Препарат B", "Уровень", "Объяснение", "Раздел/страница"]
+    )
+    interactions.append(
+        [
+            "D01",
+            "D02",
+            "caution",
+            "СИНТЕТИЧЕСКОЕ ПРАВИЛО ДЛЯ ПРОВЕРКИ ВИДИМОСТИ",
+            "Тестовый раздел",
+        ]
     )
     data = io.BytesIO()
     w.save(data)
@@ -117,6 +131,10 @@ def check_medicines(patient, doctor, url):
     expect(
         doctor.get_by_text("СИНТЕТИЧЕСКИЙ ТЕКСТ ДЛЯ БРАУЗЕРНОГО ТЕСТА", exact=True)
     ).to_be_visible()
+    doctor.goto(url + "/medicines/combinations?drug=D01&drug=D02")
+    expect(
+        doctor.get_by_text("СИНТЕТИЧЕСКОЕ ПРАВИЛО ДЛЯ ПРОВЕРКИ ВИДИМОСТИ", exact=True)
+    ).to_be_visible()
     doctor.goto(url + source_path)
     doctor.get_by_label("Действие", exact=True).select_option("withdraw")
     doctor.get_by_label("Обоснование / разрешение разногласий", exact=True).fill(
@@ -134,7 +152,7 @@ def check_medicines(patient, doctor, url):
     doctor.get_by_label("Название, МНН или действующее вещество", exact=True).focus()
     doctor.keyboard.type("Авиандр")
     doctor.keyboard.press("Enter")
-    expect(doctor.locator(".medicine-catalog a")).to_have_count(1)
+    expect(doctor.locator(".medicine-catalog .medicine-product")).to_have_count(1)
     # Patient and emergency paths remain independent of this physician reference.
     denied = patient.goto(url + "/medicines")
     assert denied.status == 403

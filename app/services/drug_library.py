@@ -641,15 +641,26 @@ def sources(c, code=None, include_inactive=False):
 
 
 def search(c, q="", group="", status=""):
+    from app.services.medicine_reference import enrich
+
     drugs = current(c, "drug")
     verified = {s["meta"]["drug_code"] for s in sources(c)}
     words = normalize(q).split()
     result = []
     for code, d in drugs.items():
+        d = enrich(d)
         hay = normalize(
             " ".join(
                 str(d.get(k, ""))
-                for k in ["name", "inn", "substance", "aliases", "atc"]
+                for k in [
+                    "name",
+                    "inn",
+                    "substance",
+                    "aliases",
+                    "atc",
+                    "group",
+                    "manufacturer",
+                ]
             )
         )
         if not all(w in hay for w in words) or (group and group != d["group"]):
@@ -669,6 +680,8 @@ def search(c, q="", group="", status=""):
 
 
 def check_pairs(c, codes):
+    from app.services.medicine_reference import enrich, pair
+
     codes = list(dict.fromkeys(codes))
     drugs = current(c, "drug")
     if not 2 <= len(codes) <= 20 or any(code not in drugs for code in codes):
@@ -684,6 +697,12 @@ def check_pairs(c, codes):
                 dict(**p, source=s) for p in s["meta"]["pairs"] if p["key"] == key
             )
         results.append(
-            dict(a=drugs[a], b=drugs[b], known=known, candidate=draft.get(key))
+            dict(
+                a=enrich(drugs[a]),
+                b=enrich(drugs[b]),
+                known=known,
+                candidate=draft.get(key),
+                editorial=pair(a, b),
+            )
         )
     return results

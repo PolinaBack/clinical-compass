@@ -1,33 +1,30 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="section-page-heading">
-        <h1>Библиотека препаратов</h1>
-        <p>Поиск справочной информации для специалиста. Данные справочника не изменяют назначения пациентам.</p>
+<div class="section-page-heading"><p class="medicine-eyebrow">Библиотека специалиста</p><h1>Библиотека препаратов</h1><p>Справочные карточки, проверка сочетаний и учебные черновики назначений.</p></div>
+{% include 'medicine_nav.html' %}
+<p class="medicine-notice">Редакционная справка · сведения требуют сверки по актуальной инструкции конкретной формы. Не является основанием для реального назначения.</p>
+<form class="card medicine-search" action="/medicines" method="get" role="search" data-catalog-search>
+    <label for="medicine-query">Название, МНН или действующее вещество</label>
+    <input id="medicine-query" name="q" value="{{ q }}" type="search" maxlength="200" autocomplete="off" list="medicine-suggestions" placeholder="Поиск по названию, МНН, группе или производителю">
+    <datalist id="medicine-suggestions"></datalist><span id="medicine-suggestion-status" role="status" class="caption"></span>
+    <div class="medicine-filters">
+        <label>Группа<select name="group"><option value="">Все группы</option>{% for g in groups %}<option {% if group == g %}selected{% endif %}>{{ g }}</option>{% endfor %}</select></label>
+        <label>Проверка источника<select name="status"><option value="">Все записи</option><option value="verified" {% if status == 'verified' %}selected{% endif %}>Есть проверенный источник</option><option value="unverified" {% if status == 'unverified' %}selected{% endif %}>Требуется проверка</option></select></label>
+        <button>Найти</button><a href="/medicines">Сбросить</a>
     </div>
-    {% include 'medicine_nav.html' %}
-    <form class="card medicine-search" action="/medicines" method="get" role="search">
-        <label for="medicine-query">Название, МНН или действующее вещество</label>
-        <input id="medicine-query" name="q" value="{{ q }}" type="search" maxlength="200" autocomplete="off" list="medicine-suggestions" placeholder="Например, Авиандр или маритупирдин">
-        <datalist id="medicine-suggestions"></datalist>
-        <span id="medicine-suggestion-status" role="status" class="caption"></span>
-        <div class="medicine-filters">
-            <label>Группа<select name="group"><option value="">Все группы</option>{% for g in groups %}<option {% if group == g %}selected{% endif %}>{{ g }}</option>{% endfor %}</select></label>
-            <label>Проверка источника<select name="status"><option value="">Все записи</option><option value="verified" {% if status == 'verified' %}selected{% endif %}>Есть проверенный источник</option><option value="unverified" {% if status == 'unverified' %}selected{% endif %}>Требуется проверка</option></select></label>
-            <button>Найти</button><a href="/medicines">Сбросить</a>
+</form>
+<p role="status" data-catalog-count>Найдено: {{ medicines|length }}. Сверка относится к отдельным сведениям и конкретной форме.</p>
+{% if comparison %}<p class="medicine-selection-info"><a href="/medicines/combinations">В проверке: {{ comparison|length }} →</a> <span>Набор для проверки сохраняется отдельно от черновика назначения.</span></p>{% endif %}
+<div class="medicine-catalog">
+{% for medicine in medicines %}
+    <article class="card medicine-product" data-catalog-card data-search="{{ medicine.name }} {{ medicine.inn }} {{ medicine.aliases }} {{ medicine.atc }} {{ medicine.group }} {{ medicine.manufacturer }}" data-group="{{ medicine.group }}" data-verified="{{ '1' if medicine.verified else '0' }}">
+        <span class="medicine-group">{{ medicine.group }}</span><h2><a href="/medicines/{{ medicine.slug }}">{{ medicine.name }}</a></h2>
+        <p>МНН: {{ medicine.inn }}</p><p>{{ medicine.strength }} · {{ medicine.form }} · № {{ medicine.package|replace(' шт.', '') }}</p><p class="caption">{{ medicine.manufacturer }}</p>
+        <div class="medicine-actions"><a class="button" href="/medicines/{{ medicine.slug }}">Открыть карточку</a>
+            <form action="/medicines/combinations/selection" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="add"><input type="hidden" name="code" value="{{ medicine.code }}"><input type="hidden" name="return_to" value="{{ catalogue_return }}">{% for code in comparison %}<input type="hidden" name="selected" value="{{ code }}">{% endfor %}<button class="medicine-secondary" {% if medicine.code in comparison %}disabled{% endif %}>{{ 'В проверке ✓' if medicine.code in comparison else '+ В проверку' }}</button></form>
+            <a class="button medicine-secondary" href="/medicines/prescriptions?add={{ medicine.code }}">Назначить</a>
         </div>
-    </form>
-    <p role="status">Найдено: {{ medicines|length }}. Проверка относится только к отдельным сведениям и конкретной форме в источнике.</p>
-    <div class="grid two medicine-catalog">
-        {% for medicine in medicines %}
-            <a class="card profile-tile" href="/medicines/{{ medicine.slug }}">
-                <h2>{{ medicine.name }}</h2>
-                <p>МНН / действующее вещество: <strong>{{ medicine.inn }}</strong></p>
-                <p>{{ medicine.group }} · АТХ {{ medicine.atc }}</p>
-                <p>Форма из Excel: {{ medicine.form or 'не указана' }}</p>
-                <span class="medicine-badge">{{ 'Есть проверенный источник' if medicine.verified else 'Требуется проверка источника' }}</span>
-                <span>Информация о лекарстве</span></a>
-        {% else %}
-            <p>Совпадений нет. Попробуйте название или МНН без фильтров.</p>
-        {% endfor %}
-    </div>
+    </article>
+{% else %}<p>Совпадений нет. Попробуйте название или МНН без фильтров.</p>{% endfor %}
+</div>
 {% endblock %}

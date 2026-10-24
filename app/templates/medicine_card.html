@@ -1,37 +1,25 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>{{ drug.name }}</h1>
-{% include 'medicine_nav.html' %}
-<section class="card">
-    <h2>Идентификация записи {{ drug.code }}</h2>
-    <p>МНН / действующее вещество: <strong>{{ drug.inn }}</strong>. Группа: {{ drug.group }}. АТХ: {{ drug.atc }}.</p>
-    <p>Форма из исходной библиотеки: {{ drug.form or 'не указана' }}. Примеры брендов: {{ drug.aliases or 'не указаны' }}.</p>
-    <p class="caption">Идентификационные данные загружены из Excel. Они не подтверждают регистрацию всех перечисленных брендов и форм.</p>
-    <a href="/medicines/import/{{ drug._import }}">Источник и версия записи</a>
-    {% if drug.code == 'D01' %}<p><a href="/reference/aviandr/source">Исходный листок-вкладыш PDF</a> · <a href="/reference/aviandr/archive">Сохранённая справка по листку</a>. Актуальность листка по ГРЛС не подтверждена.</p>{% endif %}
-</section>
-<div class="notice">Справочник не назначает и не отменяет лечение. Сведения применимы только к указанному в проверенном источнике продукту и форме. Для клинического решения нужны действующая инструкция, российские клинические рекомендации и решение врача.</div>
-{% for field,label in fields.items() %}
-<section class="card medicine-fact">
-    <h2>{{ label }}</h2>
-    {% for f in facts[field] %}
-        <p class="medicine-preserve">{{ f.text }}</p>
-        <p>Раздел/страница: {{ f.locator }}. РУ: {{ f.source.meta.registration }}. Форма: {{ f.source.meta.product_form }}.</p>
-        <p><a href="{{ f.source.meta.source_url }}" target="_blank" rel="noopener noreferrer">Первоисточник ГРЛС</a> · <a href="/medicines/import/{{ f.source.id }}">Проверка и история</a></p>
-        <p class="caption">Редакция: {{ f.source.meta.version }}. Дата сверки врачом: {{ f.source.meta.checked_on }}; повторная сверка до {{ f.source.meta.valid_until }}. Сверка выполнена вручную, не автоматически.</p>
-    {% else %}<p>Подтверждённых данных в нашей базе нет. Отсутствие сведений не означает отсутствие противопоказаний, реакций или взаимодействий.</p>{% endfor %}
-    {% if facts[field]|length > 1 %}<p class="warning">Несколько источников: проверьте различия форм и формулировок. Система не объединяет их в рекомендацию.</p>{% endif %}
-</section>
-{% endfor %}
-<section class="card"><h2>Официальные документы и их статусы</h2>
-{% for s in refs %}<p><a href="/medicines/import/{{ s.id }}">{{ s.filename }} · {{ s.meta.version }}</a> — {{ 'проверен врачом в указанном объёме' if s.active else 'не проверен, заменён, отозван или срок сверки истёк' }}.</p>{% else %}<p>Официальный документ для этой записи пока не загружен.</p>{% endfor %}
-<a href="/medicines/import">Загрузить документ или обновление</a></section>
-<details class="card"><summary>Неподтверждённые исходные данные Excel — для вычитки</summary>
-    <p class="warning">Ниже исходные утверждения авторов Excel. Они могут быть неполными, противоречивыми или устаревшими. Не являются проверенными показаниями, дозировками или клиническими правилами. Пустые ячейки не заполнены предположениями.</p>
-    {% for block in raw %}<h2>{{ block.sheet }}</h2><p><a href="/medicines/import/{{ block.import_id }}">Версия источника</a></p>
-    {% for rownum,row in block.rows %}<details><summary>Строка {{ rownum }}</summary><ol>{% for cell in row %}<li>{{ cell if cell is not none else 'Нет данных в источнике' }}</li>{% endfor %}</ol></details>{% endfor %}{% endfor %}
-    <h2>Нежелательные реакции из книги категорий</h2><p>Записей: {{ adverse|length }}. Частоты и приоритеты не подтверждены и не включаются в алерты автоматически.</p>
-    {% for a in adverse %}<details><summary>{{ a.raw['Категория'] }} · {{ a.raw['Медицинский термин'] }}</summary><dl>{% for k,v in a.raw.items() %}<dt>{{ k }}</dt><dd>{{ v if v is not none else 'Нет данных в источнике' }}</dd>{% endfor %}</dl></details>{% endfor %}
-</details>
-<section class="card"><h2>История карточки</h2>{% for h in history %}<p><a href="/medicines/import/{{ h.import_id }}">Версия #{{ h.import_id }} · {{ h.filename }} · {{ h.created_at }}</a></p>{% endfor %}<p>Обновления добавляют версии. Прежние исходники и решения о проверке сохраняются.</p></section>
+{% include 'medicine_nav.html' %}<a class="medicine-back" href="{{ card_return }}">← Вернуться к выбранному разделу</a>
+<div class="medicine-card-layout">
+    <nav class="card medicine-toc" aria-label="Разделы карточки"><h2>Разделы карточки</h2>{% for section in drug.reference.sections %}<a href="#medicine-{{ section.key }}">{{ section.title }}</a>{% endfor %}<a href="#medicine-registry">Реестр нежелательных реакций</a><a href="#medicine-sources">Документы и проверка</a></nav>
+    <div class="medicine-card-main">
+        <section class="medicine-card-heading"><p class="medicine-eyebrow">Карточка препарата · {{ drug.code }}</p><h1>{{ drug.name }}</h1><p>МНН: <strong>{{ drug.inn }}</strong> · {{ drug.group }}</p>
+            <dl class="medicine-metadata"><div><dt>Производитель</dt><dd>{{ drug.manufacturer }}</dd></div><div><dt>Форма и дозировка</dt><dd>{{ drug.form }}, {{ drug.strength }}</dd></div><div><dt>Количество</dt><dd>{{ drug.package }}</dd></div><div><dt>Регистрационный номер · требует сверки</dt><dd>{{ drug.registration }}</dd></div><div><dt>АТХ</dt><dd>{{ drug.atc }}</dd></div><div><dt>Справочная дата · не дата сверки</dt><dd>{{ drug.reference.reference_date }}</dd></div></dl>
+            <div class="medicine-actions"><form action="/medicines/combinations/selection" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="add"><input type="hidden" name="code" value="{{ drug.code }}"><input type="hidden" name="return_to" value="{{ self_return }}">{% if comparison_patient is not none %}<input type="hidden" name="draft_patient" value="{{ comparison_patient }}">{% endif %}{% for code in comparison %}<input type="hidden" name="selected" value="{{ code }}">{% endfor %}<button {% if drug.code in comparison %}disabled{% endif %}>{{ 'В проверке ✓' if drug.code in comparison else '+ Для проверки' }}</button></form><a class="button medicine-secondary" href="/medicines/prescriptions?add={{ drug.code }}">Назначить пациенту</a><a class="button medicine-secondary" href="{{ comparison_link }}">Проверить сочетания</a></div>
+        </section>
+        <aside class="medicine-notice"><strong>Редакционная справка, не полная официальная инструкция.</strong> Регистрационные сведения, противопоказания, дозы и частоты требуют сверки по действующей ОХЛП выбранной формы.<p>{{ drug.reference.discrepancy }}</p></aside>
+        {% for section in drug.reference.sections %}<section class="card medicine-fact" id="medicine-{{ section.key }}"><h2>{{ section.title }}</h2><p class="medicine-preserve">{{ section.text }}</p>{% if section.key == 'adverse' %}<a href="#medicine-registry">По системам и частотам: {{ drug.reference.reactions|length }} записей →</a>{% endif %}</section>{% endfor %}
+        <section class="card medicine-fact" id="medicine-registry"><h2>Реестр нежелательных реакций</h2><p>Записей: {{ drug.reference.reactions|length }}. Перечень неполный, частоты не подтверждены для выбранной упаковки и не переносятся между формами. Лабораторные изменения требуют отдельной врачебной оценки.</p>{% for system, rows in drug.reference.reactions|groupby('system') %}<details class="medicine-reaction-group"><summary>{{ system }} <span class="medicine-group">{{ rows|length }}</span></summary><dl>{% for row in rows %}<div class="medicine-reaction"><dt>{{ row.term }}</dt><dd>{{ row.frequency }} · требует сверки</dd></div>{% endfor %}</dl></details>{% endfor %}</section>
+        <section class="card medicine-fact" id="medicine-sources"><h2>Документы и проверка</h2><p>Справочные внешние страницы могут описывать другое торговое наименование или форму; это не подтверждение актуальности выбранного РУ.</p><ul>{% for url in drug.reference.links %}<li><a href="{{ url }}" target="_blank" rel="noopener noreferrer">{{ 'Справочная страница Видаль' if 'vidal.ru' in url else 'Дополнительная справочная страница' }}</a> · не сверено</li>{% endfor %}</ul>
+        {% if drug.code == 'D01' %}<p><a href="/reference/aviandr/source">Сохранённый листок-вкладыш</a> · <a href="/reference/aviandr/archive">Прежняя справка</a>. Актуальность по ГРЛС не подтверждена.</p>{% endif %}
+        <h3>Подтверждённые фрагменты</h3><p>Ниже только отдельно проверенные врачом документы с указанием конкретного продукта и формы. Они не подтверждают автоматически редакционную карточку выше.</p>
+        {% for field,label in fields.items() %}{% if facts[field] %}<h3>{{ label }}</h3>{% for f in facts[field] %}<p class="medicine-preserve">{{ f.text }}</p><p>{{ f.locator }} · РУ {{ f.source.meta.registration }} · {{ f.source.meta.product_form }}</p><p><a href="{{ f.source.meta.source_url }}" target="_blank" rel="noopener noreferrer">Первоисточник ГРЛС</a> · <a href="/medicines/import/{{ f.source.id }}">Версия и решение врача</a>. Редакция {{ f.source.meta.version }}, сверка {{ f.source.meta.checked_on }}, повторная до {{ f.source.meta.valid_until }}.</p>{% endfor %}{% endif %}{% endfor %}
+        {% if not refs|selectattr('active')|list %}<p>Подтверждённых данных в нашей базе нет. Отсутствие сведений не означает отсутствие противопоказаний, реакций или взаимодействий.</p>{% endif %}
+        {% for s in refs %}<p><a href="/medicines/import/{{ s.id }}">{{ s.filename }} · {{ s.meta.version }}</a> — {{ 'проверен врачом в указанном объёме' if s.active else 'не проверен, заменён, отозван или срок сверки истёк' }}.</p>{% endfor %}<a href="/medicines/import">Загрузить документ или обновление</a></section>
+        <details class="card"><summary>Неподтверждённые исходные данные Excel — для вычитки</summary><p>Прежние записи и версии сохранены. Они не являются проверенными клиническими правилами.</p>{% for block in raw %}<h3>{{ block.sheet }}</h3><a href="/medicines/import/{{ block.import_id }}">Версия источника</a>{% for rownum,row in block.rows %}<details><summary>Строка {{ rownum }}</summary><ol>{% for cell in row %}<li>{{ cell if cell is not none else 'Нет данных в источнике' }}</li>{% endfor %}</ol></details>{% endfor %}{% endfor %}
+        <h3>Прежние категории реакций: {{ adverse|length }}</h3>{% for a in adverse %}<details><summary>{{ a.raw['Категория'] }} · {{ a.raw['Медицинский термин'] }}</summary><dl>{% for k,v in a.raw.items() %}<dt>{{ k }}</dt><dd>{{ v if v is not none else 'Нет данных в источнике' }}</dd>{% endfor %}</dl></details>{% endfor %}
+        <h3>История карточки</h3>{% for h in history %}<p><a href="/medicines/import/{{ h.import_id }}">Версия #{{ h.import_id }} · {{ h.filename }} · {{ h.created_at }}</a></p>{% endfor %}</details>
+    </div>
+</div>
 {% endblock %}

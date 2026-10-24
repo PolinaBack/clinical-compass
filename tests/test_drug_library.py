@@ -81,8 +81,8 @@ def test_bootstrap_all_sheets_and_search(client):
     for query, name in [
         ("авиАНДР", "Авиандр"),
         ("маритупирдин", "Авиандр"),
-        ("эсциталопрам", "Ципралекс"),
-        ("серлифт", "Асентра"),
+        ("эсциталопрам", "Эсциталопрам"),
+        ("серлифт", "Сертралин"),
     ]:
         r = client.get("/api/medicines/suggest", params={"q": query})
         assert r.json()["results"][0]["name"] == name
@@ -197,7 +197,7 @@ def test_combinations_two_three_and_unknown(client):
     ).text
     assert html.count('class="card medicine-pair"') == 3
     assert html.count("Подтверждённое взаимодействие не найдено в нашей базе.") == 3
-    assert html.count("Есть неподтверждённая запись Excel") == 2
+    assert html.count("Прежняя неподтверждённая запись Excel") == 2
     assert "Это не означает, что взаимодействий нет." in html
     assert (
         "Проверено пар: 1."
@@ -205,7 +205,7 @@ def test_combinations_two_three_and_unknown(client):
             "/medicines/combinations", params={"drug": ["D01", "D02", "D01"]}
         ).text
     )
-    assert client.get("/medicines/combinations?drug=D01").status_code == 422
+    assert client.get("/medicines/combinations?drug=D01").status_code == 200
     assert client.get("/medicines/combinations?drug=D01&drug=D99").status_code == 422
 
 
@@ -263,6 +263,10 @@ def test_official_review_provenance_withdrawal_expiry(client):
     assert "СИНТЕТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ" in client.get("/medicines/aviandr").text
     html = client.get("/medicines/combinations?drug=D01&drug=D02&drug=D04").text
     assert html.count("СИНТЕТИЧЕСКОЕ ВЗАИМОДЕЙСТВИЕ") == 1
+    # Existing reviewed warnings remain visible before optional, collapsed archives.
+    assert html.index("СИНТЕТИЧЕСКОЕ ВЗАИМОДЕЙСТВИЕ") < html.index(
+        "Инструкции, проверка и ограничения"
+    )
     assert (
         "Тестовый раздел 5" in html
         and html.count("Подтверждённое взаимодействие не найдено") == 2
