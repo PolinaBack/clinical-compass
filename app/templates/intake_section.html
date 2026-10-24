@@ -10,6 +10,7 @@
 {% if category.total %}<progress class="intake-progress" data-section-progress value="{{ category.percent }}" max="100" aria-label="Заполнение раздела">{{ category.percent }}%</progress>{% endif %}
 {% set jump_editable=not intake_readonly and consent %}{% set jump_current=category.key %}{% include 'intake_jump.html' %}
 {% include 'intake_category_banner.html' %}
+{% set request_category=category.key %}{% include 'information_request_notice.html' %}
 {% if request.query_params.get('saved') or request.query_params.get('files_saved') %}<p role="status" class="success">Сохранено в черновике.</p>{% endif %}
 {% include 'intake_section_records.html' %}
 {% if not intake_readonly and consent %}

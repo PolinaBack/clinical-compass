@@ -18,8 +18,16 @@
     form.querySelector('[data-calendar-free-note]').hidden = !free;
     document.querySelector('[data-calendar-editor-title]').textContent = free ? 'Свободные часы' : appointment ? 'Назначить встречу' : 'Запись прошедшей встречи';
   };
-  form.elements.event_kind.addEventListener('change', updateMode);
   updateMode();
+  let endEdited = false;
+  const setDefaultEnd = () => {
+    const parts = form.elements.time.value.split(':').map(Number);
+    const end = parts[0]*60 + parts[1] + 50;
+    form.elements.end_time.value = String(Math.floor(end/60)%24).padStart(2,'0') + ':' + String(end%60).padStart(2,'0');
+    form.elements.ends_next_day.checked = end >= 1440;
+  };
+  form.elements.end_time.addEventListener('input', () => { endEdited = true; });
+  form.elements.time.addEventListener('change', () => { if (!endEdited) setDefaultEnd(); });
   const open = (value, mode = 'free') => {
     const [day, time] = value.split('T');
     if (day) form.elements.date.value = day;
@@ -29,7 +37,9 @@
       form.elements.patient_id.value = document.querySelector('.calendar-patient-picker select')?.value || '';
     }
     updateMode();
-    editor.open = true;
+    endEdited = false;
+    setDefaultEnd();
+    editor.hidden = false;
     editor.scrollIntoView({block: 'center', behavior: 'smooth'});
     form.elements.time.focus({preventScroll: true});
   };
@@ -43,7 +53,7 @@
     if (selected?.value) form.elements.patient_id.value = selected.value;
     open(day + 'T10:00', 'past');
   });
-  document.querySelector('[data-calendar-close]')?.addEventListener('click', () => { editor.open = false; });
+  document.querySelector('[data-calendar-close]')?.addEventListener('click', () => { editor.hidden = true; });
   document.querySelectorAll('[data-calendar-slot]').forEach(button => button.addEventListener('click', () => {
     const panel = document.getElementById('calendar-slot-details');
     panel.hidden = false;
@@ -61,4 +71,6 @@
     // Keep the chooser usable if the browser returns after a stale-slot error.
     // The server scopes the actual booking to the patient ID in the route.
   });
+  const scroll = document.querySelector('[data-calendar-scroll]');
+  if (scroll) scroll.scrollTop = 8 * 32;
 })();

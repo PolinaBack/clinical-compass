@@ -21,6 +21,7 @@
         {% if current_page is defined and '/ai-analysis' in current_page %}<link rel="stylesheet" href="{{ asset_url('experimental_ai.css') }}"><script src="{{ asset_url('patient_ai.js') }}" defer></script>{% endif %}
         {% if current_page is defined and '/family' in current_page %}<link rel="stylesheet" href="{{ asset_url('family.css') }}"><script src="{{ asset_url('family.js') }}" defer></script>{% endif %}
         <script src="{{ asset_url('diary.js') }}" defer></script>
+        {% if '/diary/questions/' in current_page %}<script src="{{ asset_url('diary_question_builder.js') }}" defer></script>{% endif %}
         <script src="{{ asset_url('app.js') }}" defer></script><script src="{{ asset_url('workflows.js') }}" defer></script>
     </head>
     <body class="portal-shell {{ 'signed-in' if user else '' }} {{ 'specialist-space' if user == 'doctor' else 'patient-space' }} {{ 'minimal-ui' if interface_prefs and interface_prefs.minimal else '' }}">

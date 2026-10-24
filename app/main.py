@@ -370,12 +370,16 @@ def create_app(db_path=None):
         )
         with db() as c:
             extras = read_diary_extras(c, pid)
+            from .services.information_requests import listing
+
+            information_requests = listing(c, account(request), pid)
         return dict(
             patient=p,
             today=date.today().isoformat(),
             points=points,
             consent=has_consent(pid),
             assessment_data=overview(db, pid),
+            information_requests=information_requests,
             latest_diary=max(
                 data["diary"], key=lambda r: (r["day"], r["id"]), default=None
             ),

@@ -235,7 +235,32 @@ def create(c, user, form):
         check_scope(c, user, pid, doctor=True)
     value = str(form.get("date", "")) + "T" + str(form.get("time", ""))
     begins = slots.local_start(value, label)
-    minutes = slots.duration(form.get("duration_minutes"))
+    if form.get("end_time"):
+        if form.get("duration_minutes") or form.get("ends_next_day", "") not in (
+            "",
+            "yes",
+        ):
+            raise HTTPException(
+                422, "Укажите время окончания без отдельной длительности."
+            )
+        try:
+            ending_time = datetime.strptime(str(form["end_time"]), "%H:%M").strftime(
+                "%H:%M"
+            )
+        except ValueError:
+            raise HTTPException(422, "Проверьте время окончания.") from None
+        ending_day = begins.date() + timedelta(
+            days=int(form.get("ends_next_day") == "yes")
+        )
+        ending = slots.local_start(ending_day.isoformat() + "T" + ending_time, label)
+        minutes = slots.duration(
+            (
+                ending.astimezone(slots.UTC) - begins.astimezone(slots.UTC)
+            ).total_seconds()
+            / 60
+        )
+    else:
+        minutes = slots.duration(form.get("duration_minutes"))
     mode = form.get("event_kind") or ("appointment" if pid else "free")
     if mode not in ("free", "appointment", "past"):
         raise HTTPException(422, "Выберите свободные часы или назначение встречи.")

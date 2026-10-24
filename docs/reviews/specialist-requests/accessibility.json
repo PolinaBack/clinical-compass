@@ -1,0 +1,98 @@
+[
+  {
+    "page": "profile",
+    "role": "doctor",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "profile",
+    "role": "doctor",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "profile",
+    "role": "doctor",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "profile",
+    "role": "doctor",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "calendar",
+    "role": "doctor",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "calendar",
+    "role": "doctor",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "calendar",
+    "role": "doctor",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "calendar",
+    "role": "doctor",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "builder",
+    "role": "doctor",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "builder",
+    "role": "doctor",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "builder",
+    "role": "doctor",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "builder",
+    "role": "doctor",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "requests",
+    "role": "patient",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "requests",
+    "role": "patient",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "requests",
+    "role": "patient",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "requests",
+    "role": "patient",
+    "width": 1280,
+    "violations": []
+  }
+]

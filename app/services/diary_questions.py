@@ -44,6 +44,38 @@ MODULES = {
 }
 
 
+def condition_groups(question=None):
+    groups = []
+    for trigger, limit, title in (
+        ("wellbeing_lte", 10, "Самочувствие"),
+        ("sleep_lte", 24, "Длительность сна"),
+    ):
+        values = (
+            {i / 2 for i in range(limit * 2 + 1)}
+            if trigger == "sleep_lte"
+            else set(range(limit + 1))
+        )
+        if (
+            question
+            and question["trigger"] == trigger
+            and question["threshold"] is not None
+        ):
+            values.add(question["threshold"])
+        groups.append(
+            (
+                title,
+                [
+                    (
+                        f"{trigger}:{value:g}",
+                        f"{title} {value:g}{' ч' if trigger == 'sleep_lte' else ''} или ниже",
+                    )
+                    for value in sorted(values)
+                ],
+            )
+        )
+    return groups
+
+
 def legacy_config(row):
     r = dict(row)
     return dict(
@@ -230,15 +262,21 @@ def configuration(form):
         raise HTTPException(
             422, "Для интервала нужна начальная дата; конец не может быть раньше начала"
         ) from None
-    trigger = str(form.get("trigger", "always"))
+    if "condition" in form:
+        if "trigger" in form or "threshold" in form:
+            raise HTTPException(422, "Выберите одно условие показа")
+        condition = str(form["condition"]).split(":", 1)
+        trigger = condition[0]
+        raw_threshold = condition[1] if len(condition) == 2 else ""
+    else:
+        trigger = str(form.get("trigger", "always"))
+        raw_threshold = str(form.get("threshold", ""))
     if trigger not in ("always", "wellbeing_lte", "sleep_lte", "missed"):
         raise HTTPException(422, "Проверьте условие показа")
-    if trigger.endswith("_lte") and not str(form.get("threshold", "")).strip():
+    if trigger.endswith("_lte") and not raw_threshold.strip():
         raise HTTPException(422, "Укажите порог условия показа")
     threshold = (
-        float(number(form.get("threshold"), "Порог"))
-        if trigger.endswith("_lte")
-        else None
+        float(number(raw_threshold, "Порог")) if trigger.endswith("_lte") else None
     )
     if threshold is not None and not 0 <= threshold <= (
         24 if trigger == "sleep_lte" else 10
@@ -269,6 +307,8 @@ def save_definition(c, pid, user, form, mid=None):
             raise HTTPException(404, "Вопрос не найден")
         if str(form.get("revision", "")) != str(old["version"]):
             raise HTTPException(409, "Вопрос уже изменился. Обновите страницу.")
+        if "position" not in form:
+            definition["position"] = old["position"]
         ensure_version(c, old, user)
         version = old["version"] + 1
     else:

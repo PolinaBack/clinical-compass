@@ -1,4 +1,5 @@
 {% from 'questionnaire_choices.html' import tile_heading %}
+{% include 'information_request_notice.html' %}
 <section class="card questionnaire-page" id="assessments">
     {% if request.query_params.get('assigned') %}<p class="success" role="status">Назначение сохранено.</p>{% endif %}
     <div class="section-heading">

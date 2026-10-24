@@ -1,0 +1,1 @@
+PASS: doctor request -> patient private draft -> submission -> request answered; green summary; calendar initial 08:00/night scroll, three matching actions and explicit end times; constructor all 11 previews, saved format change and actual patient text answer; 320/390/768/1280, 16 axe A/AA audits; no overflow/JS errors. Temporary fictional database, no model calls.

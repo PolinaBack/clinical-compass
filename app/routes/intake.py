@@ -138,6 +138,22 @@ def intake_context(c, user, pid, view="summary", submission_id=None, as_of=None)
 
 
 def register_intake(app, db, account, access, csrf_check, render, patient_context):
+    @app.post("/patients/{pid}/information-requests")
+    async def information_request(request: Request, pid: int):
+        user = account(request)
+        if access(request, pid) != "doctor":
+            raise HTTPException(403, "Запрос отправляет ведущий врач")
+        form = await request.form()
+        csrf_check(request, str(form.get("csrf", "")))
+        from app.services.information_requests import request_information
+
+        with db() as c:
+            c.execute("BEGIN IMMEDIATE")
+            request_information(c, user, pid, str(form.get("topic", "")))
+        return RedirectResponse(
+            f"/patients/{pid}/profile?requested=1#profile-preparation", status_code=303
+        )
+
     def redirect(pid, tail=""):
         return RedirectResponse(
             f"/patients/{pid}/profile/about" + tail, status_code=303

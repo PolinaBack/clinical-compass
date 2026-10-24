@@ -90,7 +90,10 @@ def check_specialist_refinements(doctor, patient, url):
             ), (name, width)
             if name == "calendar":
                 assert doctor.locator(".calendar-scroll").evaluate(
-                    "el=>el.scrollHeight<=el.clientHeight+1"
+                    "el=>Math.abs(el.scrollTop-256)<2"
+                )
+                assert doctor.locator(".calendar-scroll").evaluate(
+                    "el=>el.scrollHeight>el.clientHeight"
                 ), width
                 expect(
                     doctor.locator('[data-calendar-time="2030-01-07T00:00"]')
@@ -114,6 +117,6 @@ def check_specialist_refinements(doctor, patient, url):
         json.dumps(audits, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print(
-        "PASS: real browser PHQ-4 submission -> automatic PHQ-9/GAD-7; recent activity/sorted cards; free hours without link -> mandatory link for appointment; full 24-hour calendar without vertical inner scrolling; matching forum buttons; clean recording/questionnaire UI; 320/390/768/1280, 16 axe A/AA audits, no JS errors or page overflow. No models invoked.",
+        "PASS: real browser PHQ-4 submission -> automatic PHQ-9/GAD-7; recent activity/sorted cards; free hours without link -> mandatory link for appointment; calendar initially at 08:00 with all 24 hours available by scrolling; matching forum buttons; clean recording/questionnaire UI; 320/390/768/1280, 16 axe A/AA audits, no JS errors or page overflow. No models invoked.",
         flush=True,
     )

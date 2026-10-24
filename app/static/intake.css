@@ -189,3 +189,9 @@
  .intake-footer-actions button {width:100%;justify-content:center;}
  .intake-file-picker input::file-selector-button {padding:12px 14px;margin-right:8px;}
 }
+
+.information-request-notice { margin:20px 0; padding:20px 24px; background:#e8f4ed; border:1px solid #cce4d8; border-radius:20px; }
+.information-request-notice h2 { font-size:22px; margin:0 0 12px; }
+.information-request-notice li { margin:10px 0; }
+[data-question-builder] [hidden] { display:none!important; }
+[data-builder-preview] input:not([type="checkbox"]),[data-builder-preview] select,[data-builder-preview] textarea { max-width:100%; width:100%; }

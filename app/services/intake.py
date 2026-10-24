@@ -381,6 +381,9 @@ def submit(c, pid, user, form):
         (pid, current["revision"]),
     ).fetchone()
     if existing:
+        from .information_requests import fulfill
+
+        fulfill(c, user, pid, explicit_submission=True)
         return existing["id"]
     ident = c.execute(
         "INSERT INTO intake_submissions(patient_id,revision,catalog_version,payload,created_by,created_at) VALUES(?,?,?,?,?,?)",
@@ -396,6 +399,9 @@ def submit(c, pid, user, form):
     change(
         c, pid, user, "submitted", current["revision"], dict(submission_id=ident), ident
     )
+    from .information_requests import fulfill
+
+    fulfill(c, user, pid, explicit_submission=True)
     return ident
 
 

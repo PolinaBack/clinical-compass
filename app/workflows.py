@@ -600,6 +600,10 @@ def register_workflows(
                 from .services.assessment_followups import ensure_followups
 
                 ensure_followups(c, aid, user["id"])
+            if status == "completed":
+                from .services.information_requests import fulfill
+
+                fulfill(c, user, a["patient_id"])
         return RedirectResponse(target, status_code=303)
 
     @app.post("/patients/{pid}/repeat")

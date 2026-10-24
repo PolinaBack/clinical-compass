@@ -24,6 +24,8 @@ def register_consultations(app, db, account, access, csrf_check):
             "date",
             "time",
             "duration_minutes",
+            "end_time",
+            "ends_next_day",
             "timezone",
             "patient_id",
             "url",

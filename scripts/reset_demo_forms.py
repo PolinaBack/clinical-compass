@@ -116,6 +116,13 @@ def queries(c, pids):
             f"SELECT * FROM patient_ai_runs WHERE patient_id IN ({marks}) ORDER BY id",
             pids,
         )
+    if c.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='patient_information_requests'"
+    ).fetchone():
+        result["patient_information_requests"] = (
+            f"SELECT * FROM patient_information_requests WHERE patient_id IN ({marks}) ORDER BY id",
+            pids,
+        )
     return result
 
 
@@ -268,6 +275,7 @@ def reset(path=None, *, pids=(1, 2), apply=False, destination=None):
                 "clinical_attachments",
                 "intake_entity_links",
                 "intake_changes",
+                "patient_information_requests",
                 "intake_submissions",
                 "intake_drafts",
                 "intake_entities",
