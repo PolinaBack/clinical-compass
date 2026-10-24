@@ -1,0 +1,62 @@
+[
+  {
+    "page": "thread",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "thread",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "thread",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "thread",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "feed",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "feed",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "feed",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "feed",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "compose",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "compose",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "compose",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "compose",
+    "width": 1280,
+    "violations": []
+  }
+]

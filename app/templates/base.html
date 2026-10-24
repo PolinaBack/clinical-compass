@@ -10,6 +10,7 @@
         <link rel="stylesheet" href="{{ asset_url('style.css') }}">
         <link rel="stylesheet" href="{{ asset_url('interface.css') }}">
         <link rel="stylesheet" href="{{ asset_url('diary.css') }}">
+        {% if current_page is defined and current_page.startswith('/doctor/forum') %}<link rel="stylesheet" href="{{ asset_url('clinician_forum.css') }}">{% endif %}
         {% if current_page is defined and current_page.startswith('/medicines') %}<link rel="stylesheet" href="{{ asset_url('medicines.css') }}"><script src="{{ asset_url('medicines.js') }}" defer></script>{% endif %}
         {% if current_page is defined and ('/meetings' in current_page or current_page.startswith('/meeting-recordings/') or current_page.startswith('/meeting-artifacts/')) %}<link rel="stylesheet" href="{{ asset_url('meetings.css') }}"><script src="{{ asset_url('meetings.js') }}" defer></script>{% endif %}
         {% if user %}<link rel="stylesheet" href="{{ asset_url('intake.css') }}"><script src="{{ asset_url('intake.js') }}" defer></script>{% endif %}
@@ -50,7 +51,7 @@
 
     <main id="main">
         <div class="demo-line">
-            <span class="status-dot"></span> Исследовательский прототип · 18+ · {{ 'данные выбранной карты' if current_page is defined and '/ai-analysis' in current_page else 'только синтетические данные' }} · служба помощи не подключена
+            <span class="status-dot"></span> Исследовательский прототип · 18+ · {{ 'обезличенные обсуждения' if current_page is defined and current_page.startswith('/doctor/forum') else ('данные выбранной карты' if current_page is defined and '/ai-analysis' in current_page else 'только синтетические данные') }} · служба помощи не подключена
         </div>
         {% block content %}{% endblock %}
     </main>

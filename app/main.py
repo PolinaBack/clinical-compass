@@ -37,6 +37,7 @@ from .services.drug_library import bootstrap as bootstrap_drug_library
 from .routes.meetings import register_meetings
 from .routes.experimental_ai import register_experimental_ai
 from .routes.patient_ai import register_patient_ai
+from .routes.clinician_forum import register_clinician_forum
 from .recordings import register_recordings
 
 ROOT = Path(__file__).resolve().parent
@@ -407,6 +408,7 @@ def create_app(db_path=None):
         )
 
     register_community(app, db, identity, account, csrf_check, render)
+    register_clinician_forum(app, db, account, csrf_check, render)
     register_interface(app, db, account, render, patient_context)
     from .routes.materials import register_materials
 

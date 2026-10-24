@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% from 'clinician_forum_parts.html' import privacy_note %}
+{% block title %}Форум врачей · Клинический компас{% endblock %}
+{% block content %}
+<div class="clinician-forum">
+<div class="forum-heading"><div><p class="eyebrow">ПРОФЕССИОНАЛЬНОЕ ОБСУЖДЕНИЕ</p><h1>Форум врачей</h1><p class="lead">Обезличенные случаи, вопросы и опыт коллег. Доступен только вошедшим врачам этого приложения.</p></div><a class="button" href="/doctor/forum/new">+ Новая тема</a></div>
+{{ privacy_note() }}
+<form method="get" action="/doctor/forum" class="card forum-filters" aria-label="Фильтр обсуждений">
+    <div><label for="kind">Раздел</label><select id="kind" name="kind"><option value="all">Все обсуждения</option>{% for value,label in kinds.items() %}<option value="{{ value }}" {% if kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div><label for="forum-search">Поиск по темам</label><input id="forum-search" type="search" name="q" value="{{ q }}" maxlength="80" placeholder="Тема или ключевое слово"></div>
+    <label class="forum-check"><input type="checkbox" name="mine" value="true" {% if mine %}checked{% endif %}><span>Мои публикации</span></label>
+    <button class="button secondary" type="submit">Показать</button>
+</form>
+<section aria-label="Темы форума" class="forum-feed">
+{% for topic in topics %}
+<article class="card forum-topic"><div class="forum-meta"><span class="forum-kind {{ topic.kind }}">{{ kinds[topic.kind] }}</span><span>Врач №{{ topic.author_id }} · <time datetime="{{ topic.created_at }}">{{ topic.created_at|local_datetime }}</time></span>{% if topic.status == 'hidden' %}<span class="forum-hidden">Скрыто: проверьте обезличивание</span>{% endif %}</div><h2><a href="/doctor/forum/topics/{{ topic.id }}">{{ topic.title }}</a></h2><p class="forum-excerpt">{{ topic.body[:220] }}{{ '…' if topic.body|length > 220 else '' }}</p><div class="forum-topic-footer"><span>Ответов: {{ topic.comments_count }}</span><a href="/doctor/forum/topics/{{ topic.id }}">Открыть обсуждение →</a></div></article>
+{% else %}<div class="card forum-empty"><h2>{{ 'Ничего не найдено' if q or kind != 'all' or mine else 'Начните обсуждение с коллегами' }}</h2><p>Можно задать профессиональный вопрос или описать случай без узнаваемых подробностей.</p><a href="/doctor/forum/new" class="button secondary">Создать тему</a></div>{% endfor %}
+</section>
+{% if previous or following %}<nav class="forum-actions" aria-label="Страницы форума">{% if previous %}<a href="{{ previous }}">← Предыдущие темы</a>{% endif %}{% if following %}<a href="{{ following }}">Следующие темы →</a>{% endif %}</nav>{% endif %}
+<p class="caption">Обсуждение коллег не является назначением пациенту. Публикации не привязаны к картам и не передаются ИИ автоматически.</p>
+<a href="/doctor/tasks">← К задачам</a>
+</div>
+{% endblock %}

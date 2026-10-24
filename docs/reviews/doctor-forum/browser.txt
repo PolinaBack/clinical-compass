@@ -1,0 +1,1 @@
+PASS clinician forum: actual create/preview/privacy rejection/publish/comment/edit/reload/hide/correct; two doctors, patient 403 and public FAQ isolation; 320/390/768/1280; 12 axe audits; no overflow or JavaScript errors.

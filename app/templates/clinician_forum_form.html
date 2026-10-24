@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% from 'clinician_forum_parts.html' import privacy_note, composer %}
+{% block title %}{{ 'Изменение публикации' if form.operation.startswith('edit') else 'Новая публикация' }} · Форум врачей{% endblock %}
+{% block content %}
+<div class="clinician-forum forum-editor"><a href="/doctor/forum">← Форум врачей</a><div class="forum-heading"><div><p class="eyebrow">СЛУЧАИ И ВОПРОСЫ КОЛЛЕГАМ</p><h1>{{ 'Изменить публикацию' if form.operation.startswith('edit') else 'Новая тема' }}</h1></div></div>
+{{ privacy_note() }}
+{% if error %}<div class="forum-error" role="alert"><h2>Проверьте обезличивание и поля</h2><p>{{ error }}</p></div>{% endif %}
+<section class="card"><h2>Подготовьте публикацию</h2>{{ composer(form, csrf, kinds) }}</section>
+</div>
+{% endblock %}

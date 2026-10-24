@@ -1,0 +1,16 @@
+{
+  "original_tables": 72,
+  "original_rows": 552,
+  "all_original_nonmigration_records_preserved": true,
+  "new_tables": [
+    "clinician_comments",
+    "clinician_privacy_reports",
+    "clinician_topics"
+  ],
+  "old_migrations_preserved": true,
+  "restarts": 2,
+  "foreign_keys": "ok",
+  "integrity": "ok",
+  "working_database_records_unchanged": true,
+  "real_patient_cases_created": false
+}

@@ -1,0 +1,50 @@
+.clinician-forum { max-width: 1100px; margin: 28px auto 48px; overflow-wrap: anywhere; }
+.forum-editor { max-width: 920px; }
+.forum-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 28px 0; }
+.forum-heading > div { min-width: 0; }
+.forum-heading h1, .forum-thread h1 { font-size: clamp(28px, 4vw, 44px); line-height: 1.2; color: #202b50; }
+.forum-heading .button { flex-shrink: 0; }
+.forum-heading .lead { max-width: 750px; }
+.forum-privacy { padding: 22px 26px; border: 1px solid #e3dbf3; border-radius: 22px; background: #f3eefc; color: #42355d; margin: 24px 0; }
+.forum-privacy p { margin: 10px 0 0; }
+.clinician-forum .card { border: 1px solid #e7e3ef; border-radius: 24px; background: #fff; padding: 28px; min-width: 0; }
+.forum-filters { display: flex; gap: 18px; align-items: end; flex-wrap: wrap; }
+.forum-filters > div { flex: 1 1 220px; min-width: 0; }
+.clinician-forum label { display: block; font-weight: 650; color: #303b56; margin-bottom: 8px; }
+.clinician-forum input:not([type=checkbox]), .clinician-forum select, .clinician-forum textarea { width: 100%; min-width: 0; border: 1px solid #ded9e9; border-radius: 14px; background: #fff; color: #303b56; padding: 13px 15px; min-height: 46px; }
+.clinician-forum textarea { resize: vertical; }
+.forum-compose > label:not(:first-child) { margin-top: 20px; }
+.clinician-forum .forum-check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; line-height: 1.6; }
+.forum-check input { width: 20px; height: 20px; flex: 0 0 20px; margin: 3px 0 0; accent-color: #69509e; }
+.forum-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; font-size: 14px; color: #626478; }
+.forum-kind, .forum-hidden { display: inline-flex; padding: 6px 12px; border-radius: 20px; background: #eee7fb; color: #584080; font-size: 13px; font-weight: 700; }
+.forum-kind.case { background: #e6f3ee; color: #2c6651; }
+.forum-hidden { background: #fff1d9; color: #78551b; }
+.forum-topic h2 { font-size: 24px; line-height: 1.35; margin: 18px 0 12px; }
+.forum-topic h2 a { color: #343052; text-decoration: none; }
+.forum-topic h2 a:hover { text-decoration: underline; }
+.forum-excerpt { color: #626478; }
+.forum-topic-footer { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid #eeeaf3; padding-top: 16px; font-size: 14px; }
+.forum-topic-footer > a { font-weight: 650; }
+.forum-actions, .forum-item-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 24px 0; }
+.forum-item-actions { border-top: 1px solid #eeeaf3; padding-top: 16px; }
+.forum-item-actions > details { flex: 1 1 100%; }
+.forum-small-form { margin-top: 18px; padding: 16px; background: #f8f6fc; border-radius: 16px; }
+.forum-small-form .caption { margin: 10px 0 0; }
+.forum-body { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; margin: 20px 0; }
+.forum-error { padding: 18px 22px; border-left: 4px solid #9c6428; background: #fff5e3; color: #68471f; border-radius: 12px; margin: 20px 0; }
+.forum-error h2 { font-size: 20px; }
+.forum-error p { margin-bottom: 0; }
+.forum-empty { text-align: center; padding: 40px 28px !important; }
+.forum-preview h2 { font-size: 28px; margin-top: 20px; }
+.clinician-forum summary { cursor: pointer; color: #5b437f; font-weight: 650; min-height: 40px; }
+.clinician-forum .caption { color: #686677; }
+.minimal-ui .forum-privacy { background: #fff; }
+@media (max-width: 650px) {
+  .forum-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .clinician-forum .card { padding: 22px 18px; }
+  .forum-privacy { padding: 20px 18px; }
+  .forum-filters { display: grid; grid-template-columns: minmax(0,1fr); }
+  .forum-topic-footer { flex-direction: column; gap: 10px; }
+  .forum-actions .button { max-width: 100%; white-space: normal; }
+}

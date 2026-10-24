@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% from 'clinician_forum_parts.html' import privacy_note, composer, actions %}
+{% block title %}{{ topic.title }} · Форум врачей{% endblock %}
+{% block content %}
+<div class="clinician-forum forum-editor"><a href="/doctor/forum">← Все обсуждения</a>
+<article class="card forum-thread"><div class="forum-meta"><span class="forum-kind {{ topic.kind }}">{{ kinds[topic.kind] }}</span><span>Врач №{{ topic.author_id }} · <time datetime="{{ topic.created_at }}">{{ topic.created_at|local_datetime }}</time></span></div><h1>{{ topic.title }}</h1>
+{% if topic.status == 'hidden' %}<p class="forum-error">Тема скрыта из общего обсуждения из-за возможных персональных данных. Исправьте текст и снова пройдите предпросмотр.</p>{% endif %}
+<div class="forum-body">{{ topic.body }}</div>{% if topic.revision > 1 %}<p class="caption">Изменено: {{ topic.updated_at|local_datetime }}</p>{% endif %}{{ actions('topics', topic, actor, csrf) }}</article>
+<section aria-labelledby="forum-replies"><h2 id="forum-replies">Ответы коллег</h2>{% for item in comments %}<article class="card forum-comment"><h3>Врач №{{ item.author_id }}{% if item.author_id == topic.author_id %} · автор темы{% endif %}</h3><p class="caption"><time datetime="{{ item.created_at }}">{{ item.created_at|local_datetime }}</time></p>{% if item.status == 'hidden' %}<p class="forum-error">Ответ скрыт. Исправьте узнаваемые подробности перед повторной публикацией.</p>{% endif %}<div class="forum-body">{{ item.body }}</div>{{ actions('comments', item, actor, csrf) }}</article>{% else %}<p>Ответов пока нет. Можно поделиться опытом или задать уточняющий вопрос.</p>{% endfor %}</section>
+{% if topic.status == 'published' %}<section class="card" id="reply"><h2>Добавить ответ</h2>{{ privacy_note() }}{{ composer(form, csrf, kinds) }}</section>{% endif %}
+</div>
+{% endblock %}
