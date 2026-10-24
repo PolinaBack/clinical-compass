@@ -44,7 +44,12 @@ def cipher(db_path, c):
         ) from None
     key_file = key_path(db_path)
     if not key_file.exists():
-        if c.execute(
+        patient_ai = c.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='patient_ai_runs'"
+        ).fetchone()
+        if (
+            patient_ai and c.execute("SELECT 1 FROM patient_ai_runs LIMIT 1").fetchone()
+        ) or c.execute(
             "SELECT 1 FROM clinical_attachments WHERE content IS NOT NULL LIMIT 1"
         ).fetchone():
             raise HTTPException(

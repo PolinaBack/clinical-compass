@@ -1,0 +1,2 @@
+PASS: actual manually entered card text present in model HTTP payload, no demo substitution
+PASS card AI: manual diary/note entry reaches the selected card; payload asserted by worker; no Maria/demo substitution; history, card edits/stale result, queue/poll, separate patients/ACL, labelled transport fixture and REAL HTTP refusal without fallback; 320/390/768/1280; 6 axe checks; no overflow/JS errors. Real model quality not tested.

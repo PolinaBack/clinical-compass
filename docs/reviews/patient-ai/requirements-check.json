@@ -1,0 +1,7 @@
+{
+  "baseline": "90c6c2e48ddbafab1be0686de9360db3152d2752",
+  "requirements": 806,
+  "all_ids_descriptions_priorities_dependencies_stages_preserved": true,
+  "scope_override": "U-PATIENT-AI-24 supersedes synthetic-only scope for the new patient-card mode; isolated demo remains protected",
+  "no_prepared_responses_in_production": true
+}

@@ -4,6 +4,9 @@ import argparse
 import time
 from app.experimental_ai import jobs, store
 from app.experimental_ai.ollama import ERRORS
+from app.services.patient_ai import process_one as process_card
+from app.storage import default_path as clinical_path
+from pathlib import Path
 
 
 def main():
@@ -13,13 +16,26 @@ def main():
     )
     args = parser.parse_args()
     print(
-        "Обработчик эксперимента: только встроенные синтетические данные. Ctrl+C — остановить.",
+        "Локальный ИИ-обработчик: карты пациентов и отдельная демолаборатория. Содержимое не выводится. Ctrl+C — остановить.",
         flush=True,
     )
     try:
         while True:
-            worked = jobs.process_one()
-            if worked:
+            card_worked = process_card() if Path(clinical_path()).is_file() else False
+            try:
+                demo_worked = jobs.process_one() if not card_worked else False
+            except store.ExperimentError as exc:
+                if exc.code == "demo_not_initialized":
+                    demo_worked = False
+                else:
+                    raise
+            worked = card_worked or demo_worked
+            if card_worked:
+                print(
+                    "Card AI job processed; подробности доступны в карте, содержимое в журнал не выводится.",
+                    flush=True,
+                )
+            if demo_worked:
                 with store.connect() as c:
                     row = c.execute(
                         "SELECT id,status,error_code FROM experiment_runs ORDER BY id DESC LIMIT 1"

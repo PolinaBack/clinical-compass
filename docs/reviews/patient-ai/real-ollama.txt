@@ -1,0 +1,1 @@
+{"test_data": "fully synthetic temporary card", "real_local_http_call": true, "run_id": 1, "status": "error", "code": "provider_unavailable", "prepared_fallback": false}

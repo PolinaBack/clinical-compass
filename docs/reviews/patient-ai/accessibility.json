@@ -1,0 +1,32 @@
+[
+  {
+    "page": "card-result-labelled-fixture",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "card-result-labelled-fixture",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "card-result-labelled-fixture",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "card-result-labelled-fixture",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "card-real-http-refusal",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "card-real-http-refusal",
+    "width": 1280,
+    "violations": []
+  }
+]

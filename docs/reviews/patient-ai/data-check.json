@@ -1,0 +1,14 @@
+{
+  "original_tables": 71,
+  "original_rows": 551,
+  "all_original_rows_and_fields_preserved": true,
+  "added_migration": "011_patient_ai.sql",
+  "added_tables": [
+    "patient_ai_runs"
+  ],
+  "no_real_card_analysed_during_tests": true,
+  "production_fake_successes": 0,
+  "integrity_check": "ok",
+  "foreign_key_check": [],
+  "successful_application_start": true
+}

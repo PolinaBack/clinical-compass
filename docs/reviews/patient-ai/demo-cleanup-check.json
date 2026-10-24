@@ -1,0 +1,20 @@
+{
+  "demo_patients": {
+    "1": {
+      "assessments": 0,
+      "intake_drafts": 0,
+      "intake_submissions": 0,
+      "intake_entities": 0,
+      "answers": 0
+    },
+    "2": {
+      "assessments": 0,
+      "intake_drafts": 0,
+      "intake_submissions": 0,
+      "intake_entities": 0,
+      "answers": 0
+    }
+  },
+  "deleted_rows": 0,
+  "source_database": "workspace copy; not the user Windows computer"
+}

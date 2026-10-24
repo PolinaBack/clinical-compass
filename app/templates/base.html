@@ -15,6 +15,7 @@
         {% if user %}<link rel="stylesheet" href="{{ asset_url('intake.css') }}"><script src="{{ asset_url('intake.js') }}" defer></script>{% endif %}
         {% if user %}<link rel="stylesheet" href="{{ asset_url('questionnaires.css') }}"><script src="{{ asset_url('questionnaires.js') }}" defer></script>{% endif %}
         {% if current_page is defined and current_page.startswith('/doctor/experimental-ai') %}<link rel="stylesheet" href="{{ asset_url('experimental_ai.css') }}"><script src="{{ asset_url('experimental_ai.js') }}" defer></script>{% endif %}
+        {% if current_page is defined and '/ai-analysis' in current_page %}<link rel="stylesheet" href="{{ asset_url('experimental_ai.css') }}"><script src="{{ asset_url('patient_ai.js') }}" defer></script>{% endif %}
         {% if current_page is defined and '/family' in current_page %}<link rel="stylesheet" href="{{ asset_url('family.css') }}"><script src="{{ asset_url('family.js') }}" defer></script>{% endif %}
         <script src="{{ asset_url('diary.js') }}" defer></script>
         <script src="{{ asset_url('app.js') }}" defer></script><script src="{{ asset_url('workflows.js') }}" defer></script>
@@ -49,7 +50,7 @@
 
     <main id="main">
         <div class="demo-line">
-            <span class="status-dot"></span> Исследовательский прототип · 18+ · только синтетические данные · служба помощи не подключена
+            <span class="status-dot"></span> Исследовательский прототип · 18+ · {{ 'данные выбранной карты' if current_page is defined and '/ai-analysis' in current_page else 'только синтетические данные' }} · служба помощи не подключена
         </div>
         {% block content %}{% endblock %}
     </main>

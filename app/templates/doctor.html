@@ -12,10 +12,11 @@
         </div>
     </div>
     <section class="card">
-        <p class="eyebrow">ИССЛЕДОВАТЕЛЬСКАЯ ЛАБОРАТОРИЯ</p>
-        <h2>Экспериментальный ИИ-помощник</h2>
-        <p>Тестовый режим · только синтетические данные. Отдельный вымышленный сценарий, вопросы и гипотезы для проверки.</p>
-        <a class="button secondary" href="/doctor/experimental-ai">Открыть эксперимент</a>
+        <p class="eyebrow">ЛОКАЛЬНЫЙ ИИ-ПОМОЩНИК</p>
+        <h2>ИИ-анализ карт пациентов</h2>
+        <p>Откройте нужную карту ниже: модель проанализирует её сохранённые данные, включая ручные записи, и подготовит сводку и вопросы для проверки врачом.</p>
+        <a class="button secondary" href="#patient-cards">Выбрать карту для ИИ-анализа</a>
+        <p class="caption">Отдельная синтетическая лаборатория Марии: <a href="/doctor/experimental-ai">Открыть эксперимент</a>.</p>
     </section>
     <section class="card safety-card">
         <div class="section-heading">
@@ -35,12 +36,12 @@
         </div>
         <span class="badge">{{ patients|length }} профиля</span>
     </div>
-    <div class="patient-grid">
+    <div class="patient-grid" id="patient-cards">
         {% for p in patients %}
             <section class="card patient-preview">
                 <div class="avatar">{{ p.name[-1] }}</div>
                 <h2>{{ p.name }}</h2>
-                <p class="caption">Синтетический профиль · закреплён за вами</p>
+                <p class="caption">Профиль закреплён за вами</p>
                 <p class="{{ 'warning' if p.alerts else 'quiet-panel' }}">
                     {{ p.alerts }} записей с пропуском назначения или запросом связи
                 </p>
@@ -50,6 +51,7 @@
                     </p>
                 {% endif %}
                 <a class="button full" href="/patients/{{ p.id }}">Карточка пациента</a>
+                <a class="button secondary full" href="/patients/{{ p.id }}/ai-analysis">ИИ-анализ карты</a>
             </section>
         {% else %}
             <section class="card">

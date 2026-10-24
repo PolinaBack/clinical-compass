@@ -22,8 +22,15 @@ def backup(source, destination):
             attachments = dst.execute(
                 "SELECT 1 FROM sqlite_master WHERE type='table' AND name='clinical_attachments'"
             ).fetchone()
+            patient_ai = dst.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='patient_ai_runs'"
+            ).fetchone()
             if (
-                attachments
+                (
+                    patient_ai
+                    and dst.execute("SELECT 1 FROM patient_ai_runs LIMIT 1").fetchone()
+                )
+                or attachments
                 and dst.execute(
                     "SELECT 1 FROM clinical_attachments WHERE content IS NOT NULL LIMIT 1"
                 ).fetchone()
