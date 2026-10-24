@@ -385,12 +385,7 @@ def create_app(db_path=None):
         role = access(request, pid)
         if role != "doctor":
             return RedirectResponse(f"/patients/{pid}/diary", status_code=303)
-        return render(
-            request,
-            "specialist_patient.html",
-            section="safety",
-            **patient_context(request, pid),
-        )
+        return RedirectResponse(f"/patients/{pid}/profile", status_code=303)
 
     @app.get("/patients/{pid}/workspace/{section}")
     def specialist_section(request: Request, pid: int, section: str):
@@ -400,11 +395,21 @@ def create_app(db_path=None):
             raise HTTPException(410, "Раздел рисков и решений удалён из кабинета")
         if section not in ["safety", "assessments", "conversation"]:
             raise HTTPException(404, "Раздел не найден")
+        if section == "safety":
+            return RedirectResponse(
+                f"/patients/{pid}/workspace/assessments#assessment-events",
+                status_code=303,
+            )
+        context = patient_context(request, pid)
+        if section == "assessments":
+            from .services.assessment_results import results_context
+
+            context.update(results_context(context["assessment_data"]))
         return render(
             request,
             "specialist_patient.html",
             section=section,
-            **patient_context(request, pid),
+            **context,
         )
 
     register_community(app, db, identity, account, csrf_check, render)

@@ -80,12 +80,13 @@ def test_doctor_calendar_and_tasks_use_existing_assigned_records(client):
                 "INSERT INTO appointments(patient_id,author_id,starts_at,timezone_label,url,fallback,created_at) VALUES(?,1,'2026-11-01T10:00','Europe/Moscow','https://example.org','Телефон',?)",
                 (pid, now()),
             )
-    for path in ("/doctor/calendar", "/doctor/tasks"):
+    for path in ("/doctor/calendar",):
         html = client.get(path).text
         assert "Заявка-1" in html and "Заявка-2" not in html
-        assert 'href="/patients/1/profile/video#booking"' in html
+        assert 'href="/doctor/calendar?patient_id=1#meeting-workspace"' in html
         assert 'href="/patients/2/profile/video' not in html
-    assert 'id="workflow-alerts"' in client.get("/doctor/tasks").text
+    assert client.get("/doctor/tasks").url.path == "/doctor/forums"
+    assert 'id="workflow-alerts"' in client.get("/doctor/calendar").text
     assert client.get("/doctor/library").status_code == 200
     assert client.get("/me/overview").status_code == 403
     assert (

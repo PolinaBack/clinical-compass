@@ -86,7 +86,7 @@ def test_yes_branch_and_recent_behavior_have_separate_raw_answers(client):
     events = rows(client, "SELECT kind FROM assessment_events")
     assert len(events) == 2 and all(e["kind"].startswith("safety6_") for e in events)
     login(client, "doctor")
-    page = client.get("/patients/1").text
+    page = client.get("/patients/1/workspace/assessments").text
     assert "учебной беседе" in page
     assert (
         "Спасибо, что рассказали"

@@ -23,6 +23,7 @@ def check_patient_ai(patient, doctor, url, process):
     patient.get_by_label("Заметка", exact=True).fill(entered)
     patient.get_by_role("button", name="Сохранить запись", exact=True).click()
     doctor.goto(url + "/doctor")
+    doctor.locator('a[href="/patients/1"]').click()
     expect(doctor.locator('a[href="/patients/1/ai-analysis"]')).to_be_visible()
     doctor.locator('a[href="/patients/1/ai-analysis"]').click()
     expect(doctor.locator("main")).to_contain_text("данные выбранной карты")

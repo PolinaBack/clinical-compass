@@ -49,7 +49,9 @@ def test_only_assigned_doctor_can_add_metrics_and_custom_answers_persist(client)
         login(restarted, 'doctor')
         html = restarted.get('/patients/1/diary').text
         assert 'Энергия:</strong> 8' in html and 'Сообщён пропуск' in html
-        assert '1 записей с пропуском' in restarted.get('/doctor').text
+        assert '1 записей с пропуском' not in restarted.get('/doctor').text
+        with connect(restarted.app.state.db_path) as c:
+            assert c.execute("SELECT count(*) FROM diary WHERE patient_id=1 AND adherence='missed'").fetchone()[0] == 1
     login(client, 'patient2')
     assert f'metric-dialog-{mid}' not in client.get('/patients/2/diary').text
     assert client.get('/patients/1/diary').status_code == 403

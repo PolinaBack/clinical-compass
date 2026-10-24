@@ -41,7 +41,24 @@ def register_meetings(app, db, account, access, csrf_check, render):
         if user["role"] != "doctor":
             raise HTTPException(403, "Это действие выполняет ведущий врач")
 
-    def reply(mid):
+    def reply(mid, form=None, user=None):
+        if (
+            form is not None
+            and form.get("calendar") == "true"
+            and user is not None
+            and user["role"] == "doctor"
+        ):
+            from app.services.doctor_calendar import location
+
+            with db() as c:
+                item = c.execute(
+                    "SELECT m.patient_id,a.starts_at FROM meeting_sessions m JOIN appointments a ON a.id=m.appointment_id WHERE m.id=?",
+                    (mid,),
+                ).fetchone()
+            return RedirectResponse(
+                location(item["patient_id"], item["starts_at"][:10], mid=mid),
+                status_code=303,
+            )
         return RedirectResponse(f"/meetings/{mid}", status_code=303)
 
     def progress_view(row, duration):
@@ -98,76 +115,21 @@ def register_meetings(app, db, account, access, csrf_check, render):
                     (vid, pid, context, user["id"], now()),
                 ).lastrowid
                 audit(c, user["id"], "meeting_prepared", pid, mid)
-        return reply(mid)
+        return reply(mid, form, user)
 
     @app.get("/meetings/{mid}")
     def meeting_page(request: Request, mid: int):
         user = account(request)
         with db() as c:
-            meeting = scope(c, mid, user)
-            docs = documents(c)
-            approvals = patient_media_permissions(c, meeting["patient_id"])
-            records = []
-            for r in c.execute(
-                "SELECT id,filename,mime,duration,created_at,expires_at,deleted_at FROM meeting_recordings WHERE meeting_id=? ORDER BY id DESC",
-                (mid,),
-            ):
-                item = dict(r)
-                item["expired"] = r["expires_at"] <= now()
-                item["transcript"] = (
-                    service.latest(c, r["id"], "transcript")
-                    if user["role"] == "doctor"
-                    else None
-                )
-                visible = service.published(c, r["id"])
-                item["summary"] = (
-                    service.latest(c, r["id"], "summary")
-                    if user["role"] == "doctor"
-                    else visible
-                )
-                item["published_id"] = visible["id"] if visible else None
-                for key in ("transcript", "summary"):
-                    if item[key]:
-                        item[key] = {
-                            **dict(item[key]),
-                            "data": json.loads(item[key]["payload"]),
-                        }
-                if item["deleted_at"] or item["expired"]:
-                    item["transcript"] = item["summary"] = None
-                item["jobs"] = (
-                    [
-                        progress_view(job, r["duration"])
-                        for job in c.execute(
-                            "SELECT * FROM meeting_jobs WHERE recording_id=? ORDER BY id DESC",
-                            (r["id"],),
-                        ).fetchall()
-                    ]
-                    if user["role"] == "doctor"
-                    else []
-                )
-                item["history"] = (
-                    c.execute(
-                        "SELECT id,kind,provider,created_at,deleted_at FROM meeting_artifacts WHERE recording_id=? ORDER BY id DESC",
-                        (r["id"],),
-                    ).fetchall()
-                    if user["role"] == "doctor"
-                    else []
-                )
-                records.append(item)
+            from app.services.meeting_views import meeting_context
+
+            data = meeting_context(c, mid, user)
         response = render(
             request,
             "meeting.html",
-            meeting=meeting,
-            patient={"id": meeting["patient_id"]},
+            patient={"id": data["meeting"]["patient_id"]},
             section="video",
-            records=records,
-            consent_docs=docs,
-            approvals=approvals,
-            purposes=MEDIA_PURPOSES,
-            ai=readiness(),
-            errors=service.ERRORS,
-            groups=GROUPS,
-            timecode=lambda seconds: f"{int(seconds)//60:02d}:{int(seconds)%60:02d}",
+            **data,
         )
         response.headers["Cache-Control"] = "no-store"
         return response
@@ -196,7 +158,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
                 expected,
                 form.get("confirmed") == "true",
             )
-        return reply(mid)
+        return reply(mid, form, user)
 
     @app.post("/meetings/{mid}/recordings")
     async def upload(request: Request, mid: int):
@@ -256,7 +218,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
                     meeting["patient_id"],
                     rid,
                 )
-        return reply(mid)
+        return reply(mid, form, user)
 
     @app.get("/meeting-recordings/{rid}/media")
     def media(request: Request, rid: int):
@@ -314,7 +276,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
             row = service.recording(c, rid, user["id"])
             service.enqueue(c, rid, kind, user)
             audit(c, user["id"], "meeting_" + kind + "_queued", row["patient_id"], rid)
-        return reply(row["meeting_id"])
+        return reply(row["meeting_id"], form, user)
 
     @app.post("/meeting-recordings/{rid}/transcript")
     async def edit_transcript(request: Request, rid: int):
@@ -352,7 +314,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
             service.event(
                 c, rid, "withdrawn", user["id"], ident, reason="transcript_changed"
             )
-        return reply(row["meeting_id"])
+        return reply(row["meeting_id"], form, user)
 
     @app.post("/meeting-recordings/{rid}/summary")
     async def edit_summary(request: Request, rid: int):
@@ -370,7 +332,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
                 service.event(
                     c, rid, "withdrawn", user["id"], reason="clinician_withdrawal"
                 )
-                return reply(row["meeting_id"])
+                return reply(row["meeting_id"], form, user)
             service.permission_stamp(c, row, "summary")
             base = service.latest(c, rid, "summary")
             transcript = service.latest(c, rid, "transcript")
@@ -429,7 +391,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
                 ident,
                 reason="sources_and_medicines_checked" if intent == "publish" else "",
             )
-        return reply(row["meeting_id"])
+        return reply(row["meeting_id"], form, user)
 
     @app.get("/meeting-recordings/{rid}/export")
     def export(request: Request, rid: int):
@@ -518,4 +480,4 @@ def register_meetings(app, db, account, access, csrf_check, render):
             row = service.recording(c, rid, user["id"])
             service.delete_recording(c, row, user["id"])
             audit(c, user["id"], "meeting_deleted", row["patient_id"], rid)
-        return reply(row["meeting_id"])
+        return reply(row["meeting_id"], form, user)

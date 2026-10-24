@@ -49,7 +49,8 @@ def test_end_to_end_patient_doctor_patient(client):
         == 200
     )
     login(client, "doctor")
-    assert "1 записей" in client.get("/doctor").text
+    assert "1 записей" not in client.get("/doctor").text
+    assert "Демо-пациент А" in client.get("/doctor").text
     assert client.get("/patients/1/workspace/care").status_code == 410
     from app.storage import connect
 

@@ -37,7 +37,6 @@ def test_both_initial_forms_are_offered_independently_and_banner_removed(client)
 def test_specialist_sections_are_separate_and_patient_cannot_enter(client):
     login(client, "doctor")
     expected = {
-        "safety": 'id="safety"',
         "assessments": 'id="assessments"',
         "conversation": 'id="conversation"',
     }

@@ -7,57 +7,5 @@
     {% if user == 'doctor' %}
         {% include 'specialist_nav.html' %}
     {% endif %}
-    <div class="grid two">
-        {% for graph in graphs %}
-            {% include 'chart.html' %}
-        {% endfor %}
-    </div>
-    <section class="card">
-        <h2>Результаты пройденных опросников</h2>
-        <div class="table-scroll" tabindex="0" role="region" aria-label="Таблица результатов опросников">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Форма / версия</th>
-                        <th>Период</th>
-                        <th>Полнота</th>
-                        <th>Сумма</th>
-                        <th>Ответы</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for a in data.assessments %}
-                        <tr>
-                            <td>
-                                {{ a.name }}<small>{{ a.version }}</small>
-                            </td>
-                            <td>{{ a.period_label }}</td>
-                            <td>{{ a.result.answered }}/{{ a.result.count }} · {{ a.status }}</td>
-                            <td>
-                                {{ 'Не применяется' if a.scale == 'safety6' else a.result.total if a.result.total is not none else 'Не сформирована' }}
-                                {% if a.category %}<small>{{ a.category }} · не диагноз</small>{% endif %}
-                            </td>
-                            <td>
-                                <a href="/assessments/{{ a.id }}">Открыть</a>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="5">Пройденных опросников пока нет.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-    {% if summaries %}
-        <section class="card">
-            <h2>PHQ-ADS</h2>
-            {% for s in summaries %}
-                <p>
-                    Сессия №{{ s.sid }}: <strong>{{ s.total }}/48</strong> · PHQ-9 + GAD-7 одной сессии.
-                </p>
-            {% endfor %}
-        </section>
-    {% endif %}
+    {% include 'results_content.html' %}
 {% endblock %}

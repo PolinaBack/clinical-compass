@@ -1,12 +1,12 @@
 <nav class="portal-nav" aria-label="{{ 'Навигация специалиста' if user == 'doctor' else 'Навигация пациента' }}">
     {% if user == 'doctor' %}
-        {% set links = [('/doctor','Пациенты','people'),('/doctor/calendar','Календарь','calendar'),('/doctor/tasks','Задачи','check'),('/doctor/library','Библиотека','materials'),('/settings','Настройки','settings')] %}
+        {% set links = [('/doctor','Пациенты','people'),('/doctor/calendar','Календарь','calendar'),('/doctor/library','Библиотека','materials'),('/doctor/forums','Форумы','people'),('/settings','Настройки','settings')] %}
     {% else %}
         {% set links = [('/patients/' ~ session_pid ~ '/diary','Дневник','wellbeing'),('/patients/' ~ session_pid ~ '/results','Статистика','chart'),('/me/materials','Материалы','materials'),('/patients/' ~ session_pid ~ '/profile','Профиль','anthropometry'),('/me/start','С чего начать','consultation'),('/settings','Настройки','settings')] %}
     {% endif %}
     {% from 'icons.html' import icon %}
     {% for href,label,symbol in links %}
-        <a href="{{ href }}" aria-label="{{ label }}" title="{{ label }}" {% if href == '/settings' %}class="settings-link"{% endif %} {% if current_page == href or (href == '/settings' and current_page.startswith('/settings/')) or (href.endswith('/profile') and (current_page.startswith(href) or (meeting is defined and section == 'video'))) or (href == '/doctor/library' and (current_page.startswith('/doctor/resources') or current_page.startswith('/medicines') or current_page.startswith('/clinical-tools'))) or (href == '/doctor/tasks' and (current_page.startswith('/doctor/faq') or current_page.startswith('/doctor/forum'))) %}aria-current="page"{% endif %}>
+        <a href="{{ href }}" aria-label="{{ label }}" title="{{ label }}" {% if href == '/settings' %}class="settings-link"{% endif %} {% if current_page == href or (href == '/settings' and current_page.startswith('/settings/')) or (href.endswith('/profile') and (current_page.startswith(href) or (meeting is defined and section|default('') == 'video'))) or (href == '/doctor/library' and (current_page.startswith('/doctor/resources') or current_page.startswith('/medicines') or current_page.startswith('/clinical-tools'))) or (href == '/doctor/forums' and (current_page.startswith('/doctor/faq') or current_page.startswith('/doctor/forum'))) %}aria-current="page"{% endif %}>
             {{ icon(symbol) }}<span>{{ label }}</span>
         </a>
     {% endfor %}

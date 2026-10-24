@@ -1,0 +1,3 @@
+Processed EXPLICIT SYNTHETIC MODEL FIXTURE only
+Processed EXPLICIT SYNTHETIC MODEL FIXTURE only
+PASS specialist upgrade: real calendar click -> availability -> booking -> historical meeting -> inline upload/queue/transcript/summary with EXPLICIT SYNTHETIC MODEL FIXTURE; patient selection isolates sources; submitted-only profile/BMI, merged questionnaires/graphs, both forums, patient ACL; 320/390/768/1280; 20 axe audits, no overflow or JS errors. Real ASR/Ollama not tested.

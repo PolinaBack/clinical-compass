@@ -7,5 +7,5 @@
   <p data-job-activity>{{ job.activity_text }}</p>
   <p data-job-warning class="warning" {% if not job.warning %}hidden{% endif %}>{{ job.warning }}</p>
   <p data-job-error class="warning" {% if not job.error_message %}hidden{% endif %}>{{ job.error_message }}{% if job.status == 'failed' %} После исправления нажмите кнопку обработки ещё раз.{% endif %}</p>
-  <p data-job-ready {% if job.status != 'done' %}hidden{% endif %}><a href="/meetings/{{ meeting.id }}?result={{ job.id }}#recording-{{ record.id }}">{{ 'Показать расшифровку' if job.kind == 'transcript' else 'Показать итоги' }}</a></p>
+  <p data-job-ready {% if job.status != 'done' %}hidden{% endif %}><a href="{{ (calendar_meeting_url.split('#')[0] ~ '#recording-' ~ record.id) if calendar_embed|default(false) else '/meetings/' ~ meeting.id ~ '?result=' ~ job.id ~ '#recording-' ~ record.id }}">{{ 'Показать расшифровку' if job.kind == 'transcript' else 'Показать итоги' }}</a></p>
 </section>

@@ -1,0 +1,17 @@
+{
+  "baseline": "e54107250e029fcfb20a164fca88b0475d709f20",
+  "original_tables": 72,
+  "original_rows": 552,
+  "all_existing_nonmigration_records_preserved": true,
+  "restarts": 2,
+  "integrity": "ok",
+  "foreign_keys": "ok",
+  "new_task_migration": null,
+  "previously_pending_tables": [
+    "clinician_comments",
+    "clinician_privacy_reports",
+    "clinician_topics"
+  ],
+  "working_database_unchanged": true,
+  "real_patient_analysis_or_deletion_performed": false
+}

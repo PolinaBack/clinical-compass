@@ -1,0 +1,43 @@
+.visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.doctor-calendar,.clinician-profile { margin:24px 0 48px; overflow-wrap:anywhere; }
+.calendar-heading { display:flex; justify-content:space-between; align-items:center; gap:20px; margin:26px 0; }
+.calendar-heading h1,.calendar-heading h2 { margin:0; }
+.calendar-card { background:#fff; border:1px solid #e3e0ec; border-radius:22px; padding:20px; }
+.calendar-toolbar { display:flex; gap:16px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+.calendar-toolbar h2 { font-size:20px; margin:0; }
+.calendar-paging,.calendar-controls { display:flex; gap:8px; align-items:end; }
+.calendar-paging .button { padding:8px 14px; min-height:40px; }
+.calendar-controls label { font-size:12px; color:#5c6075; margin:0; }
+.calendar-controls input,.calendar-controls select { margin:4px 0 0; padding:9px; min-width:0; width:auto; }
+.calendar-help { margin:18px 0 10px; font-size:14px; color:#5b6175; }
+.calendar-legend { display:flex; flex-wrap:wrap; gap:18px; font-size:12px; color:#50576b; margin:14px 0; }
+.calendar-legend span { display:flex; gap:7px; align-items:center; }.calendar-legend i { width:10px; height:10px; border-radius:3px; }
+.legend-open { background:#8fc9ae; }.legend-visit { background:#af9bdf; }.legend-completed { background:#a0b3cb; }
+.calendar-scroll { max-height:620px; overflow:auto; border:1px solid #e8e5ef; border-radius:14px; scroll-behavior:auto; position:relative; }
+.calendar-grid { display:grid; grid-template-columns:58px repeat(var(--calendar-days),minmax(125px,1fr)); min-width:960px; align-items:start; }
+.calendar-single-day { min-width:0; grid-template-columns:58px minmax(0,1fr); }
+.calendar-day,.calendar-axis { min-width:0; border-right:1px solid #e9e6ef; }
+.calendar-day-heading { position:sticky; top:0; z-index:4; height:48px; display:flex; align-items:center; justify-content:center; margin:0; background:#fcfbff; border-bottom:1px solid #e6e1ef; font:700 13px 'Segoe UI',sans-serif; color:#414965; }
+.calendar-today .calendar-day-heading { color:#4b3584; background:#ece5fa; }
+.calendar-axis { position:sticky; left:0; z-index:5; background:#fff; }
+.calendar-axis-hours,.calendar-day-hours { position:relative; height:1440px; }
+.calendar-axis-hours span { position:absolute; width:100%; text-align:center; font-size:11px; color:#646b7e; line-height:30px; }
+.calendar-cell { display:block; height:30px; width:100%; background:transparent; border:0; border-bottom:1px solid #f0edf5; border-radius:0; padding:0; }
+.calendar-cell:nth-child(even) { border-bottom-color:#e4dfed; }.calendar-cell:hover,.calendar-cell:focus-visible { background:#f0eafa; outline:2px solid #9174ca; outline-offset:-2px; }
+.portal-shell .doctor-calendar button.calendar-cell { background:transparent; color:inherit; padding:0; margin:0; height:30px; min-height:30px; border:0; border-bottom:1px solid #efedf3; border-radius:0; box-shadow:none; }
+.portal-shell .doctor-calendar button.calendar-cell:nth-child(even) { border-bottom-color:#ded9e7; }
+.portal-shell .doctor-calendar button.calendar-cell:hover,.portal-shell .doctor-calendar button.calendar-cell:focus-visible { background:#f0eafa; outline:2px solid #9174ca; outline-offset:-2px; }
+.portal-shell .doctor-calendar button.calendar-event.event-open { background:#e5f3ec; color:#285c49; border:1px solid #b8d9c9; border-radius:7px; padding:3px 6px; min-height:24px; }
+.calendar-event { position:absolute; z-index:2; display:flex; flex-direction:column; gap:2px; border-radius:7px; padding:3px 6px; border:1px solid #d5c8ec; background:#eee7fa; color:#423367; font-size:11px; line-height:1.2; text-align:left; overflow:hidden; text-decoration:none; min-height:24px; }
+.calendar-event strong { font-size:11px; white-space:nowrap; }.calendar-event span { overflow:hidden; text-overflow:ellipsis; }.event-open { background:#e5f3ec; color:#285c49; border-color:#b8d9c9; }.event-completed { background:#eaf0f7; border-color:#c9d4e4; color:#3b506d; }.event-ready { background:#e4eef8; border-color:#b0c7e1; }
+.calendar-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }.calendar-form-grid label { min-width:0; }.calendar-form-grid select,.calendar-form-grid input { width:100%; min-width:0; }
+.calendar-editor summary { color:#51416f; font-weight:700; }.calendar-editor form { margin-top:20px; }.calendar-editor details { margin:18px 0; }
+.calendar-patient-picker { display:flex; gap:20px; align-items:end; }.calendar-patient-picker label,.calendar-visit-picker label { width:100%; }.calendar-patient-picker select,.calendar-visit-picker select { width:100%; }.calendar-visit-picker { margin:20px 0; }
+.calendar-meetings .meeting-page { margin-top:20px; }.doctor-calendar [hidden] { display:none!important; }
+.profile-person h2 { margin-bottom:8px; }.profile-person { margin:25px 0; }
+.profile-stat-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }.profile-stat-grid .card { margin:0; padding:22px; }.profile-stat p,.profile-stat small { color:#6c7281; font-size:13px; }.profile-stat p { margin:0 0 8px; }.profile-stat strong { font-size:28px; display:block; color:#273e50; }.profile-stat small { display:block; margin-top:8px; }
+.profile-summary-grid { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:22px; align-items:start; margin-top:22px; }.profile-summary-grid .card { margin:0 0 20px; border-radius:22px; }.profile-summary-grid h2 { font-size:21px; line-height:1.4; }.profile-summary-grid .section-heading { flex-wrap:wrap; gap:12px; }
+.medical-summary { margin:0 0 18px; }.medical-summary > div { display:grid; grid-template-columns:minmax(140px,1fr) minmax(0,1.7fr); gap:18px; border-bottom:1px solid #ececf0; padding:13px 0; font-size:14px; }.medical-summary dt { color:#4f5f6b; }.medical-summary dd { margin:0; text-align:right; color:#2e414d; font-weight:650; }
+.profile-verification { border-left:4px solid #bd945e; border-radius:10px; background:#fff8eb; padding:14px; font-size:14px; color:#554d3e; }.profile-preparation { padding:28px; border:1px solid #e5ddef; background:#f4effb; border-radius:24px; margin:22px 0; }.profile-preparation h2 { font-size:28px; }.profile-preparation h3 { font-size:18px; }.profile-preparation .card { margin:0; }.profile-source-links { display:flex; gap:12px; flex-wrap:wrap; margin-top:20px; }.profile-source-links a { padding:10px 14px; border:1px solid #e5ddef; border-radius:12px; background:#faf8ff; }
+@media(max-width:850px){.profile-summary-grid { grid-template-columns:minmax(0,1fr); }.profile-stat-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.calendar-toolbar { align-items:start; }.calendar-controls { flex-wrap:wrap; }.calendar-heading { flex-wrap:wrap; }}
+@media(max-width:550px){.calendar-card { padding:12px; }.calendar-heading h1 { font-size:32px; }.calendar-form-grid { grid-template-columns:minmax(0,1fr); }.calendar-patient-picker { display:block; }.calendar-heading .button { font-size:13px; padding:10px 14px; }.profile-stat-grid { gap:10px; }.profile-stat-grid .card { padding:16px; }.medical-summary > div { grid-template-columns:minmax(0,1fr); gap:5px; }.medical-summary dd { text-align:left; }.profile-preparation { padding:20px 16px; }}

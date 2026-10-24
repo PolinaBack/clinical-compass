@@ -768,6 +768,11 @@ def register_workflows(
     @app.get("/patients/{pid}/results")
     def results(request: Request, pid: int):
         access(request, pid)
+        if identity(request) == "doctor":
+            return RedirectResponse(
+                f"/patients/{pid}/workspace/assessments#questionnaire-results",
+                status_code=303,
+            )
         data = overview(db, pid)
         data["assessments"] = [
             a for a in data["assessments"] if a["status"] == "completed"

@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% from 'intake_fields.html' import fields,review with context %}
 {% from 'intake_records.html' import related_cards with context %}
-{% block content %}{% set section='about' %}{% include 'profile_nav.html' %}
+{% block content %}{% set section='about' %}{% if user=='doctor' %}{% include 'specialist_nav.html' %}{% endif %}{% include 'profile_nav.html' %}
 <div class="intake-page intake-section-page" data-intake-page>
-<p class="intake-breadcrumb"><a href="/patients/{{ patient.id }}/profile/about">Разделы моей анкеты</a> → {{ category.title }}</p>
+<p class="intake-breadcrumb"><a href="/patients/{{ patient.id }}/profile/about">{{ 'Разделы анамнеза' if user=='doctor' else 'Разделы моей анкеты' }}</a> → {{ category.title }}</p>
 <p class="eyebrow intake-page-eyebrow">ПЕРВИЧНАЯ АНКЕТА ПАЦИЕНТА</p>
 <div class="intake-section-heading"><h1>{{ category.title }}</h1>{% if category.total %}<span data-section-progress-label>{{ category.percent }}% заполнено</span>{% endif %}</div>
 <p class="intake-section-description">Расскажите своими словами — сведения сохраняются со слов пациента и проверяются специалистом.</p>

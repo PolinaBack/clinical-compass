@@ -160,6 +160,8 @@ def register_portal(
     @app.get("/patients/{pid}/profile")
     def profile_page(request: Request, pid: int):
         access(request, pid)
+        if account(request)["role"] == "doctor":
+            return profile_section(request, pid, "about")
         return RedirectResponse(f"/patients/{pid}/profile/about", status_code=303)
 
     @app.get("/patients/{pid}/profile/{section}")
@@ -167,6 +169,15 @@ def register_portal(
         if section not in ["about", "assessments", "family", "video"]:
             raise HTTPException(404, "Раздел не найден")
         context = patient_context(request, pid)
+        if account(request)["role"] == "doctor" and section in ("video", "assessments"):
+            return RedirectResponse(
+                (
+                    f"/doctor/calendar?patient_id={pid}#meeting-workspace"
+                    if section == "video"
+                    else f"/patients/{pid}/workspace/assessments"
+                ),
+                status_code=303,
+            )
         if section == "video":
             from .services.consultations import profile_context
 
@@ -226,7 +237,18 @@ def register_portal(
             for node in context["family_patient_nodes"]:
                 if node["key"] == "self":
                     node["age"] = context["intake_calculations"]["age"]
-        response = render(request, "profile.html", section=section, **context)
+        template = "profile.html"
+        if account(request)["role"] == "doctor" and section == "about":
+            from .services.clinician_profile import build
+
+            if not request.query_params.get("as_of"):
+                from .services.intake import computations
+
+                context["intake_calculations"] = computations(context["intake_data"])
+
+            context["clinical_profile"] = build(context)
+            template = "clinician_profile.html"
+        response = render(request, template, section=section, **context)
         response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -280,7 +302,17 @@ def register_portal(
 
         with db() as c:
             c.execute("BEGIN IMMEDIATE")
-            book(c, user, pid, slot_id)
+            appointment_id = book(c, user, pid, slot_id)
+            booked = c.execute(
+                "SELECT starts_at FROM appointments WHERE id=?", (appointment_id,)
+            ).fetchone()
+        if user["role"] == "doctor":
+            from .services.doctor_calendar import location
+
+            return RedirectResponse(
+                location(pid, booked["starts_at"][:10], aid=appointment_id),
+                status_code=303,
+            )
         return redirect(pid, "/profile/video#video")
 
     @app.post("/patients/{pid}/profile")
@@ -440,7 +472,11 @@ def register_portal(
                     (vid, booking_id),
                 )
             audit(c, user["id"], "appointment_planned", pid, vid)
-        return redirect(pid, "/profile/video#video")
+        from .services.doctor_calendar import location
+
+        return RedirectResponse(
+            location(pid, dt.date().isoformat(), aid=vid), status_code=303
+        )
 
     @app.post("/patients/{pid}/appointments/{vid}/status")
     def visit_status(
@@ -482,7 +518,11 @@ def register_portal(
 
                 release(c, user, visit)
             audit(c, user["id"], "appointment_" + intent, pid, vid)
-        return redirect(pid, "/profile/video#video")
+        from .services.doctor_calendar import location
+
+        return RedirectResponse(
+            location(pid, visit["starts_at"][:10], aid=vid), status_code=303
+        )
 
     @app.get("/patients/{pid}/safety")
     def safety_page(request: Request, pid: int):

@@ -198,9 +198,9 @@ def test_library_three_cards_active_navigation_and_forum_at_end_of_tasks(client)
             in page.text
         )
     assert "FAQ-форум" not in client.get("/doctor/resources").text
-    tasks = client.get("/doctor/tasks").text.split("</main>")[0]
-    assert tasks.index('id="faq-forum"') > tasks.index("Заявки на консультацию")
-    assert tasks.rstrip().endswith("</a></section>")
+    tasks = client.get("/doctor/forums").text.split("</main>")[0]
+    assert tasks.index('id="faq-forum"') > tasks.index('id="clinician-forum"')
+    assert tasks.rstrip().endswith("</a></section></div>")
     assert 'id="faq-forum"' not in client.get("/doctor/calendar").text
     assert client.get("/doctor/faq").status_code == 200
     login(client, "patient1")
