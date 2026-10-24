@@ -1,0 +1,1 @@
+PASS: open free/appointment/past editors at 320/390/768/1280/1920; normal date fields and 18px checkboxes, no vertical letter columns or page overflow; 8-hour window and multi-day appointment saved; conflict -> Back restores same calendar/day/patient/editor times; 15 axe A/AA audits, no JS errors. Fictional temporary DB, no models.

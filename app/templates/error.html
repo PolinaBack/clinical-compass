@@ -5,6 +5,6 @@
         <h1>{{ 'Нужно войти в свой кабинет' if status == 401 else 'Действие не выполнено' }}</h1>
         <p role="alert">{{ detail }}</p>
         <p>Не показываем успешное сохранение, если операция не завершилась.</p>
-        <a class="button" href="{{ '/doctor' if user == 'doctor' else '/me' if user else '/' }}">{{ 'Вернуться в кабинет' if user else 'К началу' }}</a><a class="button secondary" href="/faq">Читать FAQ</a>
+        <a class="button" data-error-back href="{{ error_return_url or ('/doctor' if user == 'doctor' else '/me' if user else '/') }}">{{ 'Назад' if error_return_url else 'Вернуться в кабинет' if user else 'К началу' }}</a><a class="button secondary" href="/faq">Читать FAQ</a>
     </section>
 {% endblock %}

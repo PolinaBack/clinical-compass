@@ -66,11 +66,24 @@ def local_start(value, label):
 def duration(raw):
     try:
         value = int(raw)
-        if not 5 <= value <= 240:
+        if value <= 0 or isinstance(raw, float) and raw != value:
             raise ValueError()
         return value
-    except (ValueError, TypeError):
-        raise HTTPException(422, "Длительность — от 5 до 240 минут") from None
+    except (ValueError, TypeError, OverflowError):
+        raise HTTPException(
+            422, "Укажите положительную длительность в целых минутах"
+        ) from None
+
+
+def ending_after(start, minutes):
+    try:
+        return (
+            start.astimezone(UTC) + timedelta(minutes=duration(minutes))
+        ).astimezone(start.tzinfo)
+    except (OverflowError, ValueError):
+        raise HTTPException(
+            422, "Проверьте дату окончания: она выходит за календарный диапазон."
+        ) from None
 
 
 def connection_details(url, fallback):
@@ -120,16 +133,17 @@ def conflict(c, did, start, end, exclude_appointment=None):
             before = local_start(visit["starts_at"], visit["timezone_label"])
         except HTTPException:
             # No guessed timezone or duration for historical appointments.
-            if visit["starts_at"][:10] in {
-                start.date().isoformat(),
-                end.date().isoformat(),
-            }:
+            if (
+                start.date().isoformat()
+                <= visit["starts_at"][:10]
+                <= end.date().isoformat()
+            ):
                 raise HTTPException(
                     409, "Сначала уточните время прежнего приёма в календаре"
                 ) from None
             continue
         if not visit["ends_at"]:
-            if before.astimezone(start.tzinfo).date() in {start.date(), end.date()}:
+            if start.date() <= before.astimezone(start.tzinfo).date() <= end.date():
                 raise HTTPException(
                     409, "Сначала укажите длительность прежнего приёма в календаре"
                 )
@@ -148,10 +162,7 @@ def publish(c, user, form, *, require_connection=False):
     except (ValueError, ZoneInfoNotFoundError):
         raise HTTPException(422, "Выберите действительный часовой пояс IANA") from None
     start = local_start(str(form.get("starts_at", "")), label)
-    end = (
-        start.astimezone(UTC)
-        + timedelta(minutes=duration(form.get("duration_minutes")))
-    ).astimezone(start.tzinfo)
+    end = ending_after(start, form.get("duration_minutes"))
     if start <= utc_now():
         raise HTTPException(422, "Опубликовать можно только будущее время")
     url, fallback = (
@@ -276,9 +287,12 @@ def available(c, did):
     ):
         start = datetime.fromisoformat(r["starts_at"]).astimezone(zone(r["timezone"]))
         end = datetime.fromisoformat(r["ends_at"]).astimezone(zone(r["timezone"]))
-        result.append(
-            dict(r, label=f"{start:%d.%m.%Y · %H:%M}–{end:%H:%M} · {r['timezone']}")
+        label = (
+            f"{start:%d.%m.%Y · %H:%M}–{end:%H:%M}"
+            if start.date() == end.date()
+            else f"{start:%d.%m.%Y · %H:%M} — {end:%d.%m.%Y · %H:%M}"
         )
+        result.append(dict(r, label=f"{label} · {r['timezone']}"))
     return result
 
 

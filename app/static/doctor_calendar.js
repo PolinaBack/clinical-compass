@@ -20,15 +20,21 @@
   };
   updateMode();
   let endEdited = false;
+  let editorOrigin = location.pathname + location.search + location.hash;
   const setDefaultEnd = () => {
     const parts = form.elements.time.value.split(':').map(Number);
     const end = parts[0]*60 + parts[1] + 50;
     form.elements.end_time.value = String(Math.floor(end/60)%24).padStart(2,'0') + ':' + String(end%60).padStart(2,'0');
-    form.elements.ends_next_day.checked = end >= 1440;
+    const day = new Date(form.elements.date.value + 'T12:00:00Z');
+    if (end >= 1440) day.setUTCDate(day.getUTCDate()+1);
+    if (!Number.isNaN(day.getTime())) form.elements.end_date.value = day.toISOString().slice(0,10);
   };
   form.elements.end_time.addEventListener('input', () => { endEdited = true; });
+  form.elements.end_date.addEventListener('input', () => { endEdited = true; });
+  form.elements.date.addEventListener('change', () => { if (!endEdited) setDefaultEnd(); });
   form.elements.time.addEventListener('change', () => { if (!endEdited) setDefaultEnd(); });
   const open = (value, mode = 'free') => {
+    if (editor.hidden) editorOrigin = location.pathname + location.search + location.hash;
     const [day, time] = value.split('T');
     if (day) form.elements.date.value = day;
     if (time) form.elements.time.value = time;
@@ -40,6 +46,7 @@
     endEdited = false;
     setDefaultEnd();
     editor.hidden = false;
+    rememberReturn();
     editor.scrollIntoView({block: 'center', behavior: 'smooth'});
     form.elements.time.focus({preventScroll: true});
   };
@@ -53,7 +60,17 @@
     if (selected?.value) form.elements.patient_id.value = selected.value;
     open(day + 'T10:00', 'past');
   });
-  document.querySelector('[data-calendar-close]')?.addEventListener('click', () => { editor.hidden = true; });
+  function rememberReturn() {
+    const target = new URL(location.href);
+    target.searchParams.set('create', form.elements.event_kind.value);
+    for (const [parameter,field] of [['event_date','date'],['event_time','time'],['event_end_date','end_date'],['event_end_time','end_time']]) target.searchParams.set(parameter, form.elements[field].value);
+    if (form.elements.event_kind.value !== 'free' && form.elements.patient_id.value) target.searchParams.set('patient_id',form.elements.patient_id.value);
+    target.hash = 'calendar-editor';
+    form.elements.return_to.value = target.pathname + target.search + target.hash;
+    history.replaceState(history.state,'',form.elements.return_to.value);
+  }
+  form.addEventListener('submit', rememberReturn);
+  document.querySelector('[data-calendar-close]')?.addEventListener('click', () => { editor.hidden = true; history.replaceState(history.state,'',editorOrigin); });
   document.querySelectorAll('[data-calendar-slot]').forEach(button => button.addEventListener('click', () => {
     const panel = document.getElementById('calendar-slot-details');
     panel.hidden = false;

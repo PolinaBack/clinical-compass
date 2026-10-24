@@ -1,0 +1,77 @@
+[
+  {
+    "width": 320,
+    "mode": "free",
+    "violations": []
+  },
+  {
+    "width": 320,
+    "mode": "appointment",
+    "violations": []
+  },
+  {
+    "width": 320,
+    "mode": "past",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "mode": "free",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "mode": "appointment",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "mode": "past",
+    "violations": []
+  },
+  {
+    "width": 768,
+    "mode": "free",
+    "violations": []
+  },
+  {
+    "width": 768,
+    "mode": "appointment",
+    "violations": []
+  },
+  {
+    "width": 768,
+    "mode": "past",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "mode": "free",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "mode": "appointment",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "mode": "past",
+    "violations": []
+  },
+  {
+    "width": 1920,
+    "mode": "free",
+    "violations": []
+  },
+  {
+    "width": 1920,
+    "mode": "appointment",
+    "violations": []
+  },
+  {
+    "width": 1920,
+    "mode": "past",
+    "violations": []
+  }
+]

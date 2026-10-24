@@ -142,9 +142,9 @@ def test_explicit_end_times_keep_utc_duration_conflicts_and_legacy_requests(clie
     assert (
         client.post(
             "/doctor/calendar/events",
-            data=end_form(client, time="14:00", end_time="20:00"),
+            data=end_form(client, time="14:10", end_time="20:10"),
         ).status_code
-        == 422
+        == 200
     )
     assert (
         client.post(
@@ -166,7 +166,7 @@ def test_explicit_end_times_keep_utc_duration_conflicts_and_legacy_requests(clie
     assert visit["ends_at"].endswith("21:15:00+00:00")
     assert (
         client.post(
-            "/doctor/calendar/events", data=calendar_form(client, time="18:00")
+            "/doctor/calendar/events", data=calendar_form(client, time="20:30")
         ).status_code
         == 200
     )

@@ -1,4 +1,13 @@
 "use strict";
+const errorBack = document.querySelector('[data-error-back]');
+if (errorBack && document.referrer && history.length > 1) {
+  try {
+    const source = new URL(document.referrer), target = new URL(errorBack.href);
+    if (source.origin === location.origin && target.origin === location.origin && source.pathname === target.pathname && source.search === target.search) {
+      errorBack.addEventListener('click', event => { event.preventDefault(); history.back(); });
+    }
+  } catch (_) { /* The server-provided local link remains available. */ }
+}
 // Speech recognition is optional and may use the browser vendor's remote service.
 for (const button of document.querySelectorAll(".voice")) {
   button.addEventListener("click", () => {

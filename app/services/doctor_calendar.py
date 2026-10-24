@@ -77,6 +77,19 @@ def context(
         patient_context = slots.profile_context(c, user, pid)
         visits = patient_context["appointments"]
         brief = patient_context["latest_brief"]
+        for visit in visits:
+            visit["calendar_label"] = visit["starts_at"].replace("T", " · ")
+            try:
+                start_time = slots.local_start(
+                    visit["starts_at"], visit["timezone_label"]
+                ).astimezone(tz)
+                if visit["ends_at"]:
+                    end_time = datetime.fromisoformat(visit["ends_at"]).astimezone(tz)
+                    visit["calendar_label"] = (
+                        f"{start_time:%d.%m.%Y %H:%M} — {end_time:%d.%m.%Y %H:%M}"
+                    )
+            except (ValueError, HTTPException, OverflowError):
+                pass
     if aid is not None and not any(v["id"] == aid for v in visits):
         raise HTTPException(404, "Приём не найден для выбранного пациента.")
     default_visit = (
@@ -161,7 +174,9 @@ def context(
                     event,
                     top=round(top * HOUR_HEIGHT / 60, 2),
                     height=max(28, round((end_minutes - top) * HOUR_HEIGHT / 60, 2)),
-                    time=f"{event['start']:%H:%M}–{event['end']:%H:%M}",
+                    time=f"{clip_start:%H:%M}–"
+                    + ("24:00" if clip_end.date() != day else f"{clip_end:%H:%M}"),
+                    full_time=f"{event['start']:%d.%m.%Y %H:%M} — {event['end']:%d.%m.%Y %H:%M}",
                 )
             )
         # Separate old overlapping appointments rather than placing text on top of text.
@@ -249,9 +264,19 @@ def create(c, user, form):
             )
         except ValueError:
             raise HTTPException(422, "Проверьте время окончания.") from None
-        ending_day = begins.date() + timedelta(
-            days=int(form.get("ends_next_day") == "yes")
-        )
+        try:
+            if form.get("end_date"):
+                if form.get("ends_next_day"):
+                    raise HTTPException(
+                        422, "Укажите дату окончания без отметки следующего дня."
+                    )
+                ending_day = date.fromisoformat(str(form["end_date"]))
+            else:
+                ending_day = begins.date() + timedelta(
+                    days=int(form.get("ends_next_day") == "yes")
+                )
+        except (ValueError, OverflowError):
+            raise HTTPException(422, "Проверьте дату окончания.") from None
         ending = slots.local_start(ending_day.isoformat() + "T" + ending_time, label)
         minutes = slots.duration(
             (
@@ -260,6 +285,8 @@ def create(c, user, form):
             / 60
         )
     else:
+        if form.get("end_date") or form.get("ends_next_day"):
+            raise HTTPException(422, "Укажите время окончания.")
         minutes = slots.duration(form.get("duration_minutes"))
     mode = form.get("event_kind") or ("appointment" if pid else "free")
     if mode not in ("free", "appointment", "past"):
@@ -289,7 +316,7 @@ def create(c, user, form):
             422,
             "Свободное окно можно открыть только на будущее время. Для записи прошедшей встречи выберите пациента.",
         )
-    ends = begins.astimezone(slots.UTC) + timedelta(minutes=minutes)
+    ends = slots.ending_after(begins, minutes).astimezone(slots.UTC)
     aid = c.execute(
         "INSERT INTO appointments(patient_id,author_id,starts_at,timezone_label,url,fallback,status,created_at,ends_at) VALUES(?,?,?,?,?,?,'completed',?,?)",
         (

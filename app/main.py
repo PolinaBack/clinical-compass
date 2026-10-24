@@ -162,6 +162,14 @@ def create_app(db_path=None):
 
     def render(request, template, **context):
         request.session.setdefault("csrf", secrets.token_urlsafe(24))
+        if request.method == "GET" and template != "error.html":
+            from .services.navigation import local_destination
+
+            location = request.url.path + (
+                "?" + request.url.query if request.url.query else ""
+            )
+            if len(location) <= 1024 and local_destination(request, location):
+                request.session["last_html_page"] = location
         interface_prefs = dict(minimal=False, revision=0, cards=[])
         if request.session.get("account_id"):
             with db() as c:
@@ -197,8 +205,14 @@ def create_app(db_path=None):
             return JSONResponse(
                 {"detail": str(exc.detail)}, status_code=exc.status_code
             )
+        from .services.navigation import error_destination
+
         response = render(
-            request, "error.html", status=exc.status_code, detail=str(exc.detail)
+            request,
+            "error.html",
+            status=exc.status_code,
+            detail=str(exc.detail),
+            error_return_url=await error_destination(request),
         )
         response.status_code = exc.status_code
         response.headers["Cache-Control"] = "no-store"
@@ -206,13 +220,38 @@ def create_app(db_path=None):
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request, exc):
+        from .services.navigation import error_destination
+
         response = render(
             request,
             "error.html",
             status=422,
             detail="Проверьте обязательные поля, форматы и допустимые значения. Данные не сохранены.",
+            error_return_url=await error_destination(request),
         )
         response.status_code = 422
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @app.exception_handler(Exception)
+    async def unexpected_error(request, exc):
+        from .services.navigation import error_destination
+        from fastapi.responses import JSONResponse
+
+        if request.url.path.startswith("/api/"):
+            return JSONResponse(
+                {"detail": "Действие не выполнено. Попробуйте ещё раз."},
+                status_code=500,
+            )
+        response = render(
+            request,
+            "error.html",
+            status=500,
+            detail="Действие не выполнено. Попробуйте ещё раз.",
+            error_return_url=await error_destination(request),
+        )
+        response.status_code = 500
+        response.headers["Cache-Control"] = "no-store"
         return response
 
     def back(pid):

@@ -1,6 +1,5 @@
 """Availability management in the existing doctor calendar."""
 
-from datetime import timedelta
 from fastapi import Request, HTTPException
 from fastapi.responses import RedirectResponse
 from app.services import consultations as service
@@ -25,12 +24,14 @@ def register_consultations(app, db, account, access, csrf_check):
             "time",
             "duration_minutes",
             "end_time",
+            "end_date",
             "ends_next_day",
             "timezone",
             "patient_id",
             "url",
             "fallback",
             "event_kind",
+            "return_to",
         }
         if any(k not in allowed or len(form.getlist(k)) != 1 for k in form):
             raise HTTPException(422, "Проверьте поля записи.")
@@ -42,7 +43,7 @@ def register_consultations(app, db, account, access, csrf_check):
                 {
                     k: str(v)
                     for k, v in form.items()
-                    if k not in ("csrf", "calendar_token")
+                    if k not in ("csrf", "calendar_token", "return_to")
                 },
                 sort_keys=True,
             ).encode()
@@ -147,10 +148,7 @@ def register_consultations(app, db, account, access, csrf_check):
                 raise HTTPException(409, "Длительность уже указана или приём закрыт")
             label = str(form.get("timezone", visit["timezone_label"]))
             start = service.local_start(visit["starts_at"], label)
-            end = (
-                start.astimezone(service.UTC)
-                + timedelta(minutes=service.duration(form.get("duration_minutes")))
-            ).astimezone(start.tzinfo)
+            end = service.ending_after(start, form.get("duration_minutes"))
             service.conflict(c, user["doctor_id"], start, end, exclude_appointment=vid)
             c.execute(
                 "UPDATE appointments SET ends_at=?,timezone_label=? WHERE id=?",
