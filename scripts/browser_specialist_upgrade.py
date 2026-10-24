@@ -52,13 +52,16 @@ def check_specialist_upgrade(doctor, patient, url, grant, process):
     form = doctor.locator("#calendar-event-form")
     expect(form.locator('[name="date"]')).to_have_value("2030-01-07")
     expect(form.locator('[name="time"]')).to_have_value("10:00")
-    form.locator('[name="patient_id"]').select_option("")
-    form.locator('[name="url"]').fill("https://example.org/synthetic-room")
-    form.locator('[name="fallback"]').fill("Синтетический резервный контакт")
     form.get_by_role("button", name="Сохранить время", exact=True).click()
     expect(doctor.locator(".calendar-event.event-open")).to_contain_text("10:00–10:50")
     doctor.locator(".calendar-event.event-open").click()
     doctor.locator("[data-slot-book] select").select_option("1")
+    doctor.locator('[data-slot-book] [name="url"]').fill(
+        "https://example.org/synthetic-room"
+    )
+    doctor.locator('[data-slot-book] [name="fallback"]').fill(
+        "Синтетический резервный контакт"
+    )
     doctor.get_by_role("button", name="Записать пациента на окно", exact=True).click()
     expect(doctor.locator(".calendar-event.event-planned")).to_contain_text(
         "10:00–10:50"

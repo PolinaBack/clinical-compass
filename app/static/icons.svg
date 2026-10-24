@@ -23,4 +23,5 @@
 <symbol id="check" viewBox="0 0 24 24"><path d="M5 4h14v18H5V4ZM9 4V2h6v2M8 13l3 3 5-7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="chart" viewBox="0 0 24 24"><path d="M3 3v19h19M7 18v-5m5 5V9m5 9V5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="settings" viewBox="0 0 24 24"><path d="m10 2 4 0 1 4 4-1 2 4-3 3 3 3-2 4-4-1-1 4h-4l-1-4-4 1-2-4 3-3-3-3 2-4 4 1 1-4Zm2 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="forums" viewBox="0 0 24 24"><path d="M3 3h14v11H9l-5 4v-4H3V3Zm15 5h3v12h-4l-4 3v-6M7 7h6M7 10h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>

@@ -276,7 +276,8 @@ def test_single_question_save_preserves_other_answers_history_and_conflicts(clie
 def test_phqads_assignment_package_is_atomic_idempotent_and_uses_same_session(client):
     login(client, "patient1")
     aid = start(client)
-    assert save(client, aid, [1, 2, 1, 2]).status_code == 200
+    # A manual package remains available even below the automatic thresholds.
+    assert save(client, aid, [0, 0, 0, 0]).status_code == 200
     sid = rows(client, "SELECT session_id FROM assessments")[0]["session_id"]
     login(client, "doctor")
     for _ in range(2):
@@ -296,7 +297,8 @@ def test_phqads_assignment_package_is_atomic_idempotent_and_uses_same_session(cl
     )
     assert [a["scale"] for a in assigned] == ["gad7", "phq9"]
     assert all(a["session_id"] == sid and a["assigned_by"] for a in assigned)
-    assert "пакет PHQ-ADS" in client.get("/patients/1/workspace/assessments").text
+    card = client.get("/patients/1/workspace/assessments").text
+    assert "PHQ-9" in card and "GAD-7" in card
     login(client, "patient1")
     assert (
         post(

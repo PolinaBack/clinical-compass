@@ -79,7 +79,7 @@ def test_visual_calendar_publishes_books_prevents_duplicates_and_overlaps(client
     assert not records(client, "appointments")
     html = client.get("/doctor/calendar?week=" + data["date"]).text
     assert "data-calendar-time=" in html and 'data-calendar-slot="1"' in html
-    assert "top:600px;height:50px" in html
+    assert "top:320.0px;height:28px" in html
     assert (
         client.post(
             "/doctor/calendar/events", data=calendar_form(client, time="10:30")
@@ -117,17 +117,17 @@ def test_calendar_source_times_zone_cross_midnight_and_scopes(client):
     data = calendar_form(client, time="23:30", duration_minutes="60", patient_id="1")
     assert client.post("/doctor/calendar/events", data=data).status_code == 200
     html = client.get("/doctor/calendar?view=day&week=" + data["date"]).text
-    assert "top:1410px;height:30px" in html
+    assert "top:752.0px;height:28px" in html
     nextday = (
         (datetime.fromisoformat(data["date"]) + timedelta(days=1)).date().isoformat()
     )
     assert (
-        "top:0px;height:30px"
+        "top:0.0px;height:28px"
         in client.get("/doctor/calendar?view=day&week=" + nextday).text
     )
     # Moscow 23:30 is 20:30 UTC; positions must follow the chosen displayed zone.
     assert (
-        "top:1230px;height:60px"
+        "top:656.0px;height:32.0px"
         in client.get(
             "/doctor/calendar?view=day&timezone=UTC&week=" + data["date"]
         ).text

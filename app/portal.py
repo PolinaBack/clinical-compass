@@ -294,15 +294,25 @@ def register_portal(
         pid: int,
         csrf: str = Form(...),
         slot_id: int = Form(..., gt=0, le=2**63 - 1),
+        url: str = Form("", max_length=2000),
+        fallback: str = Form("", max_length=1000),
     ):
         user = account(request)
         access(request, pid, user["role"] == "patient")
         csrf_check(request, csrf)
         from .services.consultations import book
 
+        if user["role"] != "doctor" and (url or fallback):
+            raise HTTPException(403, "Ссылку на видеоприём задаёт врач")
         with db() as c:
             c.execute("BEGIN IMMEDIATE")
-            appointment_id = book(c, user, pid, slot_id)
+            appointment_id = book(
+                c,
+                user,
+                pid,
+                slot_id,
+                connection=(url.strip(), fallback.strip()) if url or fallback else None,
+            )
             booked = c.execute(
                 "SELECT starts_at FROM appointments WHERE id=?", (appointment_id,)
             ).fetchone()

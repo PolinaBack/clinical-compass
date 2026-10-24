@@ -86,7 +86,7 @@ def test_doctor_calendar_and_tasks_use_existing_assigned_records(client):
         assert 'href="/doctor/calendar?patient_id=1#meeting-workspace"' in html
         assert 'href="/patients/2/profile/video' not in html
     assert client.get("/doctor/tasks").url.path == "/doctor/forums"
-    assert 'id="workflow-alerts"' in client.get("/doctor/calendar").text
+    assert 'id="workflow-alerts"' not in client.get("/doctor/calendar").text
     assert client.get("/doctor/library").status_code == 200
     assert client.get("/me/overview").status_code == 403
     assert (

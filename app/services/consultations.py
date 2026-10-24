@@ -139,7 +139,7 @@ def conflict(c, did, start, end, exclude_appointment=None):
             raise HTTPException(409, "Это время занято прежним приёмом")
 
 
-def publish(c, user, form):
+def publish(c, user, form, *, require_connection=False):
     doctor(c, user)
     label = str(form.get("timezone", "Europe/Moscow"))
     # New slots always use a real IANA zone, not a guessed text label.
@@ -154,9 +154,14 @@ def publish(c, user, form):
     ).astimezone(start.tzinfo)
     if start <= utc_now():
         raise HTTPException(422, "Опубликовать можно только будущее время")
-    url, fallback = connection_details(
-        str(form.get("url", "")).strip(), str(form.get("fallback", ""))
+    url, fallback = (
+        str(form.get("url", "")).strip(),
+        str(form.get("fallback", "")).strip(),
     )
+    if require_connection or url:
+        url, fallback = connection_details(url, fallback)
+    elif len(fallback) > 1000:
+        raise HTTPException(422, "Резервный контакт — до 1000 символов")
     conflict(c, user["doctor_id"], start, end)
     sid = c.execute(
         "INSERT INTO consultation_slots(doctor_id,created_by,starts_at,ends_at,timezone,url,fallback,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)",
@@ -177,7 +182,7 @@ def publish(c, user, form):
     return sid
 
 
-def book(c, user, pid, sid):
+def book(c, user, pid, sid, *, connection=None):
     check_scope(c, user, pid, write=user["role"] == "patient")
     patient = c.execute("SELECT doctor_id FROM patients WHERE id=?", (pid,)).fetchone()
     slot = c.execute(
@@ -199,6 +204,16 @@ def book(c, user, pid, sid):
         raise HTTPException(
             409, "Это время уже занято или недоступно. Выберите другое окно"
         )
+    if connection is not None:
+        doctor(c, user)
+        url, fallback = connection_details(*connection)
+    elif slot["url"]:
+        url, fallback = connection_details(slot["url"], slot["fallback"])
+    else:
+        raise HTTPException(
+            422 if user["role"] == "doctor" else 409,
+            "Для назначения встречи врач должен добавить ссылку на видеоприём и резервный контакт.",
+        )
     local = datetime.fromisoformat(slot["starts_at"]).astimezone(zone(slot["timezone"]))
     aid = c.execute(
         "INSERT INTO appointments(patient_id,author_id,starts_at,timezone_label,url,fallback,created_at,slot_id,ends_at) VALUES(?,?,?,?,?,?,?,?,?)",
@@ -207,16 +222,16 @@ def book(c, user, pid, sid):
             slot["created_by"],
             local.replace(tzinfo=None).isoformat(timespec="minutes"),
             slot["timezone"],
-            slot["url"],
-            slot["fallback"],
+            url,
+            fallback,
             now(),
             sid,
             slot["ends_at"],
         ),
     ).lastrowid
     c.execute(
-        "UPDATE consultation_slots SET status='booked',appointment_id=?,updated_at=? WHERE id=?",
-        (aid, now(), sid),
+        "UPDATE consultation_slots SET status='booked',appointment_id=?,url=?,fallback=?,updated_at=? WHERE id=?",
+        (aid, url, fallback, now(), sid),
     )
     c.execute(
         "INSERT INTO consultation_requests(patient_id,preferred_day,time_window,timezone_label,status,appointment_id,created_at) VALUES(?,?,?,?,'confirmed',?,?)",
@@ -334,7 +349,9 @@ def profile_context(c, user, pid):
                     )
                 )
     return dict(
-        available_slots=available(c, did),
+        # Unlinked hours remain in the doctor's calendar. A patient can only
+        # self-book an invitation whose connection details are ready.
+        available_slots=[s for s in available(c, did) if s["url"]],
         appointments=visits,
         latest_brief=briefs[0] if briefs else None,
         meeting_history=briefs[1:],

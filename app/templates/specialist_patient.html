@@ -10,7 +10,6 @@
     {% elif section == 'assessments' %}
         {% include 'assessment_list.html' %}
         {% include 'results_content.html' %}
-        {% if assessment_data.events %}<details class="card" id="assessment-events"><summary>Отмеченные ответы и действия по ним</summary>{% for event in assessment_data.events %}<article><p><a href="/assessments/{{ event.assessment_id }}">Открыть исходные ответы</a> · {{ event.created_at|local_datetime }}</p><p>{% if event.kind.startswith('safety6_') %}В учебной беседе сохранён новый ответ «да». Уточните его контекст по исходным ответам.{% else %}Сохранён ответ на пункт 9 PHQ-9, требующий уточнения в беседе.{% endif %}{{ ' Действие записано.' if event.action_at else '' }}</p>{% if not event.acknowledged_at %}<form action="/events/{{ event.id }}/status" method="post"><input name="csrf" type="hidden" value="{{ csrf }}"><button name="intent" value="acknowledge">Подтвердить получение события</button></form>{% else %}<form action="/events/{{ event.id }}/status" method="post"><input name="csrf" type="hidden" value="{{ csrf }}"><input name="intent" type="hidden" value="action"><label>Действие специалиста<textarea name="action_text" maxlength="3000" required>{{ event.action_text or '' }}</textarea></label><button>Сохранить действие специалиста</button></form>{% endif %}</article>{% endfor %}</details>{% endif %}
     {% elif section == 'conversation' %}
         {% include 'conversation_support.html' %}
     {% endif %}

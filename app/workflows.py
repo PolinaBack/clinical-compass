@@ -596,6 +596,10 @@ def register_workflows(
                 "INSERT INTO save_requests VALUES(?,?,?)", (token, user["id"], payload)
             )
             audit(c, user["id"], "assessment_saved", a["patient_id"], aid)
+            if a["scale"] == "phq4" and status in ("completed", "incomplete"):
+                from .services.assessment_followups import ensure_followups
+
+                ensure_followups(c, aid, user["id"])
         return RedirectResponse(target, status_code=303)
 
     @app.post("/patients/{pid}/repeat")

@@ -2,6 +2,8 @@
 {% block title %}Пациенты · Клинический компас{% endblock %}
 {% block content %}
 <h1 class="visually-hidden">Мои пациенты</h1>
+<section class="card patient-activity" aria-labelledby="patient-activity-title"><h2 id="patient-activity-title">Последние действия пациентов</h2>
+<ul>{% for p in patients if p.activity %}{% if loop.index<=5 %}<li><a href="{{ p.activity.href }}"><strong>{{ p.name }}</strong><span>{{ p.activity.label }}</span></a><time datetime="{{ p.activity.happened_at }}">{% if p.activity.date_only %}{{ p.activity.happened_at[8:10] }}.{{ p.activity.happened_at[5:7] }}.{{ p.activity.happened_at[:4] }} · время не сохранено{% else %}{{ p.activity.happened_at|local_datetime }}{% endif %}</time></li>{% endif %}{% else %}<li class="caption">Новых действий пока нет.</li>{% endfor %}</ul></section>
 <div class="patient-grid" id="patient-cards">
 {% for p in patients %}<section class="card patient-preview"><div class="avatar" aria-hidden="true">{{ p.name[-1] }}</div><h2>{{ p.name }}</h2><p class="caption">Профиль закреплён за вами</p><a class="button full" href="/patients/{{ p.id }}">Карточка пациента</a></section>
 {% else %}<section class="card"><h2>Пока нет закреплённых пациентов</h2></section>{% endfor %}

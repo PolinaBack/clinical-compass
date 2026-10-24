@@ -73,7 +73,8 @@ def test_case_patient_specialist_patient_and_safety_lifecycle(client):
     ]
     login(client, "doctor")
     card = client.get("/patients/1/workspace/assessments").text
-    assert "Предложение по PHQ-2" in card and "Предложение по GAD-2" in card
+    assert "Предложения для уточнения" not in card
+    assert "PHQ-9" in card and "GAD-7" in card
     q9 = assign(client, sid, "phq9")
     g7 = assign(client, sid, "gad7")
     # Reading and discussing are independent.

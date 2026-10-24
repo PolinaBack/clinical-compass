@@ -28,6 +28,7 @@ def register_consultations(app, db, account, access, csrf_check):
             "patient_id",
             "url",
             "fallback",
+            "event_kind",
         }
         if any(k not in allowed or len(form.getlist(k)) != 1 for k in form):
             raise HTTPException(422, "Проверьте поля записи.")

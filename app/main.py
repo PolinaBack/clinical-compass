@@ -87,6 +87,9 @@ def create_app(db_path=None):
             from .services.materials import bootstrap
 
             bootstrap(c)
+            from .services.assessment_followups import ensure_followups
+
+            ensure_followups(c)
         yield
 
     app = FastAPI(title="Клинический компас — демо", lifespan=lifespan)
@@ -302,11 +305,12 @@ def create_app(db_path=None):
         if identity(request) != "doctor":
             raise HTTPException(403, "Только для врача")
         with db() as c:
-            patients = c.execute(
-                """SELECT p.*, (SELECT count(*) FROM diary d WHERE d.patient_id=p.id AND (d.adherence='missed' OR d.contact=1)) alerts, (SELECT count(*) FROM consultation_requests q WHERE q.patient_id=p.id AND q.status='requested') pending_consultations FROM patients p WHERE p.doctor_id=?""",
-                (account(request)["doctor_id"],),
-            ).fetchall()
-        return render(request, "doctor.html", patients=patients)
+            from .services.patient_activity import patients_with_activity
+
+            patients = patients_with_activity(c, account(request)["doctor_id"])
+        response = render(request, "doctor.html", patients=patients)
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     def patient_context(request, pid):
         access(request, pid)
@@ -397,7 +401,7 @@ def create_app(db_path=None):
             raise HTTPException(404, "Раздел не найден")
         if section == "safety":
             return RedirectResponse(
-                f"/patients/{pid}/workspace/assessments#assessment-events",
+                f"/patients/{pid}/workspace/assessments",
                 status_code=303,
             )
         context = patient_context(request, pid)
@@ -509,6 +513,7 @@ def create_app(db_path=None):
                 ),
             ).lastrowid
             questions.save_answers(c, app.state.db_path, pid, user, did, extra_values)
+            audit(c, user["id"], "diary_saved", pid, did)
         return RedirectResponse(f"/patients/{pid}/diary", status_code=303)
 
     @app.post("/patients/{pid}/screening")

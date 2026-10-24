@@ -1,0 +1,1 @@
+PASS: real browser PHQ-4 submission -> automatic PHQ-9/GAD-7; recent activity/sorted cards; free hours without link -> mandatory link for appointment; full 24-hour calendar without vertical inner scrolling; matching forum buttons; clean recording/questionnaire UI; 320/390/768/1280, 16 axe A/AA audits, no JS errors or page overflow. No models invoked.

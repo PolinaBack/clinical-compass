@@ -133,4 +133,5 @@ def register_materials(app, db, account, csrf_check, render):
                     (status, now(), aid),
                 )
                 service.event(c, user, aid, status)
+                audit(c, user["id"], "resource_" + status, item["patient_id"], aid)
         return RedirectResponse("/me/materials", status_code=303)

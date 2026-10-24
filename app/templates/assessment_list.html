@@ -51,31 +51,6 @@
    href="/assessments/{{ a.id }}{{ '?review=1' if a.status == 'completed' and user != 'doctor' else '' }}">{{ 'Посмотреть ответы' if user == 'doctor' else 'Продолжить' if a.status != 'completed' else 'Мои ответы' }}</a>
             </div>
         </div>
-        {% if a.scale == 'phq4' and user == 'doctor' and a.status != 'draft' %}
-            <div class="notice">
-                <strong>Предложения для уточнения</strong>
-                <p>
-                    PHQ-2: {{ a.result.phq2 if a.result.phq2 is not none else 'неполно' }}/6 · GAD-2: {{ a.result.gad2 if a.result.gad2 is not none else 'неполно' }}/6.
-                </p>
-                {% if a.result.phq2 is not none and a.result.phq2 >= 3 and a.result.gad2 is not none and a.result.gad2 >= 3 %}
-                    <p>Предложение по PHQ-2 ≥3: PHQ-9. Предложение по GAD-2 ≥3: GAD-7. Можно назначить пакет PHQ-ADS из обеих форм.</p>
-                {% else %}
-                    {% if a.result.phq2 is not none and a.result.phq2 >= 3 %}<p>Предложение по PHQ-2 ≥3: рассмотреть PHQ-9.</p>{% endif %}
-                    {% if a.result.gad2 is not none and a.result.gad2 >= 3 %}<p>Предложение по GAD-2 ≥3: рассмотреть GAD-7.</p>{% endif %}
-                {% endif %}
-                <p class="caption">Решение о назначении принимает специалист независимо от порога. Срочность оценивается отдельно.</p>
-                <a class="button secondary small"
-                   href="/clinical-tools?patient_id={{ patient.id }}">Выбрать обследование</a>
-            </div>
-        {% endif %}
     {% endfor %}
     </div>
-    {% if user == 'doctor' %}
-        <form action="/patients/{{ patient.id }}/repeat" method="post">
-            <input type="hidden" name="csrf" value="{{ csrf }}">
-            <button class="secondary">
-                Назначить {{ 'повторную ' if assessment_data.assessments else '' }}PHQ-4 · новый период
-            </button>
-        </form>
-    {% endif %}
 </section>

@@ -10,6 +10,7 @@ from app.services.intake import check_scope
 from app.storage import now, audit
 
 WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+HOUR_HEIGHT = 32
 
 
 def location(pid=None, day=None, mid=None, aid=None):
@@ -158,8 +159,8 @@ def context(
             pieces.append(
                 dict(
                     event,
-                    top=top,
-                    height=max(24, end_minutes - top),
+                    top=round(top * HOUR_HEIGHT / 60, 2),
+                    height=max(28, round((end_minutes - top) * HOUR_HEIGHT / 60, 2)),
                     time=f"{event['start']:%H:%M}–{event['end']:%H:%M}",
                 )
             )
@@ -197,7 +198,7 @@ def context(
             previous_connection["fallback"] if previous_connection else ""
         ),
         calendar_days=calendar_days,
-        calendar_times=[f"{i//60:02d}:{i%60:02d}" for i in range(0, 1440, 30)],
+        calendar_times=[f"{i:02d}:00" for i in range(24)],
         picker_times=[f"{i//60:02d}:{i%60:02d}" for i in range(0, 1440, 5)],
         calendar_zone=label,
         calendar_zone_title=zone_title,
@@ -235,9 +236,22 @@ def create(c, user, form):
     value = str(form.get("date", "")) + "T" + str(form.get("time", ""))
     begins = slots.local_start(value, label)
     minutes = slots.duration(form.get("duration_minutes"))
+    mode = form.get("event_kind") or ("appointment" if pid else "free")
+    if mode not in ("free", "appointment", "past"):
+        raise HTTPException(422, "Выберите свободные часы или назначение встречи.")
+    if mode == "free" and pid or mode in ("appointment", "past") and not pid:
+        raise HTTPException(
+            422, "Для встречи выберите пациента; свободные часы создаются без пациента."
+        )
+    if form.get("event_kind") == "appointment" and begins <= slots.utc_now():
+        raise HTTPException(
+            422, "Для прошедшего разговора выберите запись прошедшей встречи."
+        )
+    if mode == "past" and begins > slots.utc_now():
+        raise HTTPException(422, "Прошедшая встреча должна быть в прошлом.")
     if begins > slots.utc_now():
         data = dict(form, starts_at=value, duration_minutes=minutes)
-        sid = slots.publish(c, user, data)
+        sid = slots.publish(c, user, data, require_connection=pid is not None)
         aid = slots.book(c, user, pid, sid) if pid else None
         return dict(
             slot_id=sid,

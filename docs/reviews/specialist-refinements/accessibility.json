@@ -1,0 +1,82 @@
+[
+  {
+    "page": "patients",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "patients",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "patients",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "patients",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "calendar",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "calendar",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "calendar",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "calendar",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "forums",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "forums",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "forums",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "forums",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "assessments",
+    "width": 320,
+    "violations": []
+  },
+  {
+    "page": "assessments",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "assessments",
+    "width": 768,
+    "violations": []
+  },
+  {
+    "page": "assessments",
+    "width": 1280,
+    "violations": []
+  }
+]
