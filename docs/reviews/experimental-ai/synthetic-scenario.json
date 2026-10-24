@@ -1,0 +1,310 @@
+{
+  "scenario_id": "maria-sokolova-30d-v1",
+  "provenance": "Полностью вымышлено и создано программно; не производное от карты человека.",
+  "patient": {
+    "age": 32,
+    "complaint": "Около месяца беспокоят засыпание, усталость, тревога и снижение интереса к привычным делам.",
+    "name": "Мария Соколова",
+    "sex": "female",
+    "synthetic": true,
+    "treatment": "Текущее лечение, диагнозы и лекарства в сценарии не заданы."
+  },
+  "observations": [
+    {
+      "anxiety": 8,
+      "day": "2026-09-01",
+      "note": "Трудно засыпать, меньше сил и интереса к прогулкам.",
+      "sleep_hours": 5,
+      "wellbeing": 3
+    },
+    {
+      "anxiety": 7,
+      "day": "2026-09-02",
+      "note": "",
+      "sleep_hours": 5.5,
+      "wellbeing": 4
+    },
+    {
+      "anxiety": 8,
+      "day": "2026-09-03",
+      "note": "",
+      "sleep_hours": 5,
+      "wellbeing": 3
+    },
+    {
+      "anxiety": 7,
+      "day": "2026-09-04",
+      "note": "",
+      "sleep_hours": 6,
+      "wellbeing": 4
+    },
+    {
+      "anxiety": 7,
+      "day": "2026-09-05",
+      "note": "",
+      "sleep_hours": 5.5,
+      "wellbeing": 4
+    },
+    {
+      "anxiety": 8,
+      "day": "2026-09-06",
+      "note": "",
+      "sleep_hours": 5,
+      "wellbeing": 3
+    },
+    {
+      "anxiety": 7,
+      "day": "2026-09-07",
+      "note": "",
+      "sleep_hours": 6,
+      "wellbeing": 4
+    },
+    {
+      "anxiety": 7,
+      "day": "2026-09-08",
+      "note": "",
+      "sleep_hours": 5.5,
+      "wellbeing": null
+    },
+    {
+      "anxiety": 7,
+      "day": "2026-09-09",
+      "note": "",
+      "sleep_hours": 6,
+      "wellbeing": 4
+    },
+    {
+      "anxiety": 6,
+      "day": "2026-09-10",
+      "note": "",
+      "sleep_hours": null,
+      "wellbeing": 5
+    },
+    {
+      "anxiety": 7,
+      "day": "2026-09-11",
+      "note": "",
+      "sleep_hours": 6,
+      "wellbeing": 4
+    },
+    {
+      "anxiety": 6,
+      "day": "2026-09-12",
+      "note": "",
+      "sleep_hours": 6.5,
+      "wellbeing": 5
+    },
+    {
+      "anxiety": 6,
+      "day": "2026-09-13",
+      "note": "",
+      "sleep_hours": 6,
+      "wellbeing": 4
+    },
+    {
+      "anxiety": 6,
+      "day": "2026-09-14",
+      "note": "",
+      "sleep_hours": 6.5,
+      "wellbeing": 5
+    },
+    {
+      "anxiety": 6,
+      "day": "2026-09-15",
+      "note": "Начала записывать время сна и выходить на короткие прогулки.",
+      "sleep_hours": 6.5,
+      "wellbeing": 5
+    },
+    {
+      "anxiety": 6,
+      "day": "2026-09-16",
+      "note": "",
+      "sleep_hours": 6,
+      "wellbeing": 5
+    },
+    {
+      "anxiety": 5,
+      "day": "2026-09-17",
+      "note": "",
+      "sleep_hours": 7,
+      "wellbeing": 6
+    },
+    {
+      "anxiety": 6,
+      "day": "2026-09-18",
+      "note": "",
+      "sleep_hours": 6.5,
+      "wellbeing": 5
+    },
+    {
+      "anxiety": 6,
+      "day": "2026-09-19",
+      "note": "",
+      "sleep_hours": 6,
+      "wellbeing": null
+    },
+    {
+      "anxiety": 5,
+      "day": "2026-09-20",
+      "note": "",
+      "sleep_hours": 7,
+      "wellbeing": 6
+    },
+    {
+      "anxiety": 5,
+      "day": "2026-09-21",
+      "note": "",
+      "sleep_hours": 7,
+      "wellbeing": 6
+    },
+    {
+      "anxiety": 6,
+      "day": "2026-09-22",
+      "note": "",
+      "sleep_hours": 6.5,
+      "wellbeing": 5
+    },
+    {
+      "anxiety": 5,
+      "day": "2026-09-23",
+      "note": "",
+      "sleep_hours": 7,
+      "wellbeing": 6
+    },
+    {
+      "anxiety": 8,
+      "day": "2026-09-24",
+      "note": "Вымышленный напряжённый рабочий день, легла поздно.",
+      "sleep_hours": 4.5,
+      "wellbeing": 3
+    },
+    {
+      "anxiety": 5,
+      "day": "2026-09-25",
+      "note": "",
+      "sleep_hours": 7,
+      "wellbeing": 6
+    },
+    {
+      "anxiety": 4,
+      "day": "2026-09-26",
+      "note": "",
+      "sleep_hours": 7.5,
+      "wellbeing": 7
+    },
+    {
+      "anxiety": 5,
+      "day": "2026-09-27",
+      "note": "",
+      "sleep_hours": 7,
+      "wellbeing": 6
+    },
+    {
+      "anxiety": 4,
+      "day": "2026-09-28",
+      "note": "",
+      "sleep_hours": 7.5,
+      "wellbeing": 7
+    },
+    {
+      "anxiety": 5,
+      "day": "2026-09-29",
+      "note": "",
+      "sleep_hours": 7,
+      "wellbeing": 6
+    },
+    {
+      "anxiety": 4,
+      "day": "2026-09-30",
+      "note": "Чаще удаётся отдыхать, хочется обсудить сохраняющееся беспокойство.",
+      "sleep_hours": 7.5,
+      "wellbeing": 7
+    }
+  ],
+  "questionnaires": [
+    {
+      "day": "2026-09-01",
+      "scale": "phq9",
+      "values": [
+        2,
+        2,
+        2,
+        2,
+        1,
+        1,
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "day": "2026-09-01",
+      "scale": "gad7",
+      "values": [
+        2,
+        2,
+        2,
+        2,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "day": "2026-09-15",
+      "scale": "phq9",
+      "values": [
+        1,
+        1,
+        2,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "day": "2026-09-15",
+      "scale": "gad7",
+      "values": [
+        2,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "day": "2026-09-30",
+      "scale": "phq9",
+      "values": [
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "day": "2026-09-30",
+      "scale": "gad7",
+      "values": [
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1
+      ]
+    }
+  ]
+}

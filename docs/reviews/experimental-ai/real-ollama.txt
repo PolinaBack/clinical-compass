@@ -1,0 +1,3 @@
+Эксперимент №1: error
+Код: provider_unavailable
+Нет соединения с локальной Ollama. Проверьте ollama serve и адрес сервиса.

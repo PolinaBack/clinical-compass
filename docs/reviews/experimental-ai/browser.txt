@@ -1,0 +1,1 @@
+PASS experimental UI: isolated 30-day scenario; doctor-only, no real-patient input; queue/poll/history/export/expert score; mock success explicitly labelled; REAL HTTP refusal and metrics without fake summary; 320/390/768/1280; no overflow/JS errors; 6 axe checks. This is not a real model-quality test.

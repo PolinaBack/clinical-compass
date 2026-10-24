@@ -1,0 +1,13 @@
+{
+  "main_schema_and_all_fields_unchanged": true,
+  "main_tables": 71,
+  "main_rows": 551,
+  "integrity_check": "ok",
+  "foreign_key_check": [],
+  "after_app_restart": true,
+  "separate_experiment_db": true,
+  "synthetic_patients": 1,
+  "synthetic_days": 30,
+  "synthetic_questionnaires": 6,
+  "production_fake_successes": 0
+}

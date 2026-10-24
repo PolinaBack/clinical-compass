@@ -1,0 +1,32 @@
+[
+  {
+    "width": 320,
+    "state": "labelled-mock-success",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "state": "labelled-mock-success",
+    "violations": []
+  },
+  {
+    "width": 768,
+    "state": "labelled-mock-success",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "state": "labelled-mock-success",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "state": "real-unavailable",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "state": "real-unavailable",
+    "violations": []
+  }
+]

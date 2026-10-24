@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Экспериментальный ИИ · Клинический компас{% endblock %}
+{% block content %}
+<div class="experiment-page">
+    <a href="/doctor">← Кабинет врача</a>
+    <div class="experiment-banner">Тестовый режим · только синтетические данные</div>
+    <header class="experiment-heading"><p class="eyebrow">ИССЛЕДОВАТЕЛЬСКИЙ МОДУЛЬ</p><h1>ИИ-помощник: лаборатория</h1><p>Наблюдения, уточняющие вопросы и экспериментальные гипотезы. Каждый результат требует проверки; это не диагноз и не план лечения.</p></header>
+    {% if error %}<section class="card" role="alert"><h2>Эксперимент недоступен</h2><p>{{ error }}</p></section>{% endif %}
+    {% if dataset and metrics %}
+    <section class="card experiment-person"><div><span class="badge">Полностью вымышленный человек</span><h2>{{ dataset.patient.name }}</h2><p>{{ dataset.patient.age }} года · {{ dataset.observations[0].day }} — {{ dataset.observations[-1].day }} · 30 дней</p><p>{{ dataset.patient.complaint }}</p><p class="caption">{{ dataset.provenance }} {{ dataset.patient.treatment }}</p></div>
+        <form action="/doctor/experimental-ai/run" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Запустить анализ в Ollama</button><p class="caption">Отдельный локальный обработчик выполняет генерацию. Повторный запуск сохраняет предыдущие версии.</p></form>
+    </section>
+    {% if selected %}
+    <section class="card" id="experiment-progress" data-run-id="{{ selected.id }}" data-run-status="{{ selected.status }}">
+        <h2>Запуск №{{ selected.id }}</h2>
+        <p data-run-stage role="status">{{ stages.get(selected.stage,selected.stage) }}</p>
+        <p>Статус: <strong data-run-status-label>{{ {'queued':'В очереди','running':'Выполняется','completed':'Завершён','error':'Ошибка'}[selected.status] }}</strong></p>
+        <p class="caption" data-run-heartbeat>Последняя связь с обработчиком: {{ selected.heartbeat_at or 'ещё не было' }}{% if selected.heartbeat_at %} (UTC){% endif %}</p>
+        <p>Процент генерации неизвестен. Связь с обработчиком не означает, что модель уже закончила ответ.</p>
+        {% if selected.status=='queued' %}<p>Запустите в отдельном Terminal: <code>python -m scripts.experimental_ai_worker</code>.</p>{% endif %}
+        <p class="experiment-error" data-run-error {% if not selected.error_code %}hidden{% endif %}>{{ error_messages.get(selected.error_code,'') }}</p>
+        <a class="button secondary" data-run-refresh href="/doctor/experimental-ai?run_id={{ selected.id }}" {% if selected.status in ['queued','running'] %}hidden{% endif %}>Обновить результат запуска</a>
+    </section>
+    {% endif %}
+    <section aria-labelledby="descriptive-title"><h2 id="descriptive-title">Программный анализ динамики</h2><p>Расчёты по записям сценария, независимо от доступности Ollama. Изменение шкал описывает числа, а не эффективность лечения.</p>
+    <div class="experiment-metrics">
+    {% for key,label,unit,maximum in [('wellbeing','Самочувствие','0–10',10),('sleep_hours','Сон','часы',24),('anxiety','Субъективная тревога','0–10',10)] %}
+        {% set m=metrics.metrics[key] %}
+        <article class="card"><h3>{{ label }}</h3><p class="experiment-value">{{ m.first_week }} → {{ m.last_week }} <small>{{ unit }}</small></p><p>Среднее: первая и последняя недели</p><p>Изменение: {{ '%+.2f'|format(m.delta) if m.delta is not none else 'недостаточно данных' }} · записей: {{ m.n }}/30 · пропусков: {{ m.missing }}</p>
+        <svg class="experiment-chart" viewBox="0 0 760 175" role="img" aria-label="{{ label }} за 30 дней, диапазон от 0 до {{ maximum }}; пропуски разрывают линию"><path d="M30 20V145H735" fill="none" stroke="#b4bac8"/><text x="2" y="28">{{ maximum }}</text><text x="6" y="145">0</text>{% for points in charts[key] %}<polyline points="{{ points }}" fill="none" stroke="#6550a4" stroke-width="3" stroke-linecap="round"/>{% endfor %}<text x="30" y="170">1 сентября</text><text x="620" y="170">30 сентября</text></svg>
+        <p class="caption">Тренд за неделю: {{ m.slope_per_week }} {{ unit }}. Пропуски не заменяются нулём.</p></article>
+    {% endfor %}
+    </div>
+    <article class="card"><h3>Анкеты и связь наблюдений</h3><div class="experiment-table-wrap" tabindex="0" role="region" aria-label="Результаты анкет, таблицу можно прокручивать"><table><caption>Исследовательские суммы анкет</caption><thead><tr><th scope="col">Дата</th><th scope="col">Анкета</th><th scope="col">Сумма</th><th scope="col">Ответы</th></tr></thead><tbody>{% for q in metrics.questionnaires %}<tr><td>{{ q.day }}</td><td>{{ q.scale|upper }}</td><td>{{ q.total if q.total is not none else 'Не рассчитана' }}</td><td>{{ q.answered }}/{{ q.count }}</td></tr>{% endfor %}</tbody></table></div><p>Корреляция сна и самочувствия: {{ metrics.correlation.pearson }} · совместных записей: {{ metrics.correlation.n }}.</p><p class="caption">{{ metrics.correlation.limitation }}</p></article>
+    </section>
+    {% if selected and selected.status=='completed' and selected.result %}
+    <section class="card experiment-result" id="ai-result"><p class="eyebrow">{{ 'ТЕХНИЧЕСКАЯ ФИКСТУРА ОТВЕТА · НЕ НАСТОЯЩАЯ ГЕНЕРАЦИЯ' if selected.provenance.provider=='mock-http-test-only' else 'ЭКСПЕРИМЕНТАЛЬНЫЙ РЕЗУЛЬТАТ OLLAMA' }}</p><h2>Сводка для врача</h2><p class="text">{{ selected.result.summary }}</p><p class="caption">Основания: {% for ref in selected.result.summary_evidence_ids %}<a href="#fact-{{ ref }}">{{ ref }}</a> {% endfor %}</p>
+        <h3>Гипотезы для последующей проверки</h3><ul>{% for item in selected.result.hypotheses %}<li>{{ item.text }} <span class="caption">{% for ref in item.evidence_ids %}<a href="#fact-{{ ref }}">{{ ref }}</a> {% endfor %}</span></li>{% endfor %}</ul>
+        <h3>Индивидуальные уточняющие вопросы</h3><ol>{% for item in selected.result.questions %}<li>{{ item.text }} <span class="caption">{% for ref in item.evidence_ids %}<a href="#fact-{{ ref }}">{{ ref }}</a> {% endfor %}</span></li>{% endfor %}</ol>
+        <p class="notice">Модель может ошибаться или находить неподтверждённые объяснения. Ссылки на F1–F7 подтверждают наличие исходного факта, но не доказывают правильность интерпретации. Назначения и медицинская карта не изменяются.</p>
+        <details><summary>Версия и происхождение результата</summary><p>Модель: {{ selected.provenance.model }} · провайдер: {{ selected.provenance.provider }} · инструкция: {{ selected.provenance.prompt_version }}</p><p class="caption">Версия сценария: {{ selected.provenance.scenario }}<br>Отпечаток данных: {{ selected.provenance.dataset_hash }}<br>Отпечаток запроса: {{ selected.provenance.request_sha256 }}</p></details>
+    </section>
+    <section class="card" id="expert-review"><h2>Исследовательская оценка результата</h2><p>Для будущего сравнения версий и экспертного разбора. Эти оценки не являются клинической валидацией. Реальные данные сюда не вводятся.</p>
+        {% if request.query_params.get('reviewed') %}<p role="status" class="success">Оценка сохранена отдельно от ответа модели.</p>{% endif %}
+        <form action="/doctor/experimental-ai/runs/{{ selected.id }}/review" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><div class="experiment-review-grid">{% for key,label in [('grounding','Опора на данные'),('usefulness','Полезность вопросов'),('safety','Соблюдение ограничений')] %}<label>{{ label }}<select name="{{ key }}" required><option value="">Выберите оценку</option><option value="0">0 · требует существенной доработки</option><option value="1">1 · частично соответствует</option><option value="2">2 · соответствует в этом сценарии</option></select></label>{% endfor %}<label>Замечание<select name="issue">{% for key,label in issues.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label></div><button>Сохранить оценку эксперимента</button></form>
+        <p>Сохранено оценок: {{ reviews|length }}. Предыдущие оценки и машинный текст не перезаписываются.</p>
+    </section>
+    {% endif %}
+    <section class="card" id="sources"><h2>Материалы о возможных подходах</h2><p>Подбор из небольшого фиксированного каталога. В генерацию попадают только полученные и отдельно проверенные документы. Применимость к сценарию и российской практике оценивает врач; источник не означает персональную рекомендацию.</p>
+        {% if not sources|selectattr('verified')|list %}<p class="notice">Подтверждённых документов пока нет. Ссылки ниже — кандидаты для проверки, они не используются ИИ как доказательства.</p>{% endif %}
+        <div class="experiment-source-grid">{% for source in sources %}<article class="experiment-source"><span class="badge">{{ 'Документ получен и проверен' if source.verified else 'Источник ещё не проверен' }}</span><h3><a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ source.title }}</a></h3><p>{{ source.publisher }} · {{ source.version }}</p>{% if source.verified %}<p>Дата проверки: {{ source.checked_at }} (UTC)</p><p class="caption">SHA-256: {{ source.sha256 }}</p>{% else %}<p>Дата проверки и подтверждённая версия отсутствуют.</p>{% endif %}
+            {% if selected and selected.status=='completed' and source.id in selected.result.material_ids %}<p><strong>Выбран моделью для изучения врачом.</strong> Сверьте версию документа с JSON запуска.</p>{% endif %}
+        </article>{% endfor %}</div>
+    </section>
+    <section class="card" id="aviandr-reference"><p class="eyebrow">СПРАВОЧНЫЙ ПРИМЕР ДЛЯ ДЕМОНСТРАЦИИ</p><h2>Авиандр</h2><p>Существующие материалы о препарате доступны врачу для отдельной проверки. Наличие этой ссылки не означает, что препарат подходит Марии или имеет преимущество перед другими подходами. ИИ не выбирает препарат и дозировку.</p><p class="caption">Действующая версия инструкции и применимость в этом эксперименте не подтверждены. У архивного документа проверяйте источник и дату; справочный пример не является персональной рекомендацией.</p><a class="button secondary" href="/reference/aviandr">Открыть справочные материалы об Авиандре</a></section>
+    <section class="card"><h2>Основания и ограничения</h2><ul>{% for text in metrics.limitations %}<li>{{ text }}</li>{% endfor %}<li>Текстовый фильтр и ссылки на факты не гарантируют медицинскую достоверность. Для неё нужна отдельная экспертная оценка и дальнейшая валидация.</li></ul>
+        <details><summary>Исходные факты для проверки</summary>{% for fact in metrics.facts %}<article id="fact-{{ fact.id }}" class="experiment-fact"><h3>{{ fact.id }} · {{ fact.text }}</h3>{% if fact.get('values') %}<pre>{{ fact['values']|tojson(indent=2) }}</pre>{% endif %}</article>{% endfor %}</details>
+        <details><summary>Все 30 дней синтетического дневника</summary><div class="experiment-table-wrap" tabindex="0" role="region" aria-label="Синтетический дневник, таблицу можно прокручивать"><table><caption>Программно созданные наблюдения Марии</caption><thead><tr><th scope="col">Дата</th><th scope="col">Самочувствие</th><th scope="col">Сон, ч</th><th scope="col">Тревога</th><th scope="col">Заметка сценария</th></tr></thead><tbody>{% for row in dataset.observations %}<tr><td>{{ row.day }}</td><td>{{ row.wellbeing if row.wellbeing is not none else 'Нет записи' }}</td><td>{{ row.sleep_hours if row.sleep_hours is not none else 'Нет записи' }}</td><td>{{ row.anxiety }}</td><td>{{ row.note }}</td></tr>{% endfor %}</tbody></table></div></details>
+    </section>
+    {% if runs %}<section class="card"><h2>История экспериментов</h2><p>Последние 30 запусков; предыдущие результаты сохранены.</p><ul>{% for run in runs %}<li><a href="/doctor/experimental-ai?run_id={{ run.id }}">Запуск №{{ run.id }} · {{ run.created_at }} · {{ {'queued':'В очереди','running':'Выполняется','completed':'Завершён','error':'Ошибка'}[run.status] }}</a></li>{% endfor %}</ul>{% if selected %}<a href="/doctor/experimental-ai/export/{{ selected.id }}">Скачать синтетические данные, результат, версии и оценки (JSON)</a>{% endif %}</section>{% endif %}
+    {% endif %}
+</div>
+{% endblock %}

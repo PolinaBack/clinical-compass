@@ -1,0 +1,9 @@
+{
+  "baseline": "49adbfd47afaf5ca2ec6346bbd70342cea183603",
+  "requirements": 806,
+  "same_ids_descriptions_priorities_dependencies_stages": true,
+  "other_existing_app_python_files_unchanged": 42,
+  "main_change": "registration of isolated experimental router only",
+  "no_main_database_migration": true,
+  "fixture_sha256": "fd7e32152efdf25af3e1fd6d4f3ca6caa42f20aedc9b5bcde39b87b179502844"
+}
