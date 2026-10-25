@@ -1,0 +1,3 @@
+PASS: Абсолют; four real calculated cards; 30 diary days, nine forms; sources/details; five widths; two axe A/AA audits; no JS errors
+PASS: patient account, shared scheme, access separation; native details without JavaScript
+PASS: temporary database integrity; production database untouched by browser checks

@@ -14,3 +14,4 @@ artifacts/
 attachments.key
 *.db.key
 *.session.key
+*.absolut-credentials.json
