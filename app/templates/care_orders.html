@@ -5,7 +5,7 @@
 <div class="care-page" data-care-page>
 <header class="care-heading"><p class="care-eyebrow">Кабинет специалиста · единый план</p><h2>Назначения и направления</h2><p>Лекарственные схемы, лабораторные исследования, обследования, консультации специалистов и дополнительные рекомендации. Сроки и документы сохраняются рядом с каждым пунктом.</p></header>
 <section class="care-panel medicine-editor" id="medicines"><h3>Лекарства</h3>
-<p class="medicine-notice">Учебный черновик · только синтетические данные. Схему вводит специалист. Черновик не является рецептом, не подписывается и не отправляется пациенту.</p>
+<p class="medicine-notice">Учебный черновик · только синтетические данные. Схему вводит специалист. Схема не является рецептом. Пациент видит сохранённую версию только после отдельной отправки специалистом.</p>
 <form method="get" action="/medicines/prescriptions" class="medicine-patient-picker"><label for="draft-patient">Выберите пациента</label><div class="medicine-actions"><select id="draft-patient" name="patient_id">{% for p in patients %}<option value="{{ p.id }}" {% if p.id==patient.id %}selected{% endif %}>{{ p.name }} · карта № {{ p.id }}</option>{% endfor %}</select><button class="medicine-secondary">Открыть карту</button></div></form>
 {% include 'medicine_draft_editor.html' %}</section>
 {% include 'care_order_notice.html' %}

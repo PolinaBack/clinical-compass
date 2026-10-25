@@ -474,6 +474,7 @@ def test_migration_checksum_and_original_records_survive_restarts(client):
                 "014_medicine_drafts.sql",
                 "015_care_orders.sql",
                 "016_medication_preferences.sql",
+                "017_medicine_reactions.sql",
             ]
             assert c.execute("PRAGMA foreign_key_check").fetchall() == []
         assert (

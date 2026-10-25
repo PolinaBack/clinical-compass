@@ -35,6 +35,7 @@ from .family import register_family
 from .routes.drug_library import register_drug_library
 from .routes.medicine_drafts import register_medicine_drafts
 from .routes.care_orders import register_care_orders
+from .routes.medicine_reactions import register_medicine_reactions
 from .services.drug_library import bootstrap as bootstrap_drug_library
 from .routes.meetings import register_meetings
 from .routes.experimental_ai import register_experimental_ai
@@ -467,6 +468,7 @@ def create_app(db_path=None):
     register_clinician_forum(app, db, account, csrf_check, render)
     register_interface(app, db, account, render, patient_context)
     register_care_orders(app, db, account, access, csrf_check, render, patient_context)
+    register_medicine_reactions(app, db, account, access, csrf_check)
     from .routes.materials import register_materials
 
     register_materials(app, db, account, csrf_check, render)

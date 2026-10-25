@@ -1,0 +1,3 @@
+<section class="medicine-reactions" data-medicine-reactions><h4>Реакции на препарат</h4>
+{% if reaction_source %}<details class="reaction-report-editor" data-reaction-editor><summary>{{ 'Зафиксировать реакцию у пациента' if user=='doctor' else 'Сообщить о побочном эффекте' }}</summary>{% include 'medicine_reaction_fields.html' %}</details>{% else %}<p class="care-muted">Сохраните схему, чтобы привязать сообщение о реакции к её версии и дозе.</p>{% endif %}
+{% if item_reports %}{% include 'medicine_reaction_list.html' %}{% else %}<p class="care-muted">Сообщений пока нет.</p>{% endif %}</section>

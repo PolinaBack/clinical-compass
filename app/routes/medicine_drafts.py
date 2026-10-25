@@ -32,6 +32,8 @@ def draft_context(c, path, user, patient_id, *, version=None, add=()):
             raise HTTPException(422, "Препарат отсутствует в справочнике")
         if version is None:
             selected.setdefault(code, dict(code=code))
+    from app.services.medicine_reactions import doctor_context
+
     return dict(
         selected_patient=patient,
         draft=current,
@@ -44,6 +46,7 @@ def draft_context(c, path, user, patient_id, *, version=None, add=()):
         tolerability=tolerability,
         tolerability_choices=adverse_reactions.preference_choices(tolerability),
         tolerability_matches=matches,
+        **doctor_context(c, path, user, patient_id, current),
     )
 
 

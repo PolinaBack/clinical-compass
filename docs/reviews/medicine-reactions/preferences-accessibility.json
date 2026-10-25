@@ -1,0 +1,22 @@
+[
+  {
+    "width": 390,
+    "page": "doctor",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "patient",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "doctor",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "patient",
+    "violations": []
+  }
+]

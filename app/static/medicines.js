@@ -111,8 +111,8 @@
       add.disabled = false; add.textContent = '+ Добавить'; dirty = true; update();
       document.querySelector('#draft-picker').open = true; add.focus();
     }));
-    draft.addEventListener('input', () => { dirty = true; });
-    draft.addEventListener('change', () => { dirty = true; update(); });
+    draft.addEventListener('input', event => { if (event.target.form === draft) dirty = true; });
+    draft.addEventListener('change', event => { if (event.target.form === draft) { dirty = true; update(); } });
     draft.addEventListener('submit', event => {
       if (!items.some(i => !i.hidden)) {
         event.preventDefault(); draft.querySelector('[data-draft-empty]').focus();
