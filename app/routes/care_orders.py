@@ -34,7 +34,7 @@ def register_care_orders(app, db, account, access, csrf_check, render, patient_c
         )
 
     @app.get("/patients/{pid}/assignments")
-    def workspace(request: Request, pid: int):
+    def workspace(request: Request, pid: int, version: int | None = None):
         access(request, pid)
         user = account(request)
         if user["role"] != "doctor":
@@ -42,11 +42,47 @@ def register_care_orders(app, db, account, access, csrf_check, render, patient_c
         data = patient_context(request, pid)
         with db() as c:
             data.update(context(c, app.state.db_path, user, pid))
+            from app.routes.medicine_drafts import draft_context
+
+            data.update(
+                draft_context(
+                    c,
+                    app.state.db_path,
+                    user,
+                    pid,
+                    version=version,
+                    add=request.query_params.getlist("add"),
+                )
+            )
+            data["patients"] = c.execute(
+                "SELECT id,name FROM patients WHERE doctor_id=? ORDER BY name,id",
+                (user["doctor_id"],),
+            ).fetchall()
+            data["saved"] = request.query_params.get("saved") == "1"
         response = render(
             request, "care_orders.html", order_token=secrets.token_urlsafe(24), **data
         )
         response.headers["Cache-Control"] = "no-store"
         return response
+
+    @app.post("/patients/{pid}/assignments/preferences")
+    async def preferences(request: Request, pid: int):
+        access(request, pid, True)
+        user = account(request)
+        form = await request.form(max_files=0, max_fields=160)
+        csrf_check(request, str(form.get("csrf", "")))
+        from app.services import medication_preferences
+
+        with db() as c:
+            c.execute("BEGIN IMMEDIATE")
+            medication_preferences.save(c, app.state.db_path, user, pid, form)
+        flag = (
+            "preferences_sent" if form.get("intent") == "send" else "preferences_draft"
+        )
+        return RedirectResponse(
+            f"/patients/{pid}/profile/assignments?{flag}=1#medication-preferences",
+            status_code=303,
+        )
 
     @app.post("/patients/{pid}/assignments/orders")
     async def create(request: Request, pid: int):

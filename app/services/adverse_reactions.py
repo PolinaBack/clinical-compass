@@ -43,10 +43,40 @@ def filtered(rows, drug="", system="", q=""):
     ]
 
 
-def preference_snapshot(c, pid):
+def preference_snapshot(c, pid, path=None):
     from app.services.intake import read_submission
 
+    from app.services.medication_preferences import sent
+
+    path = path or c.execute("PRAGMA database_list").fetchone()["file"]
+    preference = sent(c, path, pid)
     submission = read_submission(c, pid)
+
+    # A private draft never participates. Explicitly sent intake and medication
+    # preferences share a timestamp/audit ordering, so the last sent response wins.
+    def sequence(action, ident):
+        return c.execute(
+            "SELECT coalesce(max(id),0) FROM audit WHERE patient_id=? AND action=? AND object_id=?",
+            (pid, action, ident),
+        ).fetchone()[0]
+
+    if preference and (
+        not submission
+        or (
+            preference["created_at"],
+            sequence("medication_preferences_sent", preference["revision"]),
+        )
+        >= (submission["created_at"], sequence("intake_submitted", submission["id"]))
+    ):
+        return dict(
+            submission_id=None,
+            source="medication_preferences",
+            preference_revision=preference["revision"],
+            selected=preference["selected"],
+            primary=preference["primary"],
+            comment=preference["comment"],
+            submitted_at=preference["created_at"],
+        )
     answers = (
         submission["data"].get("answers", {}).get("medicines", {}) if submission else {}
     )

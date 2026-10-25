@@ -165,7 +165,7 @@ def save(c, path, user, pid, form):
     items = parse(form, drugs)
     from app.services import adverse_reactions
 
-    tolerability = adverse_reactions.preference_snapshot(c, pid)
+    tolerability = adverse_reactions.preference_snapshot(c, pid, path)
     registry = adverse_reactions.records(c)
     for item in items:
         item["preference_matches"] = adverse_reactions.matches(

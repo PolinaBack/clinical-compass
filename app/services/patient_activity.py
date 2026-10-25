@@ -23,6 +23,10 @@ def patients_with_activity(c, doctor_id):
         LEFT JOIN audit a ON a.patient_id=p.id AND a.object_id=d.id AND a.action='diary_saved'
         WHERE p.doctor_id=:did
         UNION ALL
+        SELECT p.id,'preferences',v.revision,v.created_at,v.revision,'' FROM patients p
+        JOIN medication_preference_versions v ON v.patient_id=p.id
+        WHERE p.doctor_id=:did AND v.status='sent'
+        UNION ALL
         SELECT p.id,'note',n.id,n.created_at,n.id,'' FROM patients p
         JOIN diary_notes n ON n.patient_id=p.id WHERE p.doctor_id=:did
         UNION ALL
@@ -57,7 +61,7 @@ def patients_with_activity(c, doctor_id):
             """SELECT a.* FROM audit a
             JOIN patients p ON p.id=a.patient_id AND p.doctor_id=?
             JOIN accounts u ON u.id=a.account_id AND u.role='patient' AND u.patient_id=p.id
-            WHERE a.action IN ('diary_saved','diary_note_saved','assessment_saved','intake_submitted','resource_read','care_order_file_sent')
+            WHERE a.action IN ('diary_saved','diary_note_saved','assessment_saved','intake_submitted','resource_read','care_order_file_sent','medication_preferences_sent')
             ORDER BY a.id""",
             (doctor_id,),
         )
@@ -81,6 +85,7 @@ def patients_with_activity(c, doctor_id):
                 "intake": "intake_submitted",
                 "resource": "resource_read",
                 "order_result": "care_order_file_sent",
+                "preferences": "medication_preferences_sent",
             }[action["kind"]]
             sequence = ordering.get(
                 (
@@ -106,6 +111,7 @@ def patients_with_activity(c, doctor_id):
                 "intake": "Отправлен первичный анамнез",
                 "resource": f"Прочитан материал «{action['detail']}»",
                 "order_result": "Прикреплён результат к назначению",
+                "preferences": "Отправлены пожелания к лекарствам",
             }[kind]
             action["href"] = (
                 f"/patients/{pid}/assignments#order-{action['object_id']}"
@@ -124,6 +130,8 @@ def patients_with_activity(c, doctor_id):
                     )
                 )
             )
+            if kind == "preferences":
+                action["href"] = f"/patients/{pid}/assignments#medicines"
             action["date_only"] = len(action["happened_at"]) == 10
             latest[pid] = action
     for patient in patients:

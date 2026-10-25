@@ -3,9 +3,13 @@
 <div class="section-page-heading"><h1>{{ patient.name }}</h1><a href="/doctor">Мои пациенты</a></div>
 {% include 'specialist_nav.html' %}
 <div class="care-page" data-care-page>
-<header class="care-heading"><p class="care-eyebrow">Кабинет специалиста · единый план</p><h2>Назначения и направления</h2><p>Лабораторные исследования, обследования, консультации специалистов и дополнительные рекомендации. Сроки и документы сохраняются рядом с каждым пунктом.</p></header>
-<section class="care-medicines"><div><h3>Лекарственные назначения</h3><p>Схемы хранятся отдельно, в личных учебных черновиках специалиста.</p></div><a class="button secondary" href="/medicines/prescriptions?patient_id={{ patient.id }}">Открыть лекарственный черновик →</a></section>
+<header class="care-heading"><p class="care-eyebrow">Кабинет специалиста · единый план</p><h2>Назначения и направления</h2><p>Лекарственные схемы, лабораторные исследования, обследования, консультации специалистов и дополнительные рекомендации. Сроки и документы сохраняются рядом с каждым пунктом.</p></header>
+<section class="care-panel medicine-editor" id="medicines"><h3>Лекарства</h3>
+<p class="medicine-notice">Учебный черновик · только синтетические данные. Схему вводит специалист. Черновик не является рецептом, не подписывается и не отправляется пациенту.</p>
+<form method="get" action="/medicines/prescriptions" class="medicine-patient-picker"><label for="draft-patient">Выберите пациента</label><div class="medicine-actions"><select id="draft-patient" name="patient_id">{% for p in patients %}<option value="{{ p.id }}" {% if p.id==patient.id %}selected{% endif %}>{{ p.name }} · карта № {{ p.id }}</option>{% endfor %}</select><button class="medicine-secondary">Открыть карту</button></div></form>
+{% include 'medicine_draft_editor.html' %}</section>
 {% include 'care_order_notice.html' %}
+<h3 class="care-referrals-heading">Направления и обследования</h3>
 <div class="care-columns">
 <section class="care-panel"><h3>Новое назначение</h3><p class="care-muted">Назначения добавляет специалист. Система ничего не выписывает автоматически.</p>
 <form method="post" action="/patients/{{ patient.id }}/assignments/orders" data-care-form>

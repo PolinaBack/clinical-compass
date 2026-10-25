@@ -93,7 +93,8 @@ def test_navigation_empty_profiles_and_private_drug_draft(client):
     )
     page = client.get("/patients/1/assignments")
     assert page.status_code == 200 and page.context["active_orders"] == []
-    assert "/medicines/prescriptions?patient_id=1" in page.text
+    assert "data-medicine-draft" in page.text
+    assert page.text.index('id="medicines"') < page.text.index("data-care-form")
     login(client, "patient1")
     page = client.get("/patients/1/profile/assignments")
     assert page.status_code == 200 and "Мои назначения и обследования" in page.text

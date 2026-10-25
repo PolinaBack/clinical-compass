@@ -53,6 +53,9 @@ def cipher(db_path, c):
         care_orders = c.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='care_orders'"
         ).fetchone()
+        medication_preferences = c.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='medication_preference_versions'"
+        ).fetchone()
         if (
             (
                 patient_ai
@@ -65,6 +68,12 @@ def cipher(db_path, c):
             or (
                 care_orders
                 and c.execute("SELECT 1 FROM care_orders LIMIT 1").fetchone()
+            )
+            or (
+                medication_preferences
+                and c.execute(
+                    "SELECT 1 FROM medication_preference_versions LIMIT 1"
+                ).fetchone()
             )
             or c.execute(
                 "SELECT 1 FROM clinical_attachments WHERE content IS NOT NULL LIMIT 1"

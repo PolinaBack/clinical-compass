@@ -193,6 +193,13 @@ def register_portal(
                 context.update(
                     care_context(c, app.state.db_path, account(request), pid)
                 )
+                from .services.medication_preferences import (
+                    patient_context as preferences_context,
+                )
+
+                context.update(
+                    preferences_context(c, app.state.db_path, account(request), pid)
+                )
         if section == "video":
             from .services.consultations import profile_context
 

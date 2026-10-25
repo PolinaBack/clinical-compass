@@ -1,0 +1,1 @@
+PASS: inline doctor medicines above referrals, actual two-drug save/reload/check/back, legacy redirect; patient 138 choices/15 categories, search/filter, max three and primary, private later draft, explicit send/comment, current matches and immutable history, separate patient; 5 widths without overflow, 4 axe A/AA audits, no JS errors. Fictional temporary DB only.

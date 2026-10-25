@@ -1,4 +1,6 @@
 <section class="medicine-preferences"><h3>Пожелания о переносимости</h3>
 {% if tolerability_choices %}<p>Личные приоритеты пациента из отправленной анкеты{% if tolerability.submission_id %} № {{ tolerability.submission_id }}{% endif %}. Звёздочкой отмечено самое важное.</p><ul class="medicine-preference-chips">{% for choice in tolerability_choices %}<li>{{ '★ ' if choice.primary else '' }}{{ choice.label }} · {{ choice.system }}</li>{% endfor %}</ul>
 {% else %}<p>Предпочтения в этой версии не указаны. Это не означает отсутствие реакций или противопоказаний.</p>{% endif %}
+{% if tolerability.get('preference_revision') %}<p class="caption">Отправлено из раздела «Лекарства» · версия {{ tolerability.preference_revision }} · {{ tolerability.submitted_at|local_datetime }}</p>{% endif %}
+{% if tolerability.get('comment') %}<p><strong>Пояснение пациента</strong></p><p class="medicine-preserve">{{ tolerability.comment }}</p>{% endif %}
 <p class="caption">Показаны точные совпадения с неполным реестром, а не прогноз вероятности или выбор лекарства. Опасные проявления, противопоказания и сочетания оцениваются независимо от предпочтений.</p></section>

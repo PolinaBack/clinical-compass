@@ -1,0 +1,42 @@
+[
+  {
+    "width": 390,
+    "page": "doctor",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "patient",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "adverse",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "file",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "doctor",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "patient",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "adverse",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "file",
+    "violations": []
+  }
+]
