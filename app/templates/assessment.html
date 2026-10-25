@@ -8,14 +8,7 @@
         <p class="eyebrow">{{ 'ИСХОДНЫЙ САМООТЧЁТ · СПЕЦИАЛИСТ' if user == 'doctor' else 'ВАШИ СОХРАНЁННЫЕ ОТВЕТЫ' }}</p>
         <h1>{{ definition.name }}</h1>
         <span class="badge">{{ {'draft':'Черновик','incomplete':'Не завершено','completed':'Отправлено'}[assessment.status] }}</span>
-        <p class="caption">Версия {{ assessment.version }} · {{ result.answered }}/{{ result.count }} ответов</p>
         {% if assessment.scale == 'safety6' %}
-            <p class="notice">
-                Учебная адаптация по предоставленной статье. Это не официальная самостоятельная форма C-SSRS. Баллы и категории риска не рассчитываются.
-            </p>
-            <p>
-                Вопросы 1–5: {{ assessment.period_start }} — {{ assessment.period_end }}; вопрос о поведении — за жизнь, уточнение — за последние 3 месяца.
-            </p>
         {% elif assessment.scale == 'hcl33' %}
             <p>Периоды состояний подъёма — по инструкции вопросов.</p>
         {% else %}
@@ -23,22 +16,17 @@
             <p class="caption">Период: {{ assessment.period_start }} — {{ assessment.period_end }}</p>
         {% endif %}
     </div>
-    {% if request.query_params.get('saved') %}
-        <div class="success" role="status">
-            Сохранено на сервере. Ответы доступны назначенному специалисту. Это не означает, что он уже прочитал их.
-        </div>
-    {% endif %}
-    {% if user != 'doctor' and consent %}
-        <p>
-            <a class="button secondary" href="/assessments/{{ assessment.id }}">Вернуться к ответам и дополнить</a>
-        </p>
-    {% endif %}
     {% if assessment.scale == 'safety6' and result.positive_items %}
         <div class="notice">
             <p>
                 Спасибо, что рассказали. Эти ответы можно обсудить со специалистом. При необходимости помощи сейчас не ждите ответа в приложении.
             </p>
         </div>
+    {% endif %}
+    {% if user != 'doctor' and consent %}
+        <p>
+            <a class="button secondary" href="/assessments/{{ assessment.id }}">Вернуться к ответам и дополнить</a>
+        </p>
     {% endif %}
     {% include 'video_offer.html' %}
     {% include 'video_list.html' %}
@@ -116,7 +104,6 @@
                     <button>Продолжить с PHQ-4</button>
                 </form>
             {% endif %}
-            <a href="/patients/{{ assessment.patient_id }}/profile/video">Записаться на консультацию</a>
         </section>
     {% endif %}
     {% if audio %}
@@ -138,11 +125,5 @@
     {% endfor %}
 </section>
 {% endif %}
-<details class="provenance">
-    <summary>О форме и истории ответов</summary>
-    <p>{{ definition.source }}</p>
-    <p>{{ definition.validation }}</p>
-    <a href="/assessments/{{ assessment.id }}/history">История изменений ответов</a>
-</details>
 </div>
 {% endblock %}

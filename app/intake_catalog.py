@@ -4,7 +4,7 @@ Definitions describe self-reports, never diagnostic rules or prescriptions.
 
 from app.adverse_catalog import ELIGIBLE, LABELS
 
-VERSION = "anamnesis-2026-10-25-v3"
+VERSION = ""
 STATES = {
     "unanswered": "Пока не отвечено",
     "answered": "Ответил(а)",
