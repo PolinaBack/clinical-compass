@@ -9,6 +9,7 @@ from app.experimental_ai.analysis import plot_segments
 from app.experimental_ai.jobs import STAGES
 from app.experimental_ai.sources import catalog
 from app.services import aviandr_analysis, aviandr_data, aviandr_sources, aviandr_jobs
+from app.storage import now
 
 
 def register_patient_ai(app, db, account, csrf_check, render):
@@ -84,6 +85,7 @@ def register_patient_ai(app, db, account, csrf_check, render):
             messages=service.MESSAGES,
             sources=catalog(),
             av_report=av_report,
+            av_calculated_at=now(),
             av_selected=av_selected,
             av_history=av_history,
             av_stale=bool(

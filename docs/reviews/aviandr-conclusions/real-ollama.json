@@ -1,0 +1,8 @@
+{
+  "provider": "actual-loopback-http",
+  "test": "connection to unused local Ollama port; no mock HTTP transport",
+  "status": "error",
+  "error_code": "provider_unavailable",
+  "fabricated_text": false,
+  "synthetic_only": true
+}

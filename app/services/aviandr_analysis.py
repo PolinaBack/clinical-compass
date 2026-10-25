@@ -4,9 +4,10 @@ from statistics import mean
 from datetime import date
 from app.scales import SCALES
 from app.experimental_ai.scenarios import digest
-from app.services import aviandr_data, aviandr_sources, drug_library
+from app.experimental_ai.analysis import series_stats, plot_segments
+from app.services import aviandr_data, aviandr_sources, aviandr_narratives, drug_library
 
-VERSION = "aviandr-applicability-v1"
+VERSION = "aviandr-applicability-v2"
 INDICATIONS = {
     "match": "Соответствие подтверждённым сведениям обнаружено",
     "no_match": "Соответствие не установлено",
@@ -685,6 +686,21 @@ def build(c, path, user, pid):
         adherence=adherence,
         changes=changes,
         trajectories=trajectories,
+        trends=[
+            dict(
+                key=key,
+                title=title,
+                unit=unit,
+                maximum=maximum,
+                metrics=series_stats(data["observations"], key),
+                segments=plot_segments(data["observations"], key, maximum),
+            )
+            for key, title, unit, maximum in (
+                ("anxiety", "Субъективная тревога", "0–10", 10),
+                ("wellbeing", "Самочувствие", "0–10", 10),
+                ("sleep_hours", "Продолжительность сна", "часы", 24),
+            )
+        ],
         preference_assessment=preference_assessment,
         sources=[source_info(s) for s in official],
         rules_count=len(rules),
@@ -696,5 +712,6 @@ def build(c, path, user, pid):
             "Редакционные карточки и матрицы не становятся верифицированными правилами автоматически.",
         ],
     )
+    aviandr_narratives.attach(result, pid)
     result["checksum"] = digest(result)
     return result

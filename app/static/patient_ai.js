@@ -1,9 +1,22 @@
 /* Status only: source data is collected on the server from this card. */
 (() => {
-  document.querySelectorAll('.aviandr-status-chart a[href^="#av-"]').forEach(link => link.addEventListener('click',()=>{
-    const details=document.querySelector(link.getAttribute('href'));
-    if(details?.tagName==='DETAILS') details.open=true;
-  }));
+  function revealEvidence(hash) {
+    if(!hash.startsWith('#av-')) return;
+    const target=document.getElementById(hash.slice(1));
+    if(!target) return;
+    if(target.tagName==='DETAILS') target.open=true;
+    for(let parent=target.parentElement;parent;parent=parent.parentElement) {
+      if(parent.tagName==='DETAILS') parent.open=true;
+    }
+    return target;
+  }
+  document.querySelectorAll('.aviandr-block a[href^="#av-"]').forEach(link=>link.addEventListener('click',()=>revealEvidence(link.getAttribute('href'))));
+  function revealCurrentHash() {
+    const target=revealEvidence(location.hash);
+    if(target) requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  }
+  window.addEventListener('hashchange',revealCurrentHash);
+  revealCurrentHash();
   document.querySelectorAll('[data-patient-ai]').forEach(panel => {
   if(!['queued','running'].includes(panel.dataset.status)) return;
   async function refresh() {

@@ -24,15 +24,15 @@ def check_aviandr_research(doctor, second, patient, url):
         "Недостаточно проверенных данных"
     )
     block.locator('.aviandr-status-chart a[href="#av-indications"]').click()
-    expect(block.locator("#av-indications")).to_have_attribute("open", "")
-    block.locator("#av-indications > summary").click()
+    expect(block.locator("#av-indications [data-conclusion]")).to_be_visible()
+    block.locator("#av-details-indications > summary").click()
     doctor.get_by_text("Регистрационные сведения ГРЛС", exact=True).click()
     expect(block).to_contain_text("ЛП-№(002445)-(РГ-RU)")
     expect(block).to_contain_text("2028-05-31")
     doctor.get_by_text("Регистрационные сведения ГРЛС", exact=True).click()
     assert doctor.goto(url + "/patients/3/ai-analysis").status == 403
     doctor.goto(url + "/patients/2/ai-analysis")
-    doctor.locator("#av-interactions > summary").click()
+    doctor.locator("#av-details-interactions > summary").click()
     expect(doctor.locator("#av-interactions")).to_contain_text(
         "Недостаточно данных для оценки"
     )
@@ -40,7 +40,7 @@ def check_aviandr_research(doctor, second, patient, url):
 
     second.goto(url + "/patients/3/ai-analysis")
     tolerance = second.locator("#av-tolerability")
-    tolerance.locator(":scope > summary").click()
+    tolerance.locator("#av-details-tolerability > summary").click()
     expect(tolerance).to_contain_text("Тошнота")
     expect(tolerance).to_contain_text(
         "После записанной даты начала: 16 дней; до начала: 14 дней"
@@ -62,7 +62,7 @@ def check_aviandr_research(doctor, second, patient, url):
     log.locator("summary").click()
     expect(log).to_contain_text("Синтетическое уточнение: не помню отметку за день.")
     second.reload()
-    tolerance.locator(":scope > summary").click()
+    tolerance.locator("#av-details-tolerability > summary").click()
     expect(tolerance.locator(".aviandr-counts dd")).to_have_text(["13", "2", "1", "0"])
 
     # All required fact inputs are reachable in the same native details section.
@@ -93,6 +93,7 @@ def check_aviandr_research(doctor, second, patient, url):
         "Текстовый ИИ недоступен или ответ отклонён"
     )
     expect(second.locator(".aviandr-direction")).to_have_count(4)
+    expect(second.locator("[data-conclusion]")).to_have_count(4)
     assert patient.goto(url + "/patients/3/ai-analysis").status == 403
 
     routes = [
@@ -105,7 +106,7 @@ def check_aviandr_research(doctor, second, patient, url):
             page.set_viewport_size(dict(width=width, height=1000))
             assert page.goto(url + path).status == 200
             if label == "scenario-E":
-                page.locator("#av-tolerability > summary").click()
+                page.locator("#av-details-tolerability > summary").click()
             assert page.evaluate("document.documentElement.scrollWidth<=innerWidth"), (
                 label,
                 width,
@@ -132,7 +133,7 @@ def check_aviandr_research(doctor, second, patient, url):
     native_context.add_cookies(doctor.context.cookies())
     native = native_context.new_page()
     native.goto(url + "/patients/1/ai-analysis")
-    native.locator("#av-indications > summary").click()
+    native.locator("#av-details-indications > summary").click()
     expect(native.locator("#av-indications")).to_contain_text(
         "Нет действующего проверенного правила"
     )

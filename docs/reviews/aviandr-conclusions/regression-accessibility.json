@@ -1,0 +1,32 @@
+[
+  {
+    "page": "scenario-C",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "scenario-C",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "scenario-D",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "scenario-D",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "scenario-E",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "scenario-E",
+    "width": 1280,
+    "violations": []
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "templates": [
+    {
+      "scenario": "C",
+      "conclusions": 4,
+      "unique_ids": true,
+      "nested_forms": false
+    },
+    {
+      "scenario": "D",
+      "conclusions": 4,
+      "unique_ids": true,
+      "nested_forms": false
+    },
+    {
+      "scenario": "E",
+      "conclusions": 4,
+      "unique_ids": true,
+      "nested_forms": false
+    }
+  ],
+  "aviandr_templates_compiled": true,
+  "working_database_byte_for_byte_unchanged": true,
+  "request_archive_byte_exact": true,
+  "original_requirement_rows": 806,
+  "all_original_requirement_cells_unchanged": true,
+  "browser_final_layout": "blocked by sandbox; this is not an HTTP or browser pass"
+}

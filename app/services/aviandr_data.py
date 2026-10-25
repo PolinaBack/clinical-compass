@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from app.storage import now, audit
 from app.experimental_ai.scenarios import digest
 from app.services.clinical_forms import today
-from app.services.patient_ai_data import scope, text
+from app.services.patient_ai_data import scope, text, numeric
 from app.services import (
     medicine_reactions as medicines,
     adverse_reactions,
@@ -476,6 +476,44 @@ def collect(c, path, user, pid):
             (pid, start.isoformat(), end.isoformat()),
         )
     ]
+    latest_days = {r["day"]: r for r in diary}
+    daily_points = []
+    for offset in range(30):
+        day = (start + timedelta(days=offset)).isoformat()
+        row = latest_days.get(day, {})
+        daily_points.append(
+            dict(
+                day=day,
+                diary_id=row.get("id"),
+                wellbeing=numeric(row.get("wellbeing")),
+                sleep_hours=numeric(row.get("sleep"), 24),
+                sleep_quality=numeric(row.get("sleep_quality")),
+                anxiety=None,
+                anxiety_metric_id=None,
+            )
+        )
+    # Reuse the existing patient-card convention for an explicitly named
+    # subjective anxiety scale. No diagnostic interpretation or missing=zero.
+    by_day = {r["day"]: r for r in daily_points}
+    for row in c.execute(
+        "SELECT d.day,d.id diary_id,m.id metric_id,m.title,m.kind,m.minimum,m.maximum,v.value "
+        "FROM diary_metric_values v JOIN diary d ON d.id=v.diary_id "
+        "JOIN diary_metrics m ON m.id=v.metric_id "
+        "WHERE d.patient_id=? AND m.patient_id=? AND d.day BETWEEN ? AND ? "
+        "ORDER BY d.day DESC,d.id DESC,m.id",
+        (pid, pid, start.isoformat(), end.isoformat()),
+    ):
+        point = by_day[row["day"]]
+        if (
+            point["diary_id"] == row["diary_id"]
+            and point["anxiety_metric_id"] is None
+            and "тревог" in row["title"].casefold()
+            and row["kind"] == "scale"
+            and row["minimum"] == 0
+            and row["maximum"] == 10
+        ):
+            point["anxiety"] = numeric(row["value"])
+            point["anxiety_metric_id"] = row["metric_id"]
     reports = medicines.listing(c, path, user, pid)
     preferences = adverse_reactions.preference_snapshot(c, pid, path)
     profile = c.execute(
@@ -503,6 +541,7 @@ def collect(c, path, user, pid):
         therapy=therapy,
         shared=shared,
         diary=diary,
+        observations=daily_points,
         reactions=reports,
         preferences=preferences,
         preference_choices=adverse_reactions.preference_choices(preferences),

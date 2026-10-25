@@ -1,0 +1,17 @@
+{
+  "baseline": "5f7afeb",
+  "working_database_byte_for_byte_unchanged": true,
+  "accounts_passwords_preserved": true,
+  "no_new_patients_or_duplicates": true,
+  "no_new_migrations": true,
+  "all_original_806_rows_unchanged": true,
+  "request_sha256": "35001deb1635cdc8c8f69e6b3970563e0955ea0c8e3660a32702c0abd35a6e6f",
+  "counts": {
+    "tables": 88,
+    "rows": 1040,
+    "patients": 3,
+    "scenarios": 3
+  },
+  "integrity": "ok",
+  "foreign_keys": "ok"
+}
