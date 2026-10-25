@@ -44,6 +44,13 @@ def cipher(db_path, c):
         ) from None
     key_file = key_path(db_path)
     if not key_file.exists():
+        research_data = any(
+            c.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)
+            ).fetchone()
+            and c.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone()
+            for table in ("aviandr_observations", "aviandr_runs")
+        )
         patient_ai = c.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='patient_ai_runs'"
         ).fetchone()
@@ -57,7 +64,8 @@ def cipher(db_path, c):
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='medication_preference_versions'"
         ).fetchone()
         if (
-            (
+            research_data
+            or (
                 patient_ai
                 and c.execute("SELECT 1 FROM patient_ai_runs LIMIT 1").fetchone()
             )
@@ -188,7 +196,7 @@ def save(
     content,
     form,
     *,
-    validated=None
+    validated=None,
 ):
     name = Path((upload.filename or "attachment").replace("\\", "/")).name
     if not 1 <= len(name) <= 180 or any(ord(t) < 32 for t in name):

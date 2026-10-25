@@ -1,7 +1,11 @@
 /* Status only: source data is collected on the server from this card. */
 (() => {
-  const panel=document.querySelector('[data-patient-ai]');
-  if(!panel || !['queued','running'].includes(panel.dataset.status)) return;
+  document.querySelectorAll('.aviandr-status-chart a[href^="#av-"]').forEach(link => link.addEventListener('click',()=>{
+    const details=document.querySelector(link.getAttribute('href'));
+    if(details?.tagName==='DETAILS') details.open=true;
+  }));
+  document.querySelectorAll('[data-patient-ai]').forEach(panel => {
+  if(!['queued','running'].includes(panel.dataset.status)) return;
   async function refresh() {
     try {
       const response=await fetch(panel.dataset.statusUrl,{cache:'no-store'});
@@ -13,6 +17,9 @@
       error.textContent=job.error_message;error.hidden=!job.error_message;
       if(['completed','error'].includes(job.status)) {
         panel.querySelector('[data-result-link]').hidden=false;
+        panel.querySelectorAll('[data-job-pending]').forEach(item=>item.hidden=true);
+        const failure=panel.querySelector('[data-job-failure]');
+        if(failure) failure.hidden=job.status!=='error';
         return;
       }
     } catch {
@@ -21,4 +28,5 @@
     setTimeout(refresh,4000);
   }
   refresh();
+  });
 })();

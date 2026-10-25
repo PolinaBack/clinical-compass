@@ -1,0 +1,2 @@
+PASS Aviandr research: C/D/E real 30-day records, four current directions, registry excerpt without invented medical rules, two isolated doctors, patient daily intake correction, updated 16-day adherence, native clinician fact save, real unavailable loopback Ollama worker/error/no fake output, source response trace, no-JS details, five widths, six axe A/AA audits, no JS errors. Disposable synthetic DB only.
+PASS real local HTTP error, no fabricated model result; 90 diary rows, integrity and FK OK.

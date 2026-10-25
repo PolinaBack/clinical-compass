@@ -5,6 +5,7 @@ import time
 from app.experimental_ai import jobs, store
 from app.experimental_ai.ollama import ERRORS
 from app.services.patient_ai import process_one as process_card
+from app.services.aviandr_jobs import process_one as process_aviandr
 from app.storage import default_path as clinical_path
 from pathlib import Path
 
@@ -22,6 +23,7 @@ def main():
     try:
         while True:
             card_worked = process_card() if Path(clinical_path()).is_file() else False
+            av_worked = process_aviandr() if Path(clinical_path()).is_file() else False
             try:
                 demo_worked = jobs.process_one() if not card_worked else False
             except store.ExperimentError as exc:
@@ -29,7 +31,11 @@ def main():
                     demo_worked = False
                 else:
                     raise
-            worked = card_worked or demo_worked
+            worked = card_worked or av_worked or demo_worked
+            if av_worked:
+                print(
+                    "Aviandr explanation job processed; результат в карте.", flush=True
+                )
             if card_worked:
                 print(
                     "Card AI job processed; подробности доступны в карте, содержимое в журнал не выводится.",

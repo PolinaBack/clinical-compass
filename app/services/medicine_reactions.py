@@ -458,4 +458,9 @@ def patient_context(c, path, user, pid):
             )
         )
     data["shared_medicine_plans"] = plans
+    from app.services.aviandr_data import observations
+
+    data["medicine_intake_events"] = [
+        o for o in observations(c, path, pid) if o["kind"] == "intake_event"
+    ]
     return data

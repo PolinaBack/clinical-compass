@@ -1,0 +1,30 @@
+{
+  "scope": "dry run on isolated copy",
+  "baseline": "d6f5712",
+  "original_tables": 72,
+  "original_rows": 552,
+  "all_original_rows_retained_in_backup": true,
+  "working_database_unchanged_during_dry_run": true,
+  "new_patients": 3,
+  "new_diary_rows": 90,
+  "doctors": 2,
+  "scenarios": [
+    {
+      "scenario": "C",
+      "patient_id": 1
+    },
+    {
+      "scenario": "D",
+      "patient_id": 2
+    },
+    {
+      "scenario": "E",
+      "patient_id": 3
+    }
+  ],
+  "main_password_hashes_preserved": true,
+  "idempotent_without_reset": true,
+  "integrity": "ok",
+  "foreign_keys": "ok",
+  "new_schema_migration": "018_aviandr_research.sql"
+}

@@ -4,6 +4,7 @@
 {% for src in plan['items'] %}<article class="care-order shared-medicine" id="{{ src.form_id }}-card" data-shared-medicine="{{ src.code }}"><h4>{{ src.item.reference.name or src.code }}</h4><p class="care-muted">{{ src.item.reference.inn }} · {{ src.item.reference.form }} · {{ src.item.reference.strength }}</p>
 <dl class="shared-medicine-scheme">{% for key,label in [('dose','Доза'),('frequency','Кратность'),('times','Время'),('food','Относительно еды'),('route','Способ применения'),('start','Начало'),('duration','Продолжительность'),('comment','Комментарий специалиста')] %}{% if src.item[key] %}<div><dt>{{ label }}</dt><dd>{{ src.item[key ~ '_other'] if key in ['frequency','food','route'] and src.item.get(key ~ '_other') else src.item[key] }}</dd></div>{% endif %}{% endfor %}</dl>
 {% set reaction_source=src %}{% set item_reports=src.reports %}{% include 'medicine_reaction_block.html' %}
+{% include 'medicine_intake_log.html' %}
 {% if src.earlier_reports %}<p><a href="#reaction-report-{{ src.earlier_reports[0].id }}">Предыдущие сообщения о реакциях на этот препарат · {{ src.earlier_reports|length }}</a></p>{% endif %}
 </article>{% endfor %}{% if not loop.first %}</details>{% endif %}{% endfor %}
 {% else %}<p class="care-empty">Отправленных лекарственных назначений пока нет. Учебный лекарственный черновик остаётся у специалиста и не является рецептом.</p>{% endif %}

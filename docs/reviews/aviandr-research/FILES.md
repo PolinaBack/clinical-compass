@@ -1,0 +1,54 @@
+# Изменённые файлы
+
+Сравнение с `d6f5712`. Базы, ключи, локальные пароли и временные тестовые базы не включены.
+
+- `README.md`
+- `app/migrations/018_aviandr_research.sql`
+- `app/references/aviandr_registration_excerpt.json`
+- `app/routes/patient_ai.py`
+- `app/services/aviandr_analysis.py`
+- `app/services/aviandr_data.py`
+- `app/services/aviandr_jobs.py`
+- `app/services/aviandr_ollama.py`
+- `app/services/aviandr_sources.py`
+- `app/services/clinical_attachments.py`
+- `app/services/medicine_reactions.py`
+- `app/static/aviandr_analysis.css`
+- `app/static/patient_ai.js`
+- `app/templates/aviandr_analysis.html`
+- `app/templates/aviandr_source.html`
+- `app/templates/base.html`
+- `app/templates/medicine_intake_log.html`
+- `app/templates/medicine_shared_plans.html`
+- `app/templates/patient_ai.html`
+- `docs/AVIANDR_RESEARCH.md`
+- `docs/IMPLEMENTATION_PLAN.md`
+- `docs/PROGRESS.md`
+- `docs/REQUIREMENTS.md`
+- `docs/inputs/2026-10-25/aviandr-applicability-request.txt`
+- `docs/inputs/2026-10-25/aviandr-grls-registration-excerpt.txt`
+- `docs/reviews/aviandr-research/FILES.md`
+- `docs/reviews/aviandr-research/README.md`
+- `docs/reviews/aviandr-research/accessibility.json`
+- `docs/reviews/aviandr-research/browser.txt`
+- `docs/reviews/aviandr-research/format.txt`
+- `docs/reviews/aviandr-research/pytest.txt`
+- `docs/reviews/aviandr-research/real-ollama.json`
+- `docs/reviews/aviandr-research/requirements-check.json`
+- `docs/reviews/aviandr-research/reset-dry-run.json`
+- `docs/reviews/aviandr-research/scenario-C-1280.png`
+- `docs/reviews/aviandr-research/scenario-C-390.png`
+- `docs/reviews/aviandr-research/scenario-D-1280.png`
+- `docs/reviews/aviandr-research/scenario-D-390.png`
+- `docs/reviews/aviandr-research/scenario-E-1280.png`
+- `docs/reviews/aviandr-research/scenario-E-390.png`
+- `docs/reviews/aviandr-research/tolerability-1280.png`
+- `docs/reviews/aviandr-research/tolerability-390.png`
+- `docs/reviews/aviandr-research/workspace-reset.json`
+- `scripts/backup.py`
+- `scripts/browser_aviandr_research.py`
+- `scripts/experimental_ai_worker.py`
+- `scripts/patient_ai_worker.py`
+- `scripts/setup_aviandr_scenarios.py`
+- `tests/test_aviandr_research.py`
+- `tests/test_settings.py`

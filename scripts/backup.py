@@ -1,6 +1,7 @@
 """Consistent SQLite backup; run from the project root. No third-party packages."""
 
 import argparse
+from contextlib import closing
 import os
 import sqlite3
 from pathlib import Path
@@ -14,8 +15,10 @@ def backup(source, destination):
     if destination.exists() or key_destination.exists():
         raise ValueError("Destination already exists; choose a new file name")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(source.resolve().as_uri() + "?mode=ro", uri=True) as src:
-        with sqlite3.connect(destination) as dst:
+    with closing(
+        sqlite3.connect(source.resolve().as_uri() + "?mode=ro", uri=True)
+    ) as src:
+        with closing(sqlite3.connect(destination)) as dst:
             src.backup(dst)
             if dst.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                 raise RuntimeError("Backup integrity check failed")
@@ -34,8 +37,17 @@ def backup(source, destination):
             medication_preferences = dst.execute(
                 "SELECT 1 FROM sqlite_master WHERE type='table' AND name='medication_preference_versions'"
             ).fetchone()
+            research_data = any(
+                dst.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                    (table,),
+                ).fetchone()
+                and dst.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone()
+                for table in ("aviandr_observations", "aviandr_runs")
+            )
             if (
-                (
+                research_data
+                or (
                     patient_ai
                     and dst.execute("SELECT 1 FROM patient_ai_runs LIMIT 1").fetchone()
                 )

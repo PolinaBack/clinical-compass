@@ -1,0 +1,45 @@
+{
+  "scope": "authorized explicit replacement of workspace demo DB; not the separate PyCharm database",
+  "database": "/workspace/clinical-compass/data/compass.db",
+  "backup": "/workspace/clinical-compass/data/backups/before-aviandr-reset-285d0451771eced5.db",
+  "original_tables": 72,
+  "original_rows": 552,
+  "all_original_rows_retained_in_backup": true,
+  "fresh_counts": {
+    "patients": 3,
+    "doctors": 2,
+    "diary": 90,
+    "assessments": 27,
+    "aviandr_rules": 0
+  },
+  "scenarios": [
+    {
+      "scenario": "C",
+      "patient_id": 1
+    },
+    {
+      "scenario": "D",
+      "patient_id": 2
+    },
+    {
+      "scenario": "E",
+      "patient_id": 3
+    }
+  ],
+  "preserved_usernames": [
+    "specialist",
+    "patient-a",
+    "patient-b"
+  ],
+  "main_password_hashes_preserved": true,
+  "all_old_sessions_revoked": true,
+  "new_usernames": [
+    "specialist-2",
+    "patient-e"
+  ],
+  "new_credentials_file": "/workspace/clinical-compass/data/aviandr-demo-credentials.json",
+  "credentials_excluded_from_git": true,
+  "idempotent_without_reset": true,
+  "integrity": "ok",
+  "foreign_keys": "ok"
+}
