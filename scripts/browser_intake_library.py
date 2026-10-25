@@ -132,7 +132,7 @@ def check_intake_library(patient, doctor, url):
     )
 
     doctor.goto(url + "/doctor/library")
-    expect(doctor.locator(".library-section")).to_have_count(3)
+    expect(doctor.locator(".library-section")).to_have_count(4)
     for target in ("/medicines", "/doctor/resources", "/clinical-tools"):
         doctor.goto(url + "/doctor/library")
         doctor.locator(f'.library-section[href="{target}"]').click()
@@ -177,7 +177,7 @@ def check_intake_library(patient, doctor, url):
         json.dumps(audits, ensure_ascii=False, indent=2)
     )
     print(
-        "Intake/library browser: sex, voluntary cycle, save-and-continue during autosave, conflict protection, no JS with keyboard, persistence, three cards, FAQ, role checks, four widths; "
+        "Intake/library browser: sex, voluntary cycle, save-and-continue during autosave, conflict protection, no JS with keyboard, persistence, four library cards, FAQ, role checks, four widths; "
         + (f"{len(audits)} axe audits passed." if axe else "axe not requested.")
         + " JavaScript errors: 0."
     )

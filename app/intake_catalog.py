@@ -2,7 +2,9 @@
 Definitions describe self-reports, never diagnostic rules or prescriptions.
 """
 
-VERSION = "anamnesis-2026-10-23-v2"
+from app.adverse_catalog import ELIGIBLE, LABELS
+
+VERSION = "anamnesis-2026-10-25-v3"
 STATES = {
     "unanswered": "Пока не отвечено",
     "answered": "Ответил(а)",
@@ -491,6 +493,24 @@ CATEGORIES = [
             q("supplements", "Принимаете витамины, БАДы, растительные средства?"),
             q("reactions", "Были аллергии, реакции или трудности с приёмом?"),
             f("difficulties", "Что важно учесть в приёме лекарств?", "longtext"),
+            f(
+                "avoid_reactions",
+                "Каких нежелательных эффектов лечения вам особенно хотелось бы избежать?",
+                "multi",
+                list(ELIGIBLE),
+                max_items=3,
+                option_labels=LABELS,
+                option_metadata=ELIGIBLE,
+                hint="Выберите до трёх личных приоритетов. Это не оценка вероятности реакции; можно не отвечать и изменить выбор позже.",
+            ),
+            f(
+                "primary_reaction",
+                "Что из выбранного для вас самое важное?",
+                "choice",
+                list(ELIGIBLE),
+                option_labels=LABELS,
+                hint="Один главный приоритет из выбранных выше. Врач увидит выбор после отправки анкеты.",
+            ),
         ],
         [6, 7, 29, 30],
         ("medication", "reaction"),
@@ -999,7 +1019,8 @@ personal = next(c for c in CATEGORIES if c["key"] == "personal")
 measurement_fields = [f for f in personal["fields"] if f["key"] in MEASUREMENT_KEYS]
 personal["fields"] = [f for f in personal["fields"] if f["key"] not in MEASUREMENT_KEYS]
 personal.update(
-    title="Личные данные", description="Имя, дата рождения, пол и удобный способ обращения."
+    title="Личные данные",
+    description="Имя, дата рождения, пол и удобный способ обращения.",
 )
 CATEGORIES.insert(
     1,
@@ -1276,7 +1297,14 @@ CORE_KEYS = {
     "complaints": {"groups", "onset", "top_three", "impact"},
     "mental": {"mood", "anxiety", "past_help"},
     "health": {"known_conditions"},
-    "medicines": {"current", "past", "supplements", "reactions"},
+    "medicines": {
+        "current",
+        "past",
+        "supplements",
+        "reactions",
+        "avoid_reactions",
+        "primary_reaction",
+    },
     "exams": {"available"},
     "visits": {"had_visits"},
     "support": {"household", "support"},

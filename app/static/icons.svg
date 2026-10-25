@@ -24,4 +24,4 @@
 <symbol id="chart" viewBox="0 0 24 24"><path d="M3 3v19h19M7 18v-5m5 5V9m5 9V5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="settings" viewBox="0 0 24 24"><path d="m10 2 4 0 1 4 4-1 2 4-3 3 3 3-2 4-4-1-1 4h-4l-1-4-4 1-2-4 3-3-3-3 2-4 4 1 1-4Zm2 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 <symbol id="forums" viewBox="0 0 24 24"><path d="M3 3h14v11H9l-5 4v-4H3V3Zm15 5h3v12h-4l-4 3v-6M7 7h6M7 10h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-</svg>
+<symbol id="reactions" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6L12 3Z"/><path d="M7 12h3l2-4 2 8 1-4h2"/></symbol></svg>

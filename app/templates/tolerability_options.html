@@ -1,0 +1,6 @@
+<div class="tolerability-picker" data-tolerability-picker>
+    <div class="tolerability-filters"><label>Система органов<select data-tolerability-system><option value="">Все системы</option>{% for system in field.option_metadata.values()|map(attribute='system')|unique|sort %}<option>{{ system }}</option>{% endfor %}</select></label><label>Найти эффект<input type="search" data-tolerability-search placeholder="Понятное или медицинское название"></label></div>
+    <p class="caption" role="status" data-tolerability-status>Выбрано {{ value|length if value is sequence and value is not string else 0 }} из 3.</p>
+    <div class="intake-options intake-chip-options tolerability-options">{% for option in field.options %}{% set meta=field.option_metadata[option] %}<label class="intake-chip" data-tolerability-option data-system="{{ meta.system }}" data-search="{{ meta.label }} {{ meta.medical }}"><input type="checkbox" name="a_{{ field.key }}" value="{{ option }}" {% if value is sequence and value is not string and option in value %}checked{% endif %}><span class="intake-chip-mark" aria-hidden="true">✓</span><span>{{ meta.label }}<small>{{ meta.system }} · {{ meta.medical }}</small></span></label>{% endfor %}</div>
+    <p class="caption">Личные предпочтения не заменяют оценку опасных симптомов, противопоказаний и других рисков врачом.</p>
+</div>

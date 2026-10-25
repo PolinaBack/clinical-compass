@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from fastapi import HTTPException, Request
 from fastapi.responses import RedirectResponse
 from app.services import drug_library as library, medicine_drafts as drafts
+from app.services import adverse_reactions
 
 
 def register_medicine_drafts(app, db, account, doctor_access, csrf_check, render):
@@ -29,6 +30,25 @@ def register_medicine_drafts(app, db, account, doctor_access, csrf_check, render
                 else dict(revision=0, items=[], history=[])
             )
             drugs = library.search(c)
+            tolerability = (
+                current.get("tolerability", {})
+                if version is not None
+                else (
+                    adverse_reactions.preference_snapshot(c, patient_id)
+                    if patient
+                    else {}
+                )
+            )
+            registry = adverse_reactions.records(c)
+            matches = {
+                d["code"]: adverse_reactions.matches(registry, d["code"], tolerability)
+                for d in drugs
+            }
+            if version is not None:
+                matches = {
+                    item["code"]: item.get("preference_matches", [])
+                    for item in current["items"]
+                }
         selected = {item["code"]: item for item in current["items"]}
         for code in request.query_params.getlist("add"):
             if code not in {d["code"] for d in drugs}:
@@ -48,6 +68,9 @@ def register_medicine_drafts(app, db, account, doctor_access, csrf_check, render
             routes=drafts.ROUTES,
             readonly=version is not None,
             saved=request.query_params.get("saved") == "1",
+            tolerability=tolerability,
+            tolerability_choices=adverse_reactions.preference_choices(tolerability),
+            tolerability_matches=matches,
         )
         response.headers["Cache-Control"] = "no-store"
         return response

@@ -1,0 +1,35 @@
+/* Mint is scoped to the specialist's library and its existing tools. */
+.specialist-space{--questionnaire-accent:#326d51;--questionnaire-soft:#eaf6ef;--questionnaire-border:#8cb59d;--primary:#276d59;--ink:#263e36;--line:#d7e6dd;--surface:#fff}
+.specialist-space .library-sections{grid-template-columns:repeat(2,minmax(0,1fr))}
+.specialist-space .library-section,.specialist-space .library-section:nth-child(2),.specialist-space .library-section:nth-child(3){background:#edf8f2;border-color:#d2e7d9}
+.specialist-space .library-section:hover,.specialist-space .library-section:focus-visible{box-shadow:0 6px 20px #245e4718}
+.specialist-space main:has(.medicine-nav){--medicine-accent:#286f59;--medicine-ink:#233e34;--medicine-soft:#eaf7ef;--medicine-border:#d7e6dd}
+.specialist-space .medicine-nav a{background:#fff;border-color:#d7e6dd;color:#2d6754}
+.specialist-space .medicine-nav a[aria-current]{background:#e6f5ed;color:#245c45;border-color:#72a38a}
+.specialist-space main:has(.medicine-nav) .medicine-eyebrow{color:#397761}
+.specialist-space main:has(.medicine-nav) .medicine-secondary{color:#2e6751;border-color:#c7e1d2}
+.specialist-space main:has(.medicine-nav) button:disabled{background:#9bbfaf;color:#193d2d}
+.specialist-space main:has(.medicine-nav) a:focus-visible,.specialist-space main:has(.medicine-nav) button:focus-visible{outline-color:#3b8065}
+.specialist-space .medicine-group,.specialist-space .medicine-rule-badge{color:#396f55}
+.specialist-space .medicine-selection-info,.specialist-space .medicine-card-heading{background:#eef8f2}
+.specialist-space .medicine-toc a:hover,.specialist-space .medicine-toc a:focus-visible,.specialist-space .medicine-toc a[aria-current=location]{background:#e3f3e9;color:#285e45;border-left-color:#42846a;border-radius:8px}
+.specialist-space .medicine-toc a[aria-current=location]{font-weight:750}
+.specialist-space .medicine-chip,.specialist-space main:has(.medicine-nav) .medicine-picker{background:#f1f9f4}
+.specialist-space .medicine-chip a,.specialist-space .medicine-picker>summary{color:#316d51}
+.specialist-space .medicine-rule-origin{background:#f0f6f2;color:#556f5f}
+.specialist-space .medicine-pair[data-level=unknown]{border-left-color:#84a292!important}
+.specialist-space .medicine-metadata dt{color:#506c5b}
+.specialist-space .questionnaire-tile{background:linear-gradient(135deg,#fff,#f0f9f3)!important;border-color:#d7e6dd!important}
+.specialist-space .questionnaire-tile-icon,.specialist-space .questionnaire-role,.specialist-space .questionnaire-state{background:#e7f5ed!important;color:#386e54!important}
+.specialist-space .questionnaire-tile a,.specialist-space .questionnaire-tile footer,.specialist-space .questionnaire-page .eyebrow{color:#386e54!important}
+.specialist-space .resource-card{border-color:#d7e6dd}
+.specialist-space .resource-card a{color:#2a6950}
+.medicine-preferences{background:#eaf6ef;border:1px solid #cde4d6;border-radius:18px;padding:20px;margin:20px 0}
+.medicine-preference-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0}
+.medicine-preference-chips li{background:#fff;border:1px solid #cfdfd5;border-radius:20px;padding:8px 12px;font-size:14px}
+.medicine-preference-match{background:#eff8f2;border-left:3px solid #64a17f;border-radius:12px;padding:12px 16px;margin:12px 0}
+.medicine-preference-match ul{padding-left:20px;margin:0}
+.medicine-preference-match p{font-size:14px;line-height:1.7;margin:0}
+@media(max-width:850px){.specialist-space .library-sections{grid-template-columns:1fr}}
+
+.specialist-space .medicine-pair[data-level=unknown] .medicine-rule-badge{background:#eef2f0;color:#5c6c62}

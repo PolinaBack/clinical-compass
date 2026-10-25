@@ -179,14 +179,15 @@ def test_invalid_or_stale_next_does_not_navigate_or_overwrite(client):
     assert "ещё не отправил" in client.get("/patients/1/profile/about").text
 
 
-def test_library_three_cards_active_navigation_and_forum_at_end_of_tasks(client):
+def test_library_sections_active_navigation_and_forum_at_end_of_tasks(client):
     login(client, "doctor")
     library = client.get("/doctor/library", follow_redirects=False)
     assert library.status_code == 200 and library.headers["cache-control"] == "no-store"
-    assert library.text.count('class="library-section"') == 3
+    assert library.text.count('class="library-section"') == 4
     assert "FAQ-форум" not in library.text
     for path, title in [
         ("/medicines", "Лекарства"),
+        ("/medicines/adverse-effects", "Побочные эффекты"),
         ("/doctor/resources", "Рекомендованные ресурсы"),
         ("/clinical-tools", "Анкеты"),
     ]:

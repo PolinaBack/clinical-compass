@@ -15,7 +15,13 @@ from app.intake_catalog import (
     STATES,
     MEASUREMENT_KEYS,
 )
-from app.services.clinical_forms import parse_answers, visible, display, today
+from app.services.clinical_forms import (
+    parse_answers,
+    visible,
+    display,
+    display_field,
+    today,
+)
 from app.storage import now, audit
 
 
@@ -125,6 +131,16 @@ def save_category(c, pid, user, key, form):
     data = parse_answers(
         fields, form, current["answers"].get(key, {}), preferences(c, pid)
     )
+    if key == "medicines":
+        selected = data.get("avoid_reactions", {})
+        primary = data.get("primary_reaction", {})
+        if primary.get("status") == "answered" and (
+            selected.get("status") != "answered"
+            or primary.get("value") not in selected.get("value", [])
+        ):
+            raise HTTPException(
+                422, "Главный приоритет должен быть одним из выбранных эффектов"
+            )
     if data == current["answers"].get(key, {}) and current["revision"]:
         return current["revision"]
     answers = {**current["answers"], key: data}
@@ -596,7 +612,7 @@ def overview(data, prefs):
             item = dict(
                 field=field,
                 answer=a,
-                text=display(a),
+                text=display_field(field, a),
                 target="answer:" + category["key"] + "." + field["key"],
             )
             if (

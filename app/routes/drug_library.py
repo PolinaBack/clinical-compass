@@ -349,6 +349,61 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
             comparison_return=target,
         )
 
+    @app.get("/medicines/adverse-effects")
+    def adverse_effects(
+        request: Request, drug: str = "", system: str = "", q: str = ""
+    ):
+        doctor_access(request)
+        from app.services import adverse_reactions as reactions
+
+        with db() as c:
+            rows = reactions.records(c)
+            drugs = lib.search(c)
+        systems = sorted({r["system"] for r in rows})
+        if (
+            drug
+            and drug not in {d["code"] for d in drugs}
+            or system
+            and system not in systems
+        ):
+            lib.fail("Выберите препарат и систему из списка")
+        found = reactions.filtered(rows, drug, system, q[:200])
+        keys = {r["key"] for r in found}
+        target = "/medicines/adverse-effects?" + urlencode(
+            dict(drug=drug, system=system, q=q[:200])
+        )
+        for row in rows:
+            row["visible"] = row["key"] in keys
+            row["card_url"] = (
+                "/medicines/"
+                + row["slug"]
+                + "?"
+                + urlencode(dict(return_to=target))
+                + "#medicine-registry"
+            )
+        groups = [
+            dict(
+                name=s,
+                rows=[r for r in rows if r["system"] == s],
+                count=sum(r["system"] == s for r in found),
+            )
+            for s in systems
+        ]
+        return render(
+            request,
+            "adverse_effects.html",
+            drugs=drugs,
+            systems=systems,
+            groups=groups,
+            drug=drug,
+            system=system,
+            q=q[:200],
+            total=len(rows),
+            count=len(found),
+            record_count=reactions.record_count,
+            specified=sum(r["frequency"] != "частота требует уточнения" for r in rows),
+        )
+
     @app.get("/medicines/scenarios")
     def scenarios(request: Request):
         doctor_access(request)

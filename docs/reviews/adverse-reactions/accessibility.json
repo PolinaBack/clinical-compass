@@ -1,0 +1,92 @@
+[
+  {
+    "width": 390,
+    "page": "library",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "aviandr",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "spitomin",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "all",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "draft",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "card",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "resources",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "tools",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "library",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "aviandr",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "spitomin",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "all",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "draft",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "card",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "resources",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "tools",
+    "violations": []
+  },
+  {
+    "width": 390,
+    "page": "patient-preferences",
+    "violations": []
+  },
+  {
+    "width": 1280,
+    "page": "patient-preferences",
+    "violations": []
+  }
+]

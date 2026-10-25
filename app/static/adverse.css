@@ -1,0 +1,29 @@
+.adverse-page{background:#fff;border:1px solid #d8e7e1;border-radius:24px;padding:26px;margin:20px 0;--adverse-mint:#edf8f3;--adverse-ink:#254d41}
+.adverse-page h1{font-size:clamp(24px,3vw,32px)!important;color:#263e36!important;margin:0 0 16px}
+.adverse-intro{max-width:850px;color:#546b5e;line-height:1.8;margin-bottom:22px}
+.adverse-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:20px 0}
+.adverse-filters label{margin:0;font-size:14px;font-weight:750;color:#293f37}
+.adverse-filters input,.adverse-filters select{width:100%;min-width:0;margin:8px 0 0;min-height:50px;border:1px solid #d7e1dc;border-radius:12px;background:#fff;font-size:15px;color:#2d4e41;padding:12px}
+.adverse-count{background:var(--adverse-mint);border-radius:13px;padding:14px 16px;line-height:1.7;color:#31594a;margin:18px 0}
+.adverse-count .caption{font-size:13px;color:#546b5e}
+.adverse-system{border:1px solid #d4e5dc;border-radius:20px;overflow:hidden;margin:16px 0;background:#fff}
+.adverse-system>header{background:var(--adverse-mint);padding:17px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.adverse-system h2{font-size:17px;color:var(--adverse-ink);margin:0}
+.adverse-system>header>span{font-size:12px;color:#426d56;white-space:nowrap}
+.adverse-system ul{list-style:none;padding:6px 20px;margin:0}
+.adverse-system li{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:17px 4px;border-bottom:1px solid #e6eee9}
+.adverse-system li:last-child{border-bottom:0}
+.adverse-system li>div{min-width:0}
+.adverse-system h3{font-size:15px;line-height:1.5;color:#2a4237;margin:0 0 3px}
+.adverse-system li p{font-size:13px;color:#546b5e;margin:0;line-height:1.6}
+.adverse-system a{color:#286b53;text-underline-offset:3px}
+.adverse-frequency{border-radius:24px;padding:7px 12px;background:#e7f4ed;color:#396a53;font-size:13px;line-height:1.5;flex:none;max-width:230px;text-align:center}
+.adverse-frequency-unknown{background:#f2f5f3;color:#526356}
+.adverse-empty,.adverse-footnote{color:#546b5e;font-size:14px;line-height:1.8;margin:22px 0}
+.adverse-page [hidden]{display:none!important}
+.tolerability-filters{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tolerability-options{max-height:300px;overflow:auto;align-content:start;padding:8px 4px;overscroll-behavior:contain}
+.tolerability-options .intake-chip{max-width:100%;background:#fff;border-color:#d6e6dd;align-items:start;text-align:left}
+.tolerability-options .intake-chip:has(input:checked){background:#e5f5ec!important;border-color:#4a8a6d!important;color:#285b43!important}
+.tolerability-options small{display:block;font-weight:400;font-size:11px;line-height:1.6;color:#526b5a}
+@media(max-width:700px){.adverse-page{padding:18px 14px}.adverse-filters{grid-template-columns:1fr;gap:12px}.adverse-system>header{padding:14px}.adverse-system ul{padding:4px 12px}.adverse-system li{align-items:start;flex-wrap:wrap;gap:10px}.adverse-frequency{max-width:100%;font-size:12px}.tolerability-filters{grid-template-columns:1fr}.adverse-intro{font-size:14px}}

@@ -1,4 +1,5 @@
 <nav class="medicine-nav" aria-label="Библиотека препаратов">
+    <a href="/medicines/adverse-effects" {% if current_page == '/medicines/adverse-effects' %}aria-current="page"{% endif %}>Побочные эффекты</a>
     <a href="/medicines" {% if current_page == '/medicines' %}aria-current="page"{% endif %}>Поиск препаратов</a>
     <a href="/medicines/combinations" {% if current_page == '/medicines/combinations' %}aria-current="page"{% endif %}>Проверка сочетаний</a>
     <a href="/medicines/prescriptions" {% if current_page == '/medicines/prescriptions' %}aria-current="page"{% endif %}>Назначить пациенту</a>

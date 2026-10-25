@@ -19,7 +19,7 @@ from app.intake_catalog import (
     SPECIALTIES,
 )
 from app.services import intake as service, clinical_attachments as files
-from app.services.clinical_forms import visible, display, today
+from app.services.clinical_forms import visible, display, display_field, today
 from app.storage import now, audit
 
 
@@ -129,6 +129,7 @@ def intake_context(c, user, pid, view="summary", submission_id=None, as_of=None)
         entity_category=data.get("catalog", {}).get("entity_category", ENTITY_CATEGORY),
         intake_visible=visible,
         intake_display=display,
+        intake_display_field=display_field,
         intake_today=today().isoformat(),
         intake_entity_fields=data.get("catalog", {}).get("entity_fields", {}),
         intake_systems=SYSTEMS,

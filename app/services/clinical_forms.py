@@ -138,6 +138,15 @@ def display(answer):
     return ", ".join(str(v) for v in value) if isinstance(value, list) else str(value)
 
 
+def display_field(field, answer):
+    if answer.get("status") != "answered" or not field.get("option_labels"):
+        return display(answer)
+    labels = field["option_labels"]
+    value = answer.get("value")
+    values = value if isinstance(value, list) else [value]
+    return ", ".join(labels.get(v, str(v)) for v in values)
+
+
 def local_datetime(value):
     if not value:
         return ""

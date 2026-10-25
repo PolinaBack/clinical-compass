@@ -1,0 +1,16 @@
+{
+  "baseline": "49800d1",
+  "original_tables": 72,
+  "original_rows": 552,
+  "all_original_rows_preserved": true,
+  "new_rows_by_existing_table": {
+    "schema_migrations": 3
+  },
+  "restarts": 2,
+  "idempotent": true,
+  "integrity": "ok",
+  "foreign_keys": "ok",
+  "working_database_unchanged": true,
+  "new_schema_migration": null,
+  "ai_model_calls_performed": false
+}

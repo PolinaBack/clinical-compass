@@ -54,7 +54,7 @@ def read(c, path, user, pid, version=None):
     if not row:
         if version is not None:
             raise HTTPException(404, "Версия черновика не найдена")
-        return dict(revision=0, items=[], history=[])
+        return dict(revision=0, items=[], history=[], tolerability={})
     history = [
         dict(r)
         for r in c.execute(
@@ -83,6 +83,7 @@ def read(c, path, user, pid, version=None):
         revision=version if version is not None else row["revision"],
         items=payload["items"],
         history=history,
+        tolerability=payload.get("tolerability", {}),
     )
 
 
@@ -162,15 +163,25 @@ def save(c, path, user, pid, form):
         raise HTTPException(422, "Обновите страницу черновика") from None
     drugs = {d["code"]: d for d in library.search(c)}
     items = parse(form, drugs)
+    from app.services import adverse_reactions
+
+    tolerability = adverse_reactions.preference_snapshot(c, pid)
+    registry = adverse_reactions.records(c)
+    for item in items:
+        item["preference_matches"] = adverse_reactions.matches(
+            registry, item["code"], tolerability
+        )
     old = read(c, path, user, pid)
     if revision != old["revision"]:
         raise HTTPException(
             409,
             "Черновик изменён в другой вкладке. Откройте текущую версию; прежние версии сохранены.",
         )
-    if items == old["items"]:
+    if items == old["items"] and tolerability == old.get("tolerability"):
         return
-    encrypted = cipher(path, c).encrypt(library.dump(dict(items=items)).encode())
+    encrypted = cipher(path, c).encrypt(
+        library.dump(dict(items=items, tolerability=tolerability)).encode()
+    )
     timestamp = now()
     if old["revision"]:
         row = c.execute(

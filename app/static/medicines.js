@@ -22,6 +22,29 @@
     }, 220);
   });
   const normalized = value => String(value || '').toLocaleLowerCase('ru').replaceAll('ё', 'е').trim();
+  const toc = [...document.querySelectorAll('.medicine-toc a[href^="#medicine-"]')];
+  if (toc.length) {
+    const sections = toc.map(link => document.getElementById(link.hash.slice(1))).filter(Boolean);
+    const active = id => toc.forEach(link => {
+      if (link.hash === '#' + id) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    });
+    let scheduled = false;
+    const update = () => {
+      scheduled = false;
+      const id = [...sections].reverse().find(section => section.getBoundingClientRect().top <= 155)?.id || sections[0].id;
+      active(id);
+    };
+    window.addEventListener('scroll', () => { if (!scheduled) { scheduled = true; requestAnimationFrame(update); } }, {passive: true});
+    toc.forEach(link => link.addEventListener('click', event => {
+      const target = document.getElementById(link.hash.slice(1));
+      if (!target) return;
+      event.preventDefault(); history.pushState(null, '', link.hash); active(target.id);
+      window.scrollTo({top: scrollY + target.getBoundingClientRect().top - 125,
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+    }));
+    update();
+  }
   // The entire currently displayed catalogue is searched in place. Server GET
   // remains the fallback and can fetch a different filter's result set.
   const catalogue = document.querySelector('[data-catalog-search]');
