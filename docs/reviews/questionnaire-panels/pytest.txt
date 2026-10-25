@@ -10,7 +10,7 @@ bringing up nodes...
 ........................................................................ [ 73%]
 ........................................................................ [ 84%]
 ........................................................................ [ 94%]
-...................................                                      [100%]
+....................................                                     [100%]
 =============================== warnings summary ===============================
 .venv/lib/python3.12/site-packages/starlette/testclient.py:37
 .venv/lib/python3.12/site-packages/starlette/testclient.py:37
@@ -21,4 +21,4 @@ bringing up nodes...
     _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-683 passed, 5 warnings in 436.28s (0:07:16)
+684 passed, 5 warnings in 357.99s (0:05:57)

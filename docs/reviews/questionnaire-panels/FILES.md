@@ -1,8 +1,9 @@
 # Изменённые файлы
 
-Относительно `c583772`. Базы, ключи и пароли исключены.
+Относительно `c583772`, включая объединённые UI-правки `59861b2`. Базы, ключи и пароли исключены.
 
 - [README.md](../../../README.md)
+- [app/intake_catalog.py](../../../app/intake_catalog.py)
 - [app/portal.py](../../../app/portal.py)
 - [app/routes/intake.py](../../../app/routes/intake.py)
 - [app/static/intake.css](../../../app/static/intake.css)
@@ -17,6 +18,7 @@
 - [app/templates/intake_entity.html](../../../app/templates/intake_entity.html)
 - [app/templates/intake_files.html](../../../app/templates/intake_files.html)
 - [app/templates/intake_footer.html](../../../app/templates/intake_footer.html)
+- [app/templates/intake_overview.html](../../../app/templates/intake_overview.html)
 - [app/templates/intake_section.html](../../../app/templates/intake_section.html)
 - [app/templates/intake_support.html](../../../app/templates/intake_support.html)
 - [docs/IMPLEMENTATION_PLAN.md](../../../docs/IMPLEMENTATION_PLAN.md)
@@ -31,6 +33,7 @@
 - [docs/reviews/questionnaire-panels/controls-accessibility.json](../../../docs/reviews/questionnaire-panels/controls-accessibility.json)
 - [docs/reviews/questionnaire-panels/data-check.json](../../../docs/reviews/questionnaire-panels/data-check.json)
 - [docs/reviews/questionnaire-panels/focused.txt](../../../docs/reviews/questionnaire-panels/focused.txt)
+- [docs/reviews/questionnaire-panels/merged-focused.txt](../../../docs/reviews/questionnaire-panels/merged-focused.txt)
 - [docs/reviews/questionnaire-panels/panels-accessibility.json](../../../docs/reviews/questionnaire-panels/panels-accessibility.json)
 - [docs/reviews/questionnaire-panels/period-accessibility.json](../../../docs/reviews/questionnaire-panels/period-accessibility.json)
 - [docs/reviews/questionnaire-panels/pytest.txt](../../../docs/reviews/questionnaire-panels/pytest.txt)
@@ -38,8 +41,11 @@
 - [docs/reviews/questionnaire-panels/support-1280.png](../../../docs/reviews/questionnaire-panels/support-1280.png)
 - [docs/reviews/questionnaire-panels/support-390.png](../../../docs/reviews/questionnaire-panels/support-390.png)
 - [docs/reviews/questionnaire-panels/voice-1280.png](../../../docs/reviews/questionnaire-panels/voice-1280.png)
+- [scripts/browser_assessment_period.py](../../../scripts/browser_assessment_period.py)
 - [scripts/browser_intake.py](../../../scripts/browser_intake.py)
 - [scripts/browser_intake_panels.py](../../../scripts/browser_intake_panels.py)
 - [scripts/browser_questionnaire_panels.py](../../../scripts/browser_questionnaire_panels.py)
 - [scripts/browser_smoke.py](../../../scripts/browser_smoke.py)
 - [tests/test_questionnaire_panels.py](../../../tests/test_questionnaire_panels.py)
+- [tests/test_safety_adaptation.py](../../../tests/test_safety_adaptation.py)
+- [tests/test_workflows.py](../../../tests/test_workflows.py)

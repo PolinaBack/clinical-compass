@@ -107,3 +107,17 @@ def test_intake_support_is_single_upload_surface_before_related_cards(client):
     assert (
         "data-intake-bmi" in client.get("/patients/1/profile/about/measurements").text
     )
+
+
+def test_submit_is_available_once_per_view_with_nonempty_internal_revision(client):
+    login(client, "patient1")
+    assert (
+        save(client, "personal", a_preferred_name="Синтетическое обращение").status_code
+        == 200
+    )
+    for suffix in ("", "?view=review"):
+        page = client.get("/patients/1/profile/about" + suffix)
+        assert page.status_code == 200
+        assert page.context["intake_version"]
+        assert page.text.count('action="/patients/1/intake/submit"') == 1
+    assert send(client).status_code == 200

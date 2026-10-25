@@ -5,6 +5,7 @@ IDs with yesterday's reference dates. No working database is accessed here.
 """
 
 import json
+import re
 import os
 from pathlib import Path
 
@@ -32,7 +33,7 @@ def check_assessment_period(patient, doctor, url, ids, period):
 
     def save(label="Сохранить и продолжить"):
         patient.get_by_role("button", name=label, exact=True).click()
-        expect(patient.locator(".success")).to_be_visible()
+        expect(patient).to_have_url(re.compile(r"[?&]saved=1(?:&|$)"))
 
     phq4 = f"/assessments/{ids['phq4']}"
     safety = f"/assessments/{ids['safety6']}"
@@ -46,11 +47,11 @@ def check_assessment_period(patient, doctor, url, ids, period):
     patient.get_by_role("textbox", name="Комментарий к вопросу 1", exact=True).fill(
         "Синтетический ответ после паузы"
     )
-    patient.get_by_label("! Хочу обсудить", exact=False).check()
+    patient.get_by_label("Хочу обсудить", exact=False).check()
     save("Сохранить и сделать паузу")
     patient.reload()
     expect(patient.locator('[name="answer_1"][value="2"]')).to_be_checked()
-    expect(patient.get_by_label("! Хочу обсудить", exact=False)).to_be_checked()
+    expect(patient.get_by_label("Хочу обсудить", exact=False)).to_be_checked()
     expect(
         patient.get_by_role("textbox", name="Комментарий к вопросу 1", exact=True)
     ).to_have_value("Синтетический ответ после паузы")

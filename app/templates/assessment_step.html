@@ -28,7 +28,6 @@
                 {% endif %}
             </p>
             {% if assessment.scale == 'safety6' %}
-                <p class="notice">Учебная адаптация по предоставленной статье. Это не официальная самостоятельная форма C-SSRS.</p>
                 <p class="caption">
                     {{ 'За жизнь' if step == 6 else 'За последние 3 месяца' if step == 7 else 'За последний месяц: ' ~ assessment.period_start ~ ' — ' ~ assessment.period_end }}
                 </p>
@@ -42,9 +41,6 @@
             </p>
         {% endif %}
         {% include 'video_offer.html' %}
-        {% if request.query_params.get('saved') %}
-            <p class="success" role="status">Ответ сохранён на сервере. Это не означает, что специалист уже прочитал его.</p>
-        {% endif %}
         {% if assessment.scale == 'safety6' and result.positive_items %}
             <div class="notice">
                 <p>
@@ -97,11 +93,8 @@
                                name="discuss_{{ key }}"
                                value="true"
                                {% if answer.get('discuss') %}checked{% endif %}>
-                        ! Хочу обсудить этот вопрос со специалистом
+                        Хочу обсудить этот вопрос со специалистом
                     </label>
-                    <p class="caption">
-                        Можно рассказать свою историю. {{ 'Баллы по этой форме не рассчитываются.' if assessment.scale == 'safety6' else 'Комментарий не меняет выбранный балл.' }} Комментарий можно обсудить на консультации.
-                    </p>
                     {% include 'audio_controls.html' %}
                     {% for note in question_audio %}
                     <article class="questionnaire-voice-note"><h3>Сохранённое голосовое пояснение</h3>

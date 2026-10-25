@@ -11,7 +11,7 @@ def safety_start(client):
     response = client.post("/safety/start", data={"csrf": token(client)})
     assert response.status_code == 200
     aid = int(response.url.path.split("/")[-1])
-    assert "Учебная адаптация" in response.text
+    assert "учебная адаптация" in response.text.casefold()
     return aid
 
 

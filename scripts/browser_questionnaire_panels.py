@@ -30,7 +30,8 @@ def check_questionnaire_panels(patient, doctor, url, ids):
     patient.goto(f'{url}/assessments/{ids["gad7"]}')
     patient.locator('[name="answer_1"][value="0"]').check()
     patient.get_by_role("button", name="Сохранить и сделать паузу", exact=True).click()
-    expect(patient.locator(".success")).to_be_visible()
+    expect(patient.locator('[name="answer_1"][value="0"]')).to_be_checked()
+    assert "saved=1" in patient.url
     # Real MediaRecorder with the runner's artificial microphone; separate POST.
     aid = ids["phq9"]
     patient.goto(f"{url}/assessments/{aid}")

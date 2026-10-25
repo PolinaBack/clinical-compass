@@ -4,6 +4,7 @@ Definitions describe self-reports, never diagnostic rules or prescriptions.
 
 from app.adverse_catalog import ELIGIBLE, LABELS
 
+# Internal revision for saved forms and immutable submissions; not a display label.
 VERSION = "anamnesis-2026-10-25-v3"
 STATES = {
     "unanswered": "Пока не отвечено",

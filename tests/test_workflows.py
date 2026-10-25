@@ -380,10 +380,12 @@ def test_hcl33_context_excluded_and_no_fabricated_threshold(client):
         r["item"]: r
         for r in rows(client, "SELECT * FROM answers WHERE assessment_id=?", (hcl,))
     }
-    assert score("hcl33", raw)["total"] == 33
+    expected = {"answered": 33, "count": 33, "total": 33}
+    assert score("hcl33", raw) == expected
     login(client, "doctor")
-    page = client.get(f"/assessments/{hcl}").text
-    assert "33/33" in page and "порог бар не применяется" in page.lower()
+    page = client.get(f"/assessments/{hcl}")
+    assert "33/33" in page.text
+    assert page.context["result"] == expected
 
 
 def test_password_reset_revokes_existing_session(client):
