@@ -1,0 +1,10 @@
+{
+  "baseline": "a4221ec",
+  "working_database_unchanged": true,
+  "original_tables": 88,
+  "original_rows": 1040,
+  "accounts_and_passwords_unchanged": true,
+  "no_reset_performed_on_working_database": true,
+  "no_new_migrations": true,
+  "all_original_806_requirement_rows_unchanged": true
+}

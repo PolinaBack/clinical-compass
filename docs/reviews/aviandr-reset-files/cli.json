@@ -1,0 +1,22 @@
+{
+  "scope": "CLI subprocesses on temporary fully synthetic SQLite; not native Windows",
+  "injected_os_error": "PermissionError with winerror=5",
+  "blocked_exit_code": 1,
+  "blocked_traceback": false,
+  "blocked_success_output": false,
+  "original_database_unchanged_on_denial": true,
+  "original_key_unchanged_on_denial": true,
+  "all_original_rows_retained_in_backup": true,
+  "backup_key_matches": true,
+  "unblocked_real_atomic_replace_exit_code": 0,
+  "fresh_counts": {
+    "patients": 3,
+    "doctors": 2,
+    "diary": 90,
+    "assessments": 27
+  },
+  "all_main_password_hashes_preserved": true,
+  "idempotent_without_reset": true,
+  "integrity": "ok",
+  "foreign_keys": "ok"
+}

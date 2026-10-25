@@ -6,13 +6,16 @@ Stop the application and every worker before --reset. No startup reset hook.
 """
 
 import argparse
+import errno
 import hashlib
 import json
 import os
 import secrets
 import shutil
 import sqlite3
+import stat
 import tempfile
+import time
 from datetime import timedelta
 from pathlib import Path
 
@@ -35,6 +38,92 @@ from app.intake_catalog import VERSION as INTAKE_VERSION, BY_KEY
 from scripts.backup import backup
 
 VERSION = "aviandr-three-synthetic-scenarios-v1"
+WINDOWS = os.name == "nt"
+
+
+def reset_failure(message, backup_path):
+    archived = (
+        f" Полная резервная копия прежней базы: {backup_path}." if backup_path else ""
+    )
+    return ValueError(message + archived)
+
+
+def unchanged_database(path, original_hash):
+    wal = Path(str(path) + "-wal")
+    if wal.exists() and wal.stat().st_size:
+        raise ValueError("Появился активный WAL: база используется. Замена отменена.")
+    if original_hash is None:
+        unchanged = not path.exists()
+    else:
+        unchanged = (
+            path.is_file()
+            and hashlib.sha256(path.read_bytes()).hexdigest() == original_hash
+        )
+    if not unchanged:
+        raise ValueError(
+            "База изменилась во время подготовки. Остановите сервер и повторите; замена не выполнена."
+        )
+
+
+def replace_database(fresh, path, original_hash, backup_path):
+    """Keep atomic replacement; never delete/unlink a locked destination first."""
+    restore = None
+    replaced = False
+    delays = (0.2, 0.4, 0.8, 1.6)
+    try:
+        for attempt in range(len(delays) + 1):
+            try:
+                # Recheck before every retry: a live application may have saved
+                # something while Windows temporarily denied the replacement.
+                unchanged_database(path, original_hash)
+                if WINDOWS and path.exists() and restore is None:
+                    metadata = path.stat()
+                    if not metadata.st_mode & stat.S_IWRITE:
+                        os.chmod(path, metadata.st_mode | stat.S_IWRITE)
+                        restore = metadata
+                os.replace(fresh, path)
+                replaced = True
+                return
+            except OSError as exc:
+                denied = (
+                    isinstance(exc, PermissionError)
+                    or exc.errno
+                    in (
+                        errno.EACCES,
+                        errno.EPERM,
+                        errno.EBUSY,
+                    )
+                    or getattr(exc, "winerror", None) in (5, 32, 33)
+                )
+                if denied and attempt < len(delays):
+                    time.sleep(delays[attempt])
+                    continue
+                if denied:
+                    raise reset_failure(
+                        f"Не удалось заменить {path}: файл занят или нет прав на замену. "
+                        "Прежняя база не заменена. Остановите все Run/Debug-конфигурации "
+                        "с uvicorn и ИИ/аудио-обработчиками. В PyCharm закройте вкладки "
+                        "просмотра compass.db и отключите соединение в Database "
+                        "(Disconnect), затем повторите команду. "
+                        "Не удаляйте compass.db и не меняйте права всей папки.",
+                        backup_path,
+                    ) from None
+                raise reset_failure(
+                    "ОС не разрешила установить подготовленную базу. Замена не выполнена; "
+                    "проверьте доступ к файлу и свободное место.",
+                    backup_path,
+                ) from None
+            except ValueError as exc:
+                raise reset_failure(str(exc), backup_path) from None
+    finally:
+        if restore is not None and not replaced:
+            # Restore the read-only flag only on the same original file.
+            try:
+                current = path.stat()
+                if (current.st_dev, current.st_ino) == (restore.st_dev, restore.st_ino):
+                    os.chmod(path, restore.st_mode)
+            except OSError:
+                pass
 
 
 def account(c, username, role, pid, did, credentials):
@@ -394,6 +483,7 @@ def setup(path=None, *, reset=False):
             raise ValueError(
                 "Остановите приложение и обработчики: активный WAL препятствует безопасной замене базы."
             )
+        original_hash = hashlib.sha256(path.read_bytes()).hexdigest()
         with connect(path) as c:
             c.row_factory = sqlite3.Row
             all_old = (
@@ -417,11 +507,10 @@ def setup(path=None, *, reset=False):
             / ("before-aviandr-reset-" + secrets.token_hex(8) + ".db")
         )
         backup(path, backup_path)
-        original_hash = hashlib.sha256(path.read_bytes()).hexdigest()
     # Only the explicitly requested reset replaces patient records. Default seed
     # is additive; repeats skip already registered scenarios and manual edits.
     with tempfile.TemporaryDirectory(
-        prefix=".aviandr-reset-", dir=path.parent
+        prefix=".aviandr-reset-", dir=path.parent, ignore_cleanup_errors=True
     ) as folder:
         fresh = Path(folder) / "fresh.db"
         original_key = key_path(path)
@@ -470,19 +559,23 @@ def setup(path=None, *, reset=False):
                     and not c.execute("PRAGMA foreign_key_check").fetchall()
                 )
                 assert c.execute("SELECT count(*) FROM patients").fetchone()[0] == 3
-        if (
-            original_hash
-            and hashlib.sha256(path.read_bytes()).hexdigest() != original_hash
-        ) or (original_hash is None and path.exists()):
-            raise ValueError(
-                "База изменилась во время подготовки. Остановите сервер и повторите; замена не выполнена."
-            )
+        try:
+            unchanged_database(path, original_hash)
+        except (ValueError, OSError) as exc:
+            raise reset_failure(
+                (
+                    str(exc)
+                    if isinstance(exc, ValueError)
+                    else "Не удалось проверить исходную базу; замена не выполнена."
+                ),
+                backup_path,
+            ) from None
         if not original_key.exists():
             target = Path(str(path) + ".key")
             shutil.copyfile(fresh_key, target)
             os.chmod(target, 0o600)
         os.chmod(fresh, 0o600)
-        os.replace(fresh, path)
+        replace_database(fresh, path, original_hash, backup_path)
     result["backup"] = str(backup_path) if backup_path else None
     result["preserved_usernames"] = [r["username"] for r in selected] if old else []
     return result
@@ -501,6 +594,12 @@ def main():
         result = setup(args.db, reset=args.reset)
     except (ValueError, sqlite3.Error) as exc:
         parser.exit(1, str(exc) + "\n")
+    except OSError:
+        parser.exit(
+            1,
+            "Не удалось подготовить демобазу: проверьте доступ к файлам, свободное место "
+            f"и остановите приложение/обработчики. Резервные копии в {args.db.resolve().parent / 'backups'} не удаляйте.\n",
+        )
     print("Сценарии C/D/E готовы. Повтор без --reset не перезаписывает наблюдения.")
     if result.get("backup"):
         print("Прежняя база и ключ сохранены:", result["backup"])
