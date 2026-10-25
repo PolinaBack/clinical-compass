@@ -18,6 +18,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from .content import FAQ, RESOURCES
 from .assets import asset_url
 from .security import verify_password
+from .session_keys import session_secret
 from .storage import extend_schema, audit, now
 from .workflows import register_workflows, overview
 from .migrations import apply_migrations
@@ -102,7 +103,7 @@ def create_app(db_path=None):
     app.state.db_path = path
     app.add_middleware(
         SessionMiddleware,
-        secret_key=secrets.token_hex(32),
+        secret_key=session_secret(path),
         same_site="strict",
         max_age=28800,
     )
@@ -337,8 +338,11 @@ def create_app(db_path=None):
         )
 
     @app.post("/logout")
-    def logout(request: Request, csrf: str = Form(...)):
-        csrf_check(request, csrf)
+    def logout(request: Request, csrf: str = Form("")):
+        # A cached logout form may outlive its cookie. Closing an already closed
+        # session is harmless; an authenticated session still requires its token.
+        if request.session.get("account_id"):
+            csrf_check(request, csrf)
         request.session.clear()
         return RedirectResponse("/", status_code=303)
 

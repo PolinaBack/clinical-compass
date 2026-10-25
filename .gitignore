@@ -10,6 +10,7 @@ __pycache__/
 data/
 artifacts/
 
-# Private encryption keys for clinical attachments and matching backups.
+# Private encryption/signing keys and matching attachment backups.
 attachments.key
 *.db.key
+*.session.key

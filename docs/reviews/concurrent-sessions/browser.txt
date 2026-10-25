@@ -1,0 +1,2 @@
+PASS two actual HTTP workers: two independent browsers on each of the same doctor/patient accounts; separate CSRF tokens, existing forms after second login, cross-worker navigation/actions, logout in one browser preserves the other, repeated cached logout, pre-restart form save after real process restart, no JavaScript errors. Synthetic temporary DB only.
+PASS persisted synthetic records: four clinician comments, four patient notes, integrity/FK OK.

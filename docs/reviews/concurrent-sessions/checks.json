@@ -1,0 +1,16 @@
+{
+  "real_uvicorn_workers": 2,
+  "isolated_browser_contexts": 4,
+  "roles": [
+    "doctor",
+    "patient"
+  ],
+  "same_account_per_role": true,
+  "real_worker_restarts": 2,
+  "successful_comments": 4,
+  "successful_patient_notes": 4,
+  "unexpected_403": false,
+  "integrity": "ok",
+  "foreign_keys": "ok",
+  "synthetic_only": true
+}

@@ -1,0 +1,8 @@
+{
+  "baseline": "d29b46b",
+  "working_database_unchanged": true,
+  "database_sha256": "6f959c7893997ecdd3fe6c6795e438154316f776a6a69418da764fb4eded6adc",
+  "accounts_and_passwords_unchanged": true,
+  "new_migrations": false,
+  "all_original_806_requirement_rows_unchanged": true
+}
