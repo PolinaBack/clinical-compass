@@ -1,0 +1,42 @@
+[
+  {
+    "route": "/assessments/2",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "route": "/assessments/2",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "route": "/assessments/1?review=1",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "route": "/assessments/1?review=1",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "route": "/patients/1/profile/about/personal",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "route": "/patients/1/profile/about/personal",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "route": "/patients/1/profile/about/exams",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "route": "/patients/1/profile/about/exams",
+    "width": 1280,
+    "violations": []
+  }
+]

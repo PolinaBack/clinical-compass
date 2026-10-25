@@ -1,5 +1,12 @@
 /* Presentation only. Native radios and POST forms remain usable without this file. */
 (() => {
+  function revealOriginalAnswer() {
+    const target=document.getElementById(location.hash.slice(1));
+    const originals=target?.closest('.questionnaire-originals');
+    if(originals){originals.open=true;requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));}
+  }
+  window.addEventListener('hashchange',revealOriginalAnswer);
+  revealOriginalAnswer();
   document.querySelectorAll('[data-questionnaire-answer]').forEach(group => {
     group.addEventListener('change', event => {
       if (!event.target.matches('input[type="radio"]')) return;

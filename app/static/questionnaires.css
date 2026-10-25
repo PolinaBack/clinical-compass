@@ -1,4 +1,12 @@
 /* Shared questionnaire appearance. Scoring, source wording and routes are unchanged. */
+.questionnaire-page .assessment-intro .badge[data-assessment-status="completed"] {display:inline-flex;align-items:center;min-height:48px;padding:10px 22px;border:1px solid #8cc9aa;border-radius:18px;background:#ddf3e7;color:#205c40;font-size:18px;font-weight:750;line-height:1.5;}
+.questionnaire-originals>summary {font-size:clamp(20px,2.2vw,26px);font-weight:750;color:#23304f;cursor:pointer;min-height:44px;}
+.questionnaire-originals[open]>summary {margin-bottom:20px;}
+.questionnaire-voice,.questionnaire-voice-note {border-top:1px solid #e6e1ee;padding-top:18px;margin-top:20px;min-width:0;}
+.questionnaire-page .questionnaire-voice h3,.questionnaire-page .questionnaire-voice-note h3 {font-size:16px;margin:0 0 10px;}
+.questionnaire-voice audio,.questionnaire-voice-note audio {display:block;max-width:100%;width:100%;margin:12px 0;}
+.questionnaire-voice audio[hidden] {display:none;}
+.questionnaire-voice input[type="file"] {max-width:100%;min-width:0;}
 .questionnaire-page {max-width:1120px;margin:24px 0;overflow-wrap:anywhere;}
 .questionnaire-page .assessment-intro {max-width:none;margin:24px 0;}
 .questionnaire-page .questionnaire-period-note {padding:16px 20px;border:1px solid var(--questionnaire-border,#e7e1f0);border-radius:16px;background:var(--questionnaire-soft,#f8f4ff);color:#46536a;line-height:1.6;}

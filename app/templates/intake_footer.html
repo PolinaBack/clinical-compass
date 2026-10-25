@@ -1,7 +1,4 @@
 {% if not intake_readonly and consent %}
-<section class="card intake-empty-panel"><h2>Если сейчас нечего добавить</h2><p class="intake-panel-hint">Это не означает отрицательный медицинский ответ. Можно отметить сведения как неизвестные или вернуться к разделу позже.</p>
-<div class="intake-empty-actions"><button type="button" class="secondary intake-section-unknown" form="intake-answer-form" data-intake-section-state="unknown">Нет сведений / не знаю</button><button type="submit" class="secondary" form="intake-answer-form" name="navigate" value="next">Пропустить раздел</button></div>
-<p class="caption intake-section-unknown">«Не знаю» отмечает только открытые вопросы без ответа. Уже заполненные ответы сохраняются.</p><p class="caption" role="status" data-intake-section-state-status></p></section>
 <p class="intake-footer-note">Можно продолжать в своём темпе. К любому разделу можно вернуться.</p>
 {% set previous=namespace(item=none,found=false) %}{% for item in intake_categories if not item.optional %}{% if item.key==category.key %}{% set previous.found=true %}{% elif not previous.found %}{% set previous.item=item %}{% endif %}{% endfor %}
 <div class="intake-save-actions intake-footer-actions">

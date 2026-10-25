@@ -7,7 +7,7 @@
         <div class="assessment-intro">
             <p class="eyebrow">В ВАШЕМ ТЕМПЕ</p>
             <h1>{{ definition.name }}</h1>
-            <span class="badge">{{ {'draft':'Черновик','incomplete':'Не завершено','completed':'Отправлено'}[assessment.status] }}</span>
+            <span class="badge" data-assessment-status="{{ assessment.status }}">{{ {'draft':'Черновик','incomplete':'Не завершено','completed':'Отправлено'}[assessment.status] }}</span>
             {% if assessment.scale == 'safety6' %}
                 <p class="caption">Вопрос {{ step_position }} · сохранено ответов: {{ result.answered }}</p>
             {% else %}
@@ -86,7 +86,8 @@
                     </p>
                     <p class="caption">Ответ описывает переживание, а не вашу личность. Он сам по себе не устанавливает диагноз.</p>
                 </details>
-                <details class="question-extra" {% if answer.get('comment') or answer.get('discuss') %}open{% endif %}>
+                {% set question_audio=audio|selectattr('item','equalto',key)|list %}
+                <details class="question-extra" data-question-comment {% if answer.get('comment') or answer.get('discuss') or question_audio %}open{% endif %}>
                     <summary>Добавить комментарий или обсудить</summary>
                     <label>
                         Комментарий к вопросу {{ key }}<textarea name="comment_{{ key }}" maxlength="3000">{{ answer.get('comment','') }}</textarea>
@@ -101,6 +102,15 @@
                     <p class="caption">
                         Можно рассказать свою историю. {{ 'Баллы по этой форме не рассчитываются.' if assessment.scale == 'safety6' else 'Комментарий не меняет выбранный балл.' }} Комментарий можно обсудить на консультации.
                     </p>
+                    {% include 'audio_controls.html' %}
+                    {% for note in question_audio %}
+                    <article class="questionnaire-voice-note"><h3>Сохранённое голосовое пояснение</h3>
+                        <audio controls preload="none" src="/audio/{{ note.id }}"></audio>
+                        <p class="text">{{ note.transcript or 'Без расшифровки' }}</p>
+                        <p class="caption">{{ 'Текст проверен пациентом' if note.transcript_status == 'reviewed_patient' else 'Без автоматического распознавания' }}</p>
+                        <button type="submit" class="secondary" form="audio-delete-{{ note.id }}">Удалить запись</button>
+                    </article>
+                    {% endfor %}
                 </details>
             </fieldset>
             {% if assessment.scale == 'hcl33' and step == result.count %}
@@ -124,23 +134,11 @@
                 </div>
             </div>
         </form>
-        <details class="section-fold">
-            <summary>Голосовой комментарий к вопросу {{ step }}</summary>
-            {% include 'audio_form.html' %}
-        </details>
+        {% include 'audio_form.html' %}
         {% for note in audio if note.item == key %}
-            <section class="card">
-                <h4>Голосовой комментарий к вопросу {{ key }}</h4>
-                <audio controls preload="none" src="/audio/{{ note.id }}"></audio>
-                <p class="text">{{ note.transcript or 'Без расшифровки' }}</p>
-                <p class="caption">
-                    {{ 'Текст проверен пациентом' if note.transcript_status == 'reviewed_patient' else 'Без автоматического распознавания' }}
-                </p>
-                <form action="/audio/{{ note.id }}/delete" method="post">
+                <form action="/audio/{{ note.id }}/delete" method="post" id="audio-delete-{{ note.id }}">
                     <input type="hidden" name="csrf" value="{{ csrf }}">
-                    <button class="secondary">Удалить запись</button>
                 </form>
-            </section>
         {% endfor %}
     </div>
 {% endblock %}

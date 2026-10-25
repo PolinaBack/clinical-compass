@@ -2,7 +2,6 @@
 
 import json
 import secrets
-from datetime import date
 from urllib.parse import quote
 from fastapi import Request, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse, Response
@@ -23,7 +22,7 @@ from app.services.clinical_forms import visible, display, display_field, today
 from app.storage import now, audit
 
 
-def intake_context(c, user, pid, view="summary", submission_id=None, as_of=None):
+def intake_context(c, user, pid, view="summary", submission_id=None):
     service.check_scope(c, user, pid)
     submission = service.read_submission(c, pid, submission_id)
     current = service.draft(c, pid) if user["role"] == "patient" else None
@@ -44,22 +43,6 @@ def intake_context(c, user, pid, view="summary", submission_id=None, as_of=None)
     )
     prefs = data.get("preferences", service.preferences(c, pid))
     blocks, deferred = service.overview(data, prefs)
-    if as_of:
-        try:
-            reference = date.fromisoformat(as_of)
-        except ValueError:
-            raise HTTPException(422, "Проверьте дату расчёта возраста") from None
-    else:
-        visit = c.execute(
-            "SELECT starts_at FROM appointments WHERE patient_id=? AND starts_at>=? ORDER BY starts_at LIMIT 1",
-            (pid, today().isoformat()),
-        ).fetchone()
-        try:
-            reference = (
-                date.fromisoformat(visit["starts_at"][:10]) if visit else today()
-            )
-        except ValueError:
-            reference = today()
     reviews = {}
     if submission:
         for row in c.execute(
@@ -119,7 +102,7 @@ def intake_context(c, user, pid, view="summary", submission_id=None, as_of=None)
         intake_categories=progress,
         intake_blocks=blocks,
         intake_deferred=deferred,
-        intake_calculations=service.computations(data, reference),
+        intake_calculations=service.computations(data),
         intake_reviews=reviews,
         intake_history=history,
         intake_view=view,
@@ -171,7 +154,6 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
                     pid,
                     view,
                     submission_id,
-                    request.query_params.get("as_of"),
                 )
             )
         return result
@@ -236,16 +218,11 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
             raise HTTPException(404, "Раздел не найден")
         form = await request.form(max_fields=3000)
         csrf_check(request, str(form.get("csrf", "")))
-        try:
-            date.fromisoformat(str(form.get("as_of", today().isoformat())))
-        except ValueError:
-            raise HTTPException(422, "Проверьте дату расчёта возраста") from None
         with db() as c:
             c.execute("BEGIN IMMEDIATE")
             revision = service.save_category(c, pid, account(request), category, form)
-            reference = date.fromisoformat(str(form.get("as_of", today().isoformat())))
             snapshot = service.snapshot(c, pid)
-            calculations = service.computations(snapshot, reference)
+            calculations = service.computations(snapshot)
             progress = next(
                 item
                 for item in service.categories_with_progress(

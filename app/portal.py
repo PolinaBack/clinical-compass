@@ -227,7 +227,6 @@ def register_portal(
                             if request.query_params.get("submission_id", "").isdigit()
                             else None
                         ),
-                        request.query_params.get("as_of"),
                     )
                 )
         if section == "family":

@@ -32,7 +32,8 @@ const assessmentForm = document.getElementById("assessment-form");
 if (assessmentForm) {
   const state = document.getElementById("save-state");
   let changed = false;
-  assessmentForm.addEventListener("input", () => {
+  assessmentForm.addEventListener("input", (event) => {
+    if (event.target.form !== assessmentForm) return;
     changed = true;
     state.textContent =
       "Есть несохранённые изменения. Специалист их пока не видит.";

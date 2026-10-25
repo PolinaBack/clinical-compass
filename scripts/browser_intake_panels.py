@@ -83,6 +83,7 @@ def check_intake_panels(patient, doctor, url):
     )
 
     patient.goto(url + "/patients/1/profile/about/exams")
+    patient.get_by_role("link", name="Файл", exact=True).click()
     pdf = b"%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\n%%EOF"
     patient.locator("[data-record-file]").set_input_files(
         [
@@ -124,7 +125,10 @@ def check_intake_panels(patient, doctor, url):
     extras = patient.locator(".intake-extra [data-intake-state]").evaluate_all(
         "els=>Object.fromEntries(els.map(e=>[e.name,e.value]))"
     )
-    patient.get_by_role("button", name="Нет сведений / не знаю", exact=True).click()
+    expect(patient.locator(".intake-empty-panel")).to_have_count(0)
+    patient.locator(
+        '[data-intake-field="anxiety"] [data-intake-set-state="unknown"]'
+    ).click()
     saved(patient)
     patient.reload()
     expect(patient.locator('[name="s_mood"]')).to_have_value("answered")
@@ -136,7 +140,7 @@ def check_intake_panels(patient, doctor, url):
         )
         == extras
     )
-    patient.get_by_role("button", name="Пропустить раздел", exact=True).click()
+    patient.locator("[data-intake-next]").click()
     expect(patient).to_have_url(url + "/patients/1/profile/about/health")
     patient.get_by_role("button", name="Предыдущий раздел", exact=False).click()
     expect(patient).to_have_url(url + "/patients/1/profile/about/mental")
@@ -154,7 +158,7 @@ def check_intake_panels(patient, doctor, url):
     expect(plain.locator('[name="a_comment"]')).to_have_value(
         "Сохранено нижней кнопкой без JavaScript"
     )
-    expect(plain.locator("[data-intake-section-state]")).to_be_hidden()
+    expect(plain.locator("[data-intake-section-state]")).to_have_count(0)
     plain_context.close()
 
     patient.goto(url + "/patients/1/profile/about")
@@ -214,6 +218,6 @@ def check_intake_panels(patient, doctor, url):
         json.dumps(audits, ensure_ascii=False, indent=2)
     )
     print(
-        "PASS panels: visible add/list controls, metadata/escaping/edit/reload, real linked counts, file upload/download/confirmed deletion, voice link without automatic recording, unknown preserves answers and closed extras, previous/skip/native footer, immutable clinician snapshot and private draft, both roles at four widths; 16 axe checks; no JavaScript errors.",
+        "PASS panels: visible add/list controls, metadata/escaping/edit/reload, real linked counts, unified file upload/download/confirmed deletion, voice link without automatic recording, per-question unknown preserves other answers and closed extras, previous/next/native footer, immutable clinician snapshot and private draft, both roles at four widths; 16 axe checks; no JavaScript errors.",
         flush=True,
     )

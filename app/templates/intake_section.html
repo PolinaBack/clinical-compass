@@ -15,7 +15,7 @@
 {% include 'intake_section_records.html' %}
 {% if not intake_readonly and consent %}
 <form id="intake-answer-form" method="post" action="/patients/{{ patient.id }}/intake/sections/{{ category.key }}" data-intake-autosave>
-<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ intake_draft.revision }}"><input type="hidden" name="catalog_version" value="{{ intake_version }}"><input type="hidden" name="as_of" value="{{ intake_calculations.as_of }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ intake_draft.revision }}"><input type="hidden" name="catalog_version" value="{{ intake_version }}">
 <p class="caption">Можно отвечать в своём темпе и пропускать вопросы. Ответы сохраняются автоматически; без JavaScript используйте кнопку сохранения.</p>
 <p data-intake-save-status role="status" aria-live="polite">Черновик пока не отправлен врачу.</p>
 {{ fields(category.fields,intake_data.answers.get(category.key,{}),category.key,true,intake_preferences) }}
@@ -24,16 +24,14 @@
 <p>Версия {% if intake_submission %}{{ intake_submission.id }} от {{ intake_submission.created_at|local_datetime }}{% else %}ещё не отправлена{% endif %}. Сведения пациента отделены от проверки специалиста.</p>
 <div class="intake-readonly-grid">{% for field in category.fields %}{% set a=intake_data.answers.get(category.key,{}).get(field.key,{}) %}{% if intake_visible(field,intake_data.answers.get(category.key,{}),intake_preferences) %}<article class="intake-answer"><h2>{{ field.label }}</h2><p>{{ intake_display_field(field,a) }}</p>{% if a %}{{ review('answer:' ~ category.key ~ '.' ~ field.key) }}{% endif %}</article>{% endif %}{% endfor %}</div>
 {% endif %}
-{% if category.key in ['personal','measurements'] %}
-<section class="card intake-calculations"><h2>Расчётные данные</h2><p>Возраст: <span data-intake-age>{{ intake_calculations.age if intake_calculations.age is not none else 'нужна дата рождения' }}</span> · на {{ intake_calculations.as_of }}.</p>
-{% if category.key=='measurements' %}<p>ИМТ: <strong data-intake-bmi>{{ intake_calculations.bmi if intake_calculations.bmi is not none else 'не рассчитывается' }}</strong>. <span data-intake-bmi-inputs>{{ intake_calculations.bmi_inputs }}</span> <span data-intake-bmi-note>{{ intake_calculations.bmi_note }}</span></p>{% endif %}
-<details><summary>Изменить дату расчёта возраста</summary><form method="get">{% if intake_readonly and intake_submission %}<input type="hidden" name="submission_id" value="{{ intake_submission.id }}">{% endif %}<label>Возраст на дату консультации<input type="date" name="as_of" value="{{ intake_calculations.as_of }}"></label><button class="secondary">Рассчитать на эту дату</button></form></details></section>
+{% if category.key=='measurements' %}
+<section class="card intake-calculations"><h2>Индекс массы тела</h2><p>ИМТ: <strong data-intake-bmi>{{ intake_calculations.bmi if intake_calculations.bmi is not none else 'не рассчитывается' }}</strong>. <span data-intake-bmi-inputs>{{ intake_calculations.bmi_inputs }}</span> <span data-intake-bmi-note>{{ intake_calculations.bmi_note }}</span></p></section>
 {% endif %}
 {% if category.key in ['health','family'] %}{% include 'intake_memory.html' %}{% endif %}
 {% if category.key=='family' %}<p><a href="/patients/{{ patient.id }}/profile/family">Открыть существующее семейное дерево</a>. Сведения о родственниках не становятся диагнозами пациента.</p>{% endif %}
-{{ related_cards() }}
-{% set entity=none %}{% include 'intake_files.html' %}
+{% set entity=none %}
 {% include 'intake_support.html' %}
+{{ related_cards() }}
 {% include 'intake_footer.html' %}
 <p><a href="/patients/{{ patient.id }}/profile/about?view=review">Проверить заполненное и отправить врачу</a></p>
 </div>{% endblock %}

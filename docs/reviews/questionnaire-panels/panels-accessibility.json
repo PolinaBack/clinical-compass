@@ -1,0 +1,82 @@
+[
+  {
+    "page": "medicines",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "medicines",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "exams",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "exams",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "visits",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "visits",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "health",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "health",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "mental",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "mental",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "entity",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "entity",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "doctor-medicines",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "doctor-medicines",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "doctor-entity",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "doctor-entity",
+    "width": 1280,
+    "violations": []
+  }
+]

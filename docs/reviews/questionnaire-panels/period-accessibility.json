@@ -1,0 +1,22 @@
+[
+  {
+    "page": "patient-resume",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "patient-resume",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "doctor-original-answers",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "doctor-original-answers",
+    "width": 1280,
+    "violations": []
+  }
+]

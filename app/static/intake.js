@@ -77,20 +77,6 @@
       if(selected==='answered'&&!Array.from(box.querySelectorAll('[name="a_'+box.dataset.intakeField+'"]')).some(e=>['checkbox','radio'].includes(e.type)?e.checked:e.value!==''))selected='unanswered';
       choice.value=selected;choice.dispatchEvent(new Event('change',{bubbles:true}));
     }));
-    document.querySelectorAll('[data-intake-section-state]').forEach(button=>{
-      if(button.form!==form)return;
-      button.addEventListener('click',()=>{
-        let count=0;
-        form.querySelectorAll('[data-intake-field]').forEach(box=>{
-          const choice=box.querySelector('[data-intake-state]');
-          if(box.hidden||choice.disabled||choice.value!=='unanswered'||box.closest('.intake-extra:not([open])'))return;
-          if(Array.from(box.querySelectorAll('[name="a_'+box.dataset.intakeField+'"]')).some(e=>['checkbox','radio'].includes(e.type)?e.checked:e.value.trim()!==''))return;
-          choice.value='unknown';count++;choice.dispatchEvent(new Event('change',{bubbles:true}));
-        });
-        const message=document.querySelector('[data-intake-section-state-status]');
-        if(message)message.textContent=count?'Открытые вопросы без ответа отмечены как «Не знаю». Дождитесь сообщения о сохранении.':'Открытых вопросов без ответа нет. Уже заполненные ответы не изменены.';
-      });
-    });
     form.addEventListener('submit',event=>{clearTimeout(timer);if(busy){event.preventDefault();queuedSubmitter=event.submitter;show('Завершаю сохранение перед переходом…');}else if(conflict){event.preventDefault();show('Анкета изменилась в другой вкладке. Скопируйте последние правки и обновите страницу перед переходом.');}else{dirty=false;paused=true;}});
     window.addEventListener('beforeunload',event=>{if((dirty||busy)&&form.hasAttribute('data-intake-autosave')){event.preventDefault();event.returnValue='';}});
     branches();

@@ -1,0 +1,57 @@
+[
+  {
+    "page": "complaints",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "complaints",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "mental",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "mental",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "cycle",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "cycle",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "health",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "health",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "entity",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "page": "entity",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "page": "doctor",
+    "width": 390,
+    "violations": []
+  }
+]

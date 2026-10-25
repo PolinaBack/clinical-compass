@@ -7,7 +7,7 @@
         <a href="{{ '/patients/' ~ assessment.patient_id ~ ('/workspace/assessments' if user == 'doctor' else '/profile/assessments') }}">{{ 'Карточка пациента' if user == 'doctor' else 'Мои анкеты' }}</a>
         <p class="eyebrow">{{ 'ИСХОДНЫЙ САМООТЧЁТ · СПЕЦИАЛИСТ' if user == 'doctor' else 'ВАШИ СОХРАНЁННЫЕ ОТВЕТЫ' }}</p>
         <h1>{{ definition.name }}</h1>
-        <span class="badge">{{ {'draft':'Черновик','incomplete':'Не завершено','completed':'Отправлено'}[assessment.status] }}</span>
+        <span class="badge" data-assessment-status="{{ assessment.status }}">{{ {'draft':'Черновик','incomplete':'Не завершено','completed':'Отправлено'}[assessment.status] }}</span>
         <p class="caption">Версия {{ assessment.version }} · {{ result.answered }}/{{ result.count }} ответов</p>
         {% if assessment.scale == 'safety6' %}
             <p class="notice">
@@ -42,8 +42,8 @@
     {% endif %}
     {% include 'video_offer.html' %}
     {% include 'video_list.html' %}
-    <section class="card">
-        <h2>Исходные ответы</h2>
+    <details class="card questionnaire-originals" id="original-answers">
+        <summary>Исходные ответы</summary>
         <p>
             {% if assessment.scale == 'safety6' %}
                 {{ 'Предусмотренные вопросы заполнены' if result.complete and assessment.status == 'completed' else 'Беседа не завершена' }}. Это не заключение об отсутствии риска.
@@ -103,7 +103,7 @@
             </form>
             <p class="caption">Прочтение снимает «Новое», но не закрывает «! Обсудить».</p>
         {% endif %}
-    </section>
+    </details>
     {% if assessment.scale == 'safety6' and user != 'doctor' and consent %}
         <section class="card">
             <h2>Далее — короткая PHQ-4</h2>

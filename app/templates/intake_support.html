@@ -4,5 +4,9 @@
 {% for field in support_fields if field.key=='comment' and intake_visible(field,support_answers,intake_preferences) %}<a class="button secondary" href="#{{ support_prefix }}-comment" data-intake-reveal>✎ Комментарий</a>{% endfor %}
 {% if entity_kind is not defined or entity %}<a class="button secondary" href="#intake-voice-upload" data-intake-reveal><span aria-hidden="true">♫</span> Голосовая заметка</a><a class="button secondary" href="#intake-file-upload" data-intake-reveal><span aria-hidden="true">▤</span> Файл</a>{% endif %}
 {% for field in support_fields if field.key=='discuss' and intake_visible(field,support_answers,intake_preferences) %}<a class="button secondary intake-discuss" href="#{{ support_prefix }}-discuss" data-intake-reveal>☆ Обсудить лично</a>{% endfor %}
-</div></section>
+</div>
+{% if entity_kind is not defined or entity %}{% include 'intake_files.html' %}{% else %}<p class="caption">Сначала сохраните карточку. После этого к ней можно прикрепить документы и голосовые заметки.</p>{% endif %}
+</section>
+{% else %}
+{% include 'intake_files.html' %}
 {% endif %}

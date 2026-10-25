@@ -1,0 +1,17 @@
+<div class="questionnaire-voice" id="audio">
+    <h3>Голосовое пояснение · до 60 секунд</h3>
+    <p class="caption">Необязательно. Запись можно прослушать перед отправкой. Она сохраняется локально и не меняет ответы; автоматического распознавания нет.</p>
+    <input type="hidden" name="item" value="{{ key }}" form="audio-form">
+    <label class="check"><input name="consent" type="checkbox" value="true" id="audio-consent" required form="audio-form"> Согласен(на) сохранить синтетическую аудиозапись в локальной базе и предоставить доступ назначенному специалисту.</label>
+    <div class="audio-controls">
+        <button type="button" id="record-start" class="secondary" form="audio-form">Начать запись</button>
+        <button type="button" id="record-stop" class="secondary" disabled form="audio-form">Остановить</button>
+    </div>
+    <audio id="audio-preview" controls hidden aria-label="Прослушать голосовое пояснение"></audio>
+    <label>Аудиофайл WebM, Ogg или MP4<input type="file" name="recording" accept="audio/webm,audio/ogg,audio/mp4" id="recording-file" required form="audio-form"></label>
+    <label>Длительность, секунды<input name="duration" id="recording-duration" type="number" min="0.1" max="60" step="0.1" required form="audio-form"></label>
+    <label>Расшифровка / проверенный текст, если есть<textarea name="transcript" maxlength="3000" form="audio-form"></textarea></label>
+    <label class="check"><input name="transcript_reviewed" type="checkbox" value="true" form="audio-form"> Я проверил(а) введённый текст; он хранится отдельно от исходной записи.</label>
+    <p id="audio-status" role="status"></p>
+    <button type="submit" form="audio-form">Сохранить голосовое пояснение</button>
+</div>

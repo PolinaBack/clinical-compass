@@ -1,6 +1,6 @@
-<section class="intake-attachments card" id="intake-documents"><h2>Документы и голосовые заметки</h2>
-<p class="intake-panel-hint">Результаты, заключения, выписки и фотографии. Вложения сохраняются локально в зашифрованном виде; ведущий врач увидит их после отправки анкеты.</p>
 {% if not intake_readonly and consent %}
+<details class="intake-support-upload" id="intake-documents"><summary>Прикрепить файл или голосовую заметку</summary>
+<p class="caption">Вложения сохраняются локально; ведущий врач увидит их после отправки анкеты.</p>
 <form method="post" enctype="multipart/form-data" action="/patients/{{ patient.id }}/intake/files" data-local-recording>
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ intake_draft.revision }}"><input type="hidden" name="catalog_version" value="{{ intake_version }}"><input type="hidden" name="category" value="{{ category.key }}">{% if entity %}<input type="hidden" name="entity_id" value="{{ entity.id }}">{% endif %}
 <label class="intake-file-picker">Файлы для раздела {{ category.title }}<input id="intake-file-upload" type="file" name="files" accept=".pdf,.jpg,.jpeg,.png,.wav,.mp3,.ogg,.webm,.m4a,.flac" multiple required data-record-file></label>
@@ -8,7 +8,7 @@
 <details class="intake-upload-options"><summary>Дополнительные сведения и голосовая заметка</summary>
 <div class="intake-actions"><button id="intake-voice-upload" type="button" class="secondary" data-record-start>Записать голосовую заметку</button><button type="button" class="secondary" data-record-stop hidden>Остановить запись</button><button type="button" class="secondary" data-record-discard hidden>Убрать запись</button></div><p data-record-status role="status"></p><audio data-record-preview controls hidden aria-label="Прослушать записанную заметку"></audio>
 <label>Дата обследования · если известна<input name="study_date" maxlength="100" placeholder="Можно приблизительно"></label><label>Комментарий к файлам<textarea name="file_comment" maxlength="2000"></textarea></label><label class="check"><input type="checkbox" name="sensitive" value="yes">Деликатное вложение</label>
-</details><p class="caption">Выбор файла ещё не сохраняет вложение. Голос не отправляется внешним сервисам, автоматическая расшифровка не запускается.</p><button>Сохранить выбранные вложения</button></form>
+</details><p class="caption">Выбор файла ещё не сохраняет вложение. Голос не отправляется внешним сервисам, автоматическая расшифровка не запускается.</p><button>Сохранить выбранные вложения</button></form></details>
 {% endif %}
 <div class="intake-file-list">
 {% for file in intake_data.attachments if file.category==category.key and (not entity or file.entity_id==entity.id) %}
@@ -16,4 +16,4 @@
 <p class="intake-record-meta">{% if file.sensitive %}Деликатное вложение · только вам и ведущему специалисту после отправки. {% endif %}{{ 'Антивирус: проверено' if file.scan_status=='clean' else 'Антивирус: проверка не выполнена' }}</p></div>
 {% if not intake_readonly and consent %}<details class="intake-file-delete"><summary aria-label="Удалить до отправки: {{ file.filename }}"><span aria-hidden="true">×</span></summary><form method="post" action="/patients/{{ patient.id }}/clinical-files/{{ file.id }}/delete"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ intake_draft.revision }}"><input type="hidden" name="catalog_version" value="{{ intake_version }}"><label class="check"><input type="checkbox" name="confirmed" value="yes" required>Удалить этот файл из черновика</label><button class="secondary">Удалить файл</button></form></details>{% endif %}
 </article>{% else %}<p class="intake-panel-hint">Вложений в этом разделе пока нет. Это не означает, что обследования не проводились.</p>{% endfor %}
-</div></section>
+</div>

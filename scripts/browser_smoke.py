@@ -164,7 +164,7 @@ def run(
                 exact=True,
             ).click()
         # Synthetic microphone. Save the standard answer before uploading audio.
-        patient.get_by_text("Голосовой комментарий к вопросу 9", exact=True).click()
+        patient.locator("[data-question-comment] > summary").click()
         patient.locator("#audio-consent").check()
         patient.locator("#record-start").click()
         expect(patient.locator("#record-stop")).to_be_enabled()

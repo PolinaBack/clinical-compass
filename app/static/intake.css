@@ -109,6 +109,10 @@
 .intake-support h2 {font-size:23px;color:#23304f;margin:0 0 12px;}
 .intake-support p {color:#6b7181;}
 .intake-support-actions {display:flex;gap:10px;flex-wrap:wrap;}
+.intake-support-upload {margin:18px 0 0;border:1px solid #e7e1ef;border-radius:16px;padding:14px 16px;background:#fcfaff;}
+.intake-support-upload>summary {font-size:14px;font-weight:650;min-height:32px;cursor:pointer;color:#584198;}
+.intake-support-upload[open]>summary {margin-bottom:14px;}
+.intake-support .intake-file-list {margin-top:16px;}
 .intake-support-actions .button {min-height:44px;padding:10px 15px;border-radius:13px;font-size:13px;}
 .intake-related,.intake-attachments,.intake-calculations,.intake-support,.intake-readonly-grid .intake-answer {border-color:#eeecf3;border-radius:22px;}
 .intake-section-page>.card,.intake-entity-page>.card {background:#fff;border-color:#eeecf3;border-radius:22px;}
