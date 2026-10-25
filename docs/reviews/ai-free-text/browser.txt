@@ -1,0 +1,3 @@
+PASS: two default free-text forms, actual queued workers with labelled test transport, verbatim text/XSS escaping, partial response, unchanged cards, five widths, two axe A/AA audits, mode/focus preserved on live update; no JS errors
+PASS: saved general free text and format selection work without JavaScript
+PASS: temporary synthetic database integrity and unchanged medication scheme

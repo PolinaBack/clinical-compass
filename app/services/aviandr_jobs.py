@@ -1,6 +1,7 @@
 """Durable, access-checked explanatory jobs; deterministic analysis survives errors."""
 
 import threading
+import json
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 from app.storage import connect, default_path, now, audit
@@ -12,6 +13,7 @@ from app.services.medicine_reactions import pack
 from app.experimental_ai.store import ExperimentError
 from app.experimental_ai.scenarios import canonical, digest
 from app.experimental_ai.ollama import ERRORS
+from app.experimental_ai.free_text import MODES
 
 MESSAGES = {
     **ERRORS,
@@ -31,7 +33,9 @@ def expire(c):
     )
 
 
-def enqueue(c, path, user, pid):
+def enqueue(c, path, user, pid, *, response_mode="structured"):
+    if response_mode not in MODES:
+        raise HTTPException(422, "Выберите формат ответа модели")
     c.execute("BEGIN IMMEDIATE")
     report = build(c, path, user, pid)
     expire(c)
@@ -39,21 +43,35 @@ def enqueue(c, path, user, pid):
         "SELECT * FROM aviandr_runs WHERE patient_id=? AND status IN ('queued','running')",
         (pid,),
     ).fetchone()
-    if row and row["snapshot_hash"] == report["checksum"]:
+    same_mode = (
+        row
+        and json.loads(row["provenance"] or "{}").get("response_mode", "structured")
+        == response_mode
+    )
+    if row and row["snapshot_hash"] == report["checksum"] and same_mode:
         return row["id"]
     if row:
         c.execute(
-            "UPDATE aviandr_runs SET status='error',stage='error',error_code='card_changed',finished_at=? WHERE id=?",
-            (now(), row["id"]),
+            "UPDATE aviandr_runs SET status='error',stage='error',error_code=?,finished_at=? WHERE id=?",
+            (
+                (
+                    "card_changed"
+                    if row["snapshot_hash"] != report["checksum"]
+                    else "response_mode_changed"
+                ),
+                now(),
+                row["id"],
+            ),
         )
     ident = c.execute(
-        "INSERT INTO aviandr_runs(patient_id,actor_id,actor_auth_version,status,stage,snapshot_hash,snapshot,created_at) VALUES(?,?,?,'queued','queued',?,?,?)",
+        "INSERT INTO aviandr_runs(patient_id,actor_id,actor_auth_version,status,stage,snapshot_hash,snapshot,provenance,created_at) VALUES(?,?,?,'queued','queued',?,?,?,?)",
         (
             pid,
             user["id"],
             user["auth_version"],
             report["checksum"],
             pack(c, path, report),
+            canonical(dict(response_mode=response_mode)),
             now(),
         ),
     ).lastrowid
@@ -129,7 +147,12 @@ def process_one(path=None, provider=None):
     thread = threading.Thread(target=heartbeat, daemon=True)
     thread.start()
     try:
-        result, meta = (provider or AviandrOllama()).explain(job["snapshot"], progress)
+        response_mode = (job["provenance"] or {}).get("response_mode", "structured")
+        options = dict(response_mode="free") if response_mode == "free" else {}
+        result, meta = (provider or AviandrOllama()).explain(
+            job["snapshot"], progress, **options
+        )
+        meta = {**meta, "response_mode": response_mode}
         with connect(path) as c:
             c.execute("BEGIN IMMEDIATE")
             user, _ = scope(

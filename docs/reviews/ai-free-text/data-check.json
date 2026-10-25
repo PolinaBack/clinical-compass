@@ -1,0 +1,21 @@
+{
+  "working_database_byte_identical": true,
+  "patients_preserved": 6,
+  "accounts_passwords_assignments_and_treatment_unchanged": true,
+  "no_migrations": true,
+  "original_requirement_rows_and_cells_unchanged": 806,
+  "python_files_formatted_and_compiled": [
+    "app/experimental_ai/free_text.py",
+    "app/experimental_ai/ollama.py",
+    "app/experimental_ai/jobs.py",
+    "app/routes/patient_ai.py",
+    "app/services/aviandr_ollama.py",
+    "app/services/aviandr_jobs.py",
+    "app/services/patient_ai.py",
+    "tests/test_ai_free_text.py",
+    "scripts/browser_ai_free_text.py"
+  ],
+  "javascript_syntax_checked": "app/static/patient_ai.js",
+  "real_ollama_success_tested": false,
+  "browser_transport": "mock-http-test-only"
+}

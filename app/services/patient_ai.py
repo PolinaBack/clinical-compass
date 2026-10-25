@@ -13,6 +13,7 @@ from app.experimental_ai.sources import retrieve
 from app.experimental_ai.store import ExperimentError
 from app.services.clinical_attachments import cipher
 from app.services.patient_ai_data import collect, scope
+from app.experimental_ai.free_text import MODES
 
 MESSAGES = {
     **ERRORS,
@@ -33,7 +34,9 @@ def expire(c):
     )
 
 
-def enqueue(c, path, user, pid):
+def enqueue(c, path, user, pid, *, response_mode="structured"):
+    if response_mode not in MODES:
+        raise HTTPException(422, "Выберите формат ответа модели")
     c.execute("BEGIN IMMEDIATE")
     data = collect(c, user["id"], pid, user["auth_version"])
     if not data["has_data"]:
@@ -41,20 +44,41 @@ def enqueue(c, path, user, pid):
     expire(c)
     checksum = digest(data)
     active = c.execute(
-        "SELECT id,snapshot_hash FROM patient_ai_runs WHERE patient_id=? AND status IN ('queued','running')",
+        "SELECT id,snapshot_hash,provenance FROM patient_ai_runs WHERE patient_id=? AND status IN ('queued','running')",
         (pid,),
     ).fetchone()
-    if active and active["snapshot_hash"] == checksum:
+    same_mode = (
+        active
+        and json.loads(active["provenance"] or "{}").get("response_mode", "structured")
+        == response_mode
+    )
+    if active and active["snapshot_hash"] == checksum and same_mode:
         return active["id"]
     if active:
         c.execute(
-            "UPDATE patient_ai_runs SET status='error',stage='error',error_code='card_changed',finished_at=? WHERE id=?",
-            (now(), active["id"]),
+            "UPDATE patient_ai_runs SET status='error',stage='error',error_code=?,finished_at=? WHERE id=?",
+            (
+                (
+                    "card_changed"
+                    if active["snapshot_hash"] != checksum
+                    else "response_mode_changed"
+                ),
+                now(),
+                active["id"],
+            ),
         )
     encrypted = cipher(path, c).encrypt(canonical(data).encode())
     ident = c.execute(
-        "INSERT INTO patient_ai_runs(patient_id,actor_id,actor_auth_version,status,stage,snapshot_hash,snapshot,created_at) VALUES(?,?,?,'queued','queued',?,?,?)",
-        (pid, user["id"], user["auth_version"], checksum, encrypted, now()),
+        "INSERT INTO patient_ai_runs(patient_id,actor_id,actor_auth_version,status,stage,snapshot_hash,snapshot,provenance,created_at) VALUES(?,?,?,'queued','queued',?,?,?,?)",
+        (
+            pid,
+            user["id"],
+            user["auth_version"],
+            checksum,
+            encrypted,
+            canonical(dict(response_mode=response_mode)),
+            now(),
+        ),
     ).lastrowid
     audit(c, user["id"], "patient_ai_requested", pid, ident)
     return ident
@@ -154,9 +178,12 @@ def process_one(path=None, provider=None):
     thread.start()
     try:
         verified = retrieve(data)
+        response_mode = (job["provenance"] or {}).get("response_mode", "structured")
+        options = dict(response_mode="free") if response_mode == "free" else {}
         result, meta = (provider or Ollama()).generate_analysis(
-            data, verified, progress, mode="patient-card"
+            data, verified, progress, mode="patient-card", **options
         )
+        meta = {**meta, "response_mode": response_mode}
         with connect(path) as c:
             c.execute("BEGIN IMMEDIATE")
             scope(c, row["actor_id"], row["patient_id"], row["actor_auth_version"])

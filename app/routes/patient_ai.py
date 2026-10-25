@@ -54,6 +54,9 @@ def register_patient_ai(app, db, account, csrf_check, render):
             av_rule_facts=aviandr_sources.FACTS,
             av_operators=aviandr_sources.OPERATORS,
             av_token=secrets.token_urlsafe(24),
+            # Public cache-busting nonce: GET forms with the same fragment URL
+            # may otherwise be treated as same-document navigation by browsers.
+            av_refresh_token=secrets.token_hex(8),
             av_today=aviandr_data.today().isoformat(),
         )
 
@@ -159,14 +162,24 @@ def register_patient_ai(app, db, account, csrf_check, render):
     async def run(request: Request, pid: int):
         with db() as c:
             user = authorized(request, c, pid)
-        form = await request.form(max_files=0, max_fields=2)
+        form = await request.form(max_files=0, max_fields=3)
         csrf_check(request, str(form.get("csrf", "")))
-        if set(form) != {"csrf"} or len(form.getlist("csrf")) != 1:
+        if (
+            not {"csrf"} <= set(form) <= {"csrf", "response_mode"}
+            or len(form.getlist("csrf")) != 1
+            or len(form.getlist("response_mode")) > 1
+        ):
             raise HTTPException(
                 422, "Анализ использует только сохранённые сведения выбранной карты."
             )
         with db() as c:
-            ident = service.enqueue(c, path, user, pid)
+            ident = service.enqueue(
+                c,
+                path,
+                user,
+                pid,
+                response_mode=str(form.get("response_mode", "structured")),
+            )
         return RedirectResponse(
             f"/patients/{pid}/ai-analysis?run_id={ident}", status_code=303
         )
@@ -195,12 +208,22 @@ def register_patient_ai(app, db, account, csrf_check, render):
             user = authorized(request, c, pid)
         form = await request.form(max_files=0, max_fields=3)
         csrf_check(request, str(form.get("csrf", "")))
-        if set(form) != {"csrf"} or len(form.getlist("csrf")) != 1:
+        if (
+            not {"csrf"} <= set(form) <= {"csrf", "response_mode"}
+            or len(form.getlist("csrf")) != 1
+            or len(form.getlist("response_mode")) > 1
+        ):
             raise HTTPException(
                 422, "Объяснение использует только рассчитанный сервером снимок."
             )
         with db() as c:
-            ident = aviandr_jobs.enqueue(c, path, user, pid)
+            ident = aviandr_jobs.enqueue(
+                c,
+                path,
+                user,
+                pid,
+                response_mode=str(form.get("response_mode", "structured")),
+            )
         return RedirectResponse(
             f"/patients/{pid}/ai-analysis?aviandr_id={ident}#aviandr", status_code=303
         )

@@ -78,6 +78,10 @@
         const key = detailsKey(node);
         if (opened.has(key)) node.open = opened.get(key);
       });
+      // Preserve the doctor's response format when only card facts refresh.
+      const responseMode = current.querySelector('select[name="response_mode"]');
+      const freshMode = fresh.querySelector('select[name="response_mode"]');
+      if (responseMode && freshMode) freshMode.value = responseMode.value;
       const active = document.activeElement;
       const focus = current.contains(active) ? {
         tag: active.tagName, text: active.textContent.trim(), href: active.getAttribute('href'), id: active.id
@@ -93,7 +97,7 @@
       block.dataset.avChecksum = checksum;
       block.dataset.avSelected = freshBlock.dataset.avSelected;
       if (focus) {
-        const match = [...fresh.querySelectorAll('a,button,summary')].find(node =>
+        const match = [...fresh.querySelectorAll('a,button,summary,select')].find(node =>
           focus.id ? node.id === focus.id : node.tagName === focus.tag &&
             node.getAttribute('href') === focus.href && node.textContent.trim() === focus.text
         );

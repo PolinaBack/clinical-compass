@@ -12,6 +12,7 @@
         <p class="caption" data-av-data-summary>Анкет учтено: {{ av_report.data.questionnaires|length }}, завершено: {{ av_report.data.questionnaires|selectattr('status','equalto','completed')|list|length }}. {% if av_report.data.intake_submission %}Анамнез: отправленная врачу версия {{ av_report.data.intake_submission.revision }} от {{ av_report.data.intake_submission.created_at|local_datetime }}.{% else %}Отправленной врачу версии анамнеза нет.{% endif %} Личный черновик пациента учитывается после отправки врачу.</p>
         <p class="caption">Четыре независимых вывода Python доступны без Ollama. Решение о лечении принимает врач; общего процента полезности или безопасности нет.</p>
         <form action="/patients/{{ patient.id }}/ai-analysis#aviandr" method="get" class="aviandr-refresh">
+            <input type="hidden" name="refresh" value="{{ av_refresh_token }}">
             {% if av_selected %}<input type="hidden" name="aviandr_id" value="{{ av_selected.id }}">{% endif %}
             <button class="secondary">Обновить расчёт по карте</button>
         </form>
