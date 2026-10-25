@@ -1,0 +1,32 @@
+[
+  {
+    "scenario": "C",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "scenario": "C",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "scenario": "D",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "scenario": "D",
+    "width": 1280,
+    "violations": []
+  },
+  {
+    "scenario": "E",
+    "width": 390,
+    "violations": []
+  },
+  {
+    "scenario": "E",
+    "width": 1280,
+    "violations": []
+  }
+]

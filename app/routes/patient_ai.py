@@ -1,6 +1,6 @@
 """Local AI summaries for any card the signed-in leading doctor may access."""
 
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Query, Request
 import secrets
 from fastapi.responses import JSONResponse, RedirectResponse
 from app.services import patient_ai as service
@@ -19,6 +19,43 @@ def register_patient_ai(app, db, account, csrf_check, render):
         user = account(request)
         scope(c, user["id"], pid, user["auth_version"])
         return user
+
+    def aviandr_view(c, user, pid, ident=None, report=None):
+        report = report or aviandr_analysis.build(c, path, user, pid)
+        history = [
+            dict(r)
+            for r in c.execute(
+                "SELECT id,status,created_at FROM aviandr_runs WHERE patient_id=? ORDER BY id DESC LIMIT 30",
+                (pid,),
+            )
+        ]
+        selected_id = ident or (history[0]["id"] if history else 0)
+        row = c.execute(
+            "SELECT * FROM aviandr_runs WHERE id=? AND patient_id=?",
+            (selected_id, pid),
+        ).fetchone()
+        if ident and not row:
+            raise HTTPException(404, "Объяснение не найдено в этой карте")
+        selected = service.decoded(c, path, row)
+        return dict(
+            av_report=report,
+            av_calculated_at=now(),
+            av_selected=selected,
+            av_history=history,
+            av_stale=bool(selected and selected["snapshot_hash"] != report["checksum"]),
+            av_sources=aviandr_sources.active_sources(c),
+            av_drugs=aviandr_sources.library.search(c),
+            av_messages=aviandr_jobs.MESSAGES,
+            av_kinds=aviandr_data.KINDS,
+            av_states=aviandr_data.STATES,
+            av_therapy=aviandr_data.THERAPY,
+            av_relations=aviandr_data.medicines.RELATIONS,
+            av_rule_kinds=aviandr_sources.KINDS,
+            av_rule_facts=aviandr_sources.FACTS,
+            av_operators=aviandr_sources.OPERATORS,
+            av_token=secrets.token_urlsafe(24),
+            av_today=aviandr_data.today().isoformat(),
+        )
 
     @app.get("/patients/{pid}/ai-analysis")
     def page(
@@ -49,25 +86,8 @@ def register_patient_ai(app, db, account, csrf_check, render):
             if run_id and not row:
                 raise HTTPException(404, "Анализ не найден в этой карте")
             selected = service.decoded(c, path, row)
-            av_report = aviandr_analysis.build(c, path, user, pid)
             aviandr_jobs.expire(c)
-            av_history = [
-                dict(r)
-                for r in c.execute(
-                    "SELECT id,status,created_at FROM aviandr_runs WHERE patient_id=? ORDER BY id DESC LIMIT 30",
-                    (pid,),
-                )
-            ]
-            av_ident = aviandr_id or (av_history[0]["id"] if av_history else 0)
-            av_row = c.execute(
-                "SELECT * FROM aviandr_runs WHERE id=? AND patient_id=?",
-                (av_ident, pid),
-            ).fetchone()
-            if aviandr_id and not av_row:
-                raise HTTPException(404, "Объяснение не найдено в этой карте")
-            av_selected = service.decoded(c, path, av_row)
-            av_editor_sources = aviandr_sources.active_sources(c)
-            av_drugs = aviandr_sources.library.search(c)
+            av_context = aviandr_view(c, user, pid, aviandr_id)
         from app.experimental_ai.scenarios import digest
 
         data = selected["snapshot"] if selected else current
@@ -84,25 +104,7 @@ def register_patient_ai(app, db, account, csrf_check, render):
             stages=STAGES,
             messages=service.MESSAGES,
             sources=catalog(),
-            av_report=av_report,
-            av_calculated_at=now(),
-            av_selected=av_selected,
-            av_history=av_history,
-            av_stale=bool(
-                av_selected and av_selected["snapshot_hash"] != av_report["checksum"]
-            ),
-            av_sources=av_editor_sources,
-            av_drugs=av_drugs,
-            av_messages=aviandr_jobs.MESSAGES,
-            av_kinds=aviandr_data.KINDS,
-            av_states=aviandr_data.STATES,
-            av_therapy=aviandr_data.THERAPY,
-            av_relations=aviandr_data.medicines.RELATIONS,
-            av_rule_kinds=aviandr_sources.KINDS,
-            av_rule_facts=aviandr_sources.FACTS,
-            av_operators=aviandr_sources.OPERATORS,
-            av_token=secrets.token_urlsafe(24),
-            av_today=aviandr_data.today().isoformat(),
+            **av_context,
             charts={
                 key: plot_segments(data["observations"], key, maximum)
                 for key, maximum in [
@@ -114,6 +116,44 @@ def register_patient_ai(app, db, account, csrf_check, render):
         )
         response.headers["Cache-Control"] = "no-store"
         return response
+
+    # Register before /aviandr/{ident}; "current" is not a job identifier.
+    @app.get("/api/patients/{pid}/ai-analysis/aviandr/current")
+    def aviandr_current(
+        request: Request,
+        pid: int,
+        checksum: str = Query(default="", max_length=64),
+        aviandr_id: int | None = None,
+    ):
+        with db() as c:
+            user = authorized(request, c, pid)
+            if (
+                aviandr_id is not None
+                and not c.execute(
+                    "SELECT id FROM aviandr_runs WHERE id=? AND patient_id=?",
+                    (aviandr_id, pid),
+                ).fetchone()
+            ):
+                raise HTTPException(404, "Объяснение не найдено в этой карте")
+            report = aviandr_analysis.build(c, path, user, pid)
+            value = dict(
+                checksum=report["checksum"], changed=checksum != report["checksum"]
+            )
+            if value["changed"]:
+                patient = dict(
+                    c.execute("SELECT * FROM patients WHERE id=?", (pid,)).fetchone()
+                )
+                context = aviandr_view(c, user, pid, aviandr_id, report)
+        if value["changed"]:
+            fragment = render(
+                request,
+                "aviandr_analysis.html",
+                patient=patient,
+                **context,
+                stages=STAGES,
+            )
+            value["html"] = fragment.body.decode("utf-8")
+        return JSONResponse(value, headers={"Cache-Control": "no-store"})
 
     @app.post("/patients/{pid}/ai-analysis/run")
     async def run(request: Request, pid: int):

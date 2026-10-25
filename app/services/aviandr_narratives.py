@@ -5,7 +5,7 @@ from app.intake_catalog import BY_KEY
 from app.services.clinical_forms import visible
 from app.services.patient_ai_data import text
 
-VERSION = "aviandr-patient-conclusions-v1"
+VERSION = "aviandr-patient-conclusions-v2"
 LABELS = {"phq4": "PHQ-4", "phq9": "PHQ-9", "gad7": "GAD-7"}
 FIELD_LABELS = {
     "onset": "начало симптомов",
@@ -211,10 +211,27 @@ def indications(context, direction):
     )
     scores = context.scores()
     score_text = (
-        "; ".join(s["text"] for s in scores[:2])
+        "; ".join(s["text"] for s in scores)
         if scores
         else "Полных PHQ-4/PHQ-9/GAD-7 нет; пропуски не считаются нулевыми баллами"
     )
+    latest_forms = {}
+    for form in data["questionnaires"]:
+        if (
+            form["scale"] not in latest_forms
+            or form["id"] > latest_forms[form["scale"]]["id"]
+        ):
+            latest_forms[form["scale"]] = form
+    pending = [form for form in latest_forms.values() if form["status"] != "completed"]
+    if pending:
+        score_text += (
+            "; ещё не завершены: "
+            + ", ".join(
+                f"{LABELS.get(form['scale'], form['scale'].upper())} — {form['answered']}/{form['count']} ответов"
+                for form in pending
+            )
+            + " (итоговые баллы не рассчитаны)"
+        )
     score_fact = context.fact(
         "indications",
         "scores",

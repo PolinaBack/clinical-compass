@@ -521,6 +521,15 @@ def collect(c, path, user, pid):
     ).fetchone()
     return dict(
         facts=facts,
+        intake_submission=(
+            dict(
+                id=submission["id"],
+                revision=submission["revision"],
+                created_at=submission["created_at"],
+            )
+            if submission
+            else None
+        ),
         reported=reported,
         profile=(
             {

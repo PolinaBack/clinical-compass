@@ -1,4 +1,7 @@
-<section class="aviandr-block" id="aviandr" data-aviandr-analysis>
+<section class="aviandr-block" id="aviandr" data-aviandr-analysis data-av-checksum="{{ av_report.checksum }}" data-av-refresh-url="/api/patients/{{ patient.id }}/ai-analysis/aviandr/current" data-av-selected="{{ av_selected.id if av_selected else '' }}">
+    <p class="caption aviandr-live-status" role="status" aria-live="polite" data-av-live-status hidden>Карточки автоматически обновляются при изменении сохранённых данных.</p>
+    <noscript><p class="caption">Для получения новых данных нажмите «Обновить расчёт по карте».</p></noscript>
+    <div data-av-live>
     <header class="aviandr-heading">
         <span class="aviandr-prescription-note">Не является назначением</span>
         <p class="aviandr-mode">Тестовый режим · только синтетические данные</p>
@@ -6,6 +9,7 @@
         <p class="aviandr-patient">Карта: {{ patient.name }}</p>
         <p>Исследовательская оценка по карте. Медицинские выводы ограничены наличием проверенных источников.</p>
         <div class="aviandr-meta"><p>Расчёт от <time datetime="{{ av_calculated_at }}">{{ av_calculated_at|local_datetime }}</time></p><p>Наблюдения: {{ av_report.data.period_start }} — {{ av_report.data.period_end }}</p></div>
+        <p class="caption" data-av-data-summary>Анкет учтено: {{ av_report.data.questionnaires|length }}, завершено: {{ av_report.data.questionnaires|selectattr('status','equalto','completed')|list|length }}. {% if av_report.data.intake_submission %}Анамнез: отправленная врачу версия {{ av_report.data.intake_submission.revision }} от {{ av_report.data.intake_submission.created_at|local_datetime }}.{% else %}Отправленной врачу версии анамнеза нет.{% endif %} Личный черновик пациента учитывается после отправки врачу.</p>
         <p class="caption">Четыре независимых вывода Python доступны без Ollama. Решение о лечении принимает врач; общего процента полезности или безопасности нет.</p>
         <form action="/patients/{{ patient.id }}/ai-analysis#aviandr" method="get" class="aviandr-refresh">
             {% if av_selected %}<input type="hidden" name="aviandr_id" value="{{ av_selected.id }}">{% endif %}
@@ -28,5 +32,6 @@
     <section class="aviandr-panel" id="av-limitations"><h3>Источники и границы оценки</h3><p>Факты пациента и медицинские свойства имеют разные основания. Регистрационные метаданные сами по себе не подтверждают показания или безопасность.</p><ul>{% for limitation in av_report.limitations %}<li>{{ limitation }}</li>{% endfor %}</ul><p class="caption">Версия расчёта: {{ av_report.version }} · выводов: {{ av_report.narrative_version }}. Исследовательский модуль не прошёл клиническую валидацию.</p></section>
     {% include 'aviandr_registration.html' %}
     {% include 'aviandr_records.html' %}
+    </div>
     {% include 'aviandr_tools.html' %}
 </section>

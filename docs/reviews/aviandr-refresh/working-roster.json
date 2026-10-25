@@ -1,0 +1,88 @@
+{
+  "assignments": [
+    {
+      "patient": "A",
+      "patient_id": 4,
+      "doctor_id": 1,
+      "username": "patient-a"
+    },
+    {
+      "patient": "B",
+      "patient_id": 5,
+      "doctor_id": 1,
+      "username": "patient-b"
+    },
+    {
+      "patient": "C",
+      "patient_id": 1,
+      "doctor_id": 2,
+      "username": "patient-c"
+    },
+    {
+      "patient": "D",
+      "patient_id": 2,
+      "doctor_id": 2,
+      "username": "patient-d"
+    }
+  ],
+  "accounts": [
+    {
+      "username": "specialist",
+      "role": "doctor",
+      "patient_id": null,
+      "doctor_id": 1,
+      "active": 1
+    },
+    {
+      "username": "patient-a",
+      "role": "patient",
+      "patient_id": 4,
+      "doctor_id": 1,
+      "active": 1
+    },
+    {
+      "username": "patient-b",
+      "role": "patient",
+      "patient_id": 5,
+      "doctor_id": 1,
+      "active": 1
+    },
+    {
+      "username": "specialist-2",
+      "role": "doctor",
+      "patient_id": null,
+      "doctor_id": 2,
+      "active": 1
+    },
+    {
+      "username": "patient-e",
+      "role": "patient",
+      "patient_id": 3,
+      "doctor_id": 2,
+      "active": 1
+    },
+    {
+      "username": "patient-c",
+      "role": "patient",
+      "patient_id": 1,
+      "doctor_id": 2,
+      "active": 1
+    },
+    {
+      "username": "patient-d",
+      "role": "patient",
+      "patient_id": 2,
+      "doctor_id": 2,
+      "active": 1
+    }
+  ],
+  "previous_passwords_preserved": true,
+  "all_existing_clinical_rows_preserved": true,
+  "no_deleted_patients": true,
+  "repeated_run_has_no_duplicates": true,
+  "backup_created": true,
+  "integrity": "ok",
+  "foreign_keys": "ok",
+  "diary_rows": 90,
+  "assessments": 27
+}

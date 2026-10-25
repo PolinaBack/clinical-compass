@@ -1,0 +1,11 @@
+{
+  "real_http": true,
+  "synthetic_only": true,
+  "partial_and_completed_phq4": true,
+  "doctor_fact_from_other_tab": true,
+  "unsaved_form_and_details_preserved": true,
+  "fact_links_after_refresh": true,
+  "revoked_scope_stops_polling": true,
+  "no_model_job_started": true,
+  "js_errors": []
+}

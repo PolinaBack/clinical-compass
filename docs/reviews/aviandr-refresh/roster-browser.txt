@@ -1,0 +1,1 @@
+PASS real doctor cabinets after repair: specialist 1 sees only A/B, specialist 2 sees C/D/E; foreign cards forbidden, own AI cards open.

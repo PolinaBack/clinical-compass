@@ -1,0 +1,15 @@
+{
+  "real_http": true,
+  "synthetic_only": true,
+  "specialist_1_cards": [
+    "A",
+    "B"
+  ],
+  "specialist_2_cards": [
+    "C",
+    "D",
+    "E"
+  ],
+  "foreign_cards_forbidden": true,
+  "own_cards_have_four_conclusions": true
+}

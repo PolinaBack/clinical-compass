@@ -592,6 +592,10 @@ def main():
     args = parser.parse_args()
     try:
         result = setup(args.db, reset=args.reset)
+        from scripts.reassign_demo_patients import organize
+
+        roster = organize(args.db)
+        result["credentials"].extend(roster["credentials"])
     except (ValueError, sqlite3.Error) as exc:
         parser.exit(1, str(exc) + "\n")
     except OSError:
@@ -603,9 +607,13 @@ def main():
     print("Сценарии C/D/E готовы. Повтор без --reset не перезаписывает наблюдения.")
     if result.get("backup"):
         print("Прежняя база и ключ сохранены:", result["backup"])
-    for row in result["created"]:
+    print(
+        "A/B закреплены за специалистом 1; C/D — за специалистом 2. E сохранён у прежнего специалиста."
+    )
+    print("Копия перед исправлением привязок:", roster["backup"])
+    for row in roster["assignments"]:
         print(
-            f"Пациент {row['scenario']}: карта {row['patient_id']}, специалист {row['doctor_id']}"
+            f"Пациент {row['patient']}: карта {row['patient_id']}, специалист {row['doctor_id']}, логин {row['username']}"
         )
     if result.get("preserved_usernames"):
         print("Прежние пароли сохранены:", ", ".join(result["preserved_usernames"]))
