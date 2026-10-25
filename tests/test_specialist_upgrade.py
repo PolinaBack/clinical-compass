@@ -61,7 +61,7 @@ def test_navigation_only_patient_cards_and_forums_after_library(client):
         r'<nav class="tab-nav specialist-nav".*?</nav>', card, re.S
     ).group()
     assert "Безопасность" not in cardnav and "Консультации" not in cardnav
-    assert "Анкеты, назначения и динамика" in cardnav and "ИИ-анализ" in cardnav
+    assert "Анкеты и динамика" in cardnav and "ИИ-анализ" in cardnav
     assert "Разделы личного профиля" not in card
     assert client.get("/patients/1/profile/video").url.path == "/doctor/calendar"
     assert (

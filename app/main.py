@@ -34,6 +34,7 @@ from .community import register_community, public_forum_data
 from .family import register_family
 from .routes.drug_library import register_drug_library
 from .routes.medicine_drafts import register_medicine_drafts
+from .routes.care_orders import register_care_orders
 from .services.drug_library import bootstrap as bootstrap_drug_library
 from .routes.meetings import register_meetings
 from .routes.experimental_ai import register_experimental_ai
@@ -439,6 +440,8 @@ def create_app(db_path=None):
     def specialist_section(request: Request, pid: int, section: str):
         if access(request, pid) != "doctor":
             raise HTTPException(403, "Раздел специалиста")
+        if section == "assignments":
+            return RedirectResponse(f"/patients/{pid}/assignments", status_code=303)
         if section == "care":
             raise HTTPException(410, "Раздел рисков и решений удалён из кабинета")
         if section not in ["safety", "assessments", "conversation"]:
@@ -463,6 +466,7 @@ def create_app(db_path=None):
     register_community(app, db, identity, account, csrf_check, render)
     register_clinician_forum(app, db, account, csrf_check, render)
     register_interface(app, db, account, render, patient_context)
+    register_care_orders(app, db, account, access, csrf_check, render, patient_context)
     from .routes.materials import register_materials
 
     register_materials(app, db, account, csrf_check, render)
@@ -674,7 +678,9 @@ def create_app(db_path=None):
             raise HTTPException(403, "Библиотека лекарств доступна специалисту")
 
     # Fixed draft routes must precede the drug-card /{slug} catch-all.
-    register_medicine_drafts(app, db, account, doctor_reference_access, csrf_check, render)
+    register_medicine_drafts(
+        app, db, account, doctor_reference_access, csrf_check, render
+    )
     register_drug_library(app, db, account, doctor_reference_access, csrf_check, render)
 
     @app.get("/reference/aviandr/archive")

@@ -21,6 +21,7 @@
         {% if current_page is defined and '/ai-analysis' in current_page %}<link rel="stylesheet" href="{{ asset_url('experimental_ai.css') }}"><script src="{{ asset_url('patient_ai.js') }}" defer></script>{% endif %}
         {% if current_page is defined and '/family' in current_page %}<link rel="stylesheet" href="{{ asset_url('family.css') }}"><script src="{{ asset_url('family.js') }}" defer></script>{% endif %}
         {% if current_page is defined and (current_page=='/medicines/adverse-effects' or current_page.endswith('/profile/about/medicines')) %}<link rel="stylesheet" href="{{ asset_url('adverse.css') }}"><script src="{{ asset_url('adverse.js') }}" defer></script>{% endif %}
+        {% if current_page is defined and '/assignments' in current_page %}<link rel="stylesheet" href="{{ asset_url('care_orders.css') }}"><script src="{{ asset_url('care_orders.js') }}" defer></script>{% endif %}
         {% if current_page is defined and user=='doctor' and (current_page.startswith('/medicines') or current_page.startswith('/doctor/resources') or current_page=='/doctor/library' or current_page.startswith('/clinical-tools')) %}<link rel="stylesheet" href="{{ asset_url('library_theme.css') }}">{% endif %}
         <script src="{{ asset_url('diary.js') }}" defer></script>
         {% if '/diary/questions/' in current_page %}<script src="{{ asset_url('diary_question_builder.js') }}" defer></script>{% endif %}

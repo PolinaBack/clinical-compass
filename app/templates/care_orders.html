@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="section-page-heading"><h1>{{ patient.name }}</h1><a href="/doctor">Мои пациенты</a></div>
+{% include 'specialist_nav.html' %}
+<div class="care-page" data-care-page>
+<header class="care-heading"><p class="care-eyebrow">Кабинет специалиста · единый план</p><h2>Назначения и направления</h2><p>Лабораторные исследования, обследования, консультации специалистов и дополнительные рекомендации. Сроки и документы сохраняются рядом с каждым пунктом.</p></header>
+<section class="care-medicines"><div><h3>Лекарственные назначения</h3><p>Схемы хранятся отдельно, в личных учебных черновиках специалиста.</p></div><a class="button secondary" href="/medicines/prescriptions?patient_id={{ patient.id }}">Открыть лекарственный черновик →</a></section>
+{% include 'care_order_notice.html' %}
+<div class="care-columns">
+<section class="care-panel"><h3>Новое назначение</h3><p class="care-muted">Назначения добавляет специалист. Система ничего не выписывает автоматически.</p>
+<form method="post" action="/patients/{{ patient.id }}/assignments/orders" data-care-form>
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="client_token" value="{{ order_token }}"><input type="hidden" name="return_to" value="/patients/{{ patient.id }}/assignments">
+<label>Тип назначения<select name="kind" data-care-kind>{% for key,label in order_kinds.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label>
+<label>Исследование, услуга или специалист<select name="name" data-care-name>{% for key,items in order_catalog.items() %}<optgroup label="{{ order_kinds[key] }}" data-care-options="{{ key }}">{% for name in items %}<option value="{{ name }}">{{ name }}</option>{% endfor %}</optgroup>{% endfor %}<option value="other">Другое / свой вариант</option></select></label>
+<label data-care-custom>Свой вариант<input name="custom_name" maxlength="200" placeholder="Название исследования или рекомендации"></label>
+<label>Когда необходимо выполнить<select name="due" data-care-due>{% for key,label in order_due.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label>
+<label data-care-date>Выполнить до<input type="date" name="due_date"></label><label data-care-period>Уточните срок<input name="due_text" maxlength="200" placeholder="Например, перед следующей встречей"></label>
+<label>Зачем это нужно пациенту<textarea name="purpose" rows="2" maxlength="3000" placeholder="Объяснение цели, проверенное специалистом"></textarea></label>
+<label>Подготовка и важные указания<textarea name="preparation" rows="2" maxlength="3000" placeholder="Индивидуальные условия подготовки"></textarea></label>
+<label>Комментарий специалиста<textarea name="comment" rows="2" maxlength="3000"></textarea></label>
+<p class="care-muted">После отправки пациент увидит запрос в личном профиле, в разделе «Мои назначения и обследования».</p>
+<button>+ Назначить пациенту</button>
+</form></section>
+<section class="care-panel care-assigned"><h3>Назначено: {{ active_orders|length }}</h3>{% if not active_orders %}<p class="care-empty">Пока нет назначений. Отправленные запросы появятся здесь и в профиле этого пациента.</p>{% endif %}{% for order in active_orders %}{% include 'care_order_item.html' %}{% endfor %}
+{% include 'care_order_cancelled.html' %}</section>
+</div></div>
+{% endblock %}

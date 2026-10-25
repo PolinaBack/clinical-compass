@@ -7,9 +7,9 @@
 .adverse-count{background:var(--adverse-mint);border-radius:13px;padding:14px 16px;line-height:1.7;color:#31594a;margin:18px 0}
 .adverse-count .caption{font-size:13px;color:#546b5e}
 .adverse-system{border:1px solid #d4e5dc;border-radius:20px;overflow:hidden;margin:16px 0;background:#fff}
-.adverse-system>header{background:var(--adverse-mint);padding:17px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.adverse-page .adverse-system>summary{background:var(--adverse-mint);padding:17px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .adverse-system h2{font-size:17px;color:var(--adverse-ink);margin:0}
-.adverse-system>header>span{font-size:12px;color:#426d56;white-space:nowrap}
+.adverse-system>summary>span{font-size:12px;color:#426d56;white-space:nowrap}
 .adverse-system ul{list-style:none;padding:6px 20px;margin:0}
 .adverse-system li{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:17px 4px;border-bottom:1px solid #e6eee9}
 .adverse-system li:last-child{border-bottom:0}
@@ -26,4 +26,6 @@
 .tolerability-options .intake-chip{max-width:100%;background:#fff;border-color:#d6e6dd;align-items:start;text-align:left}
 .tolerability-options .intake-chip:has(input:checked){background:#e5f5ec!important;border-color:#4a8a6d!important;color:#285b43!important}
 .tolerability-options small{display:block;font-weight:400;font-size:11px;line-height:1.6;color:#526b5a}
-@media(max-width:700px){.adverse-page{padding:18px 14px}.adverse-filters{grid-template-columns:1fr;gap:12px}.adverse-system>header{padding:14px}.adverse-system ul{padding:4px 12px}.adverse-system li{align-items:start;flex-wrap:wrap;gap:10px}.adverse-frequency{max-width:100%;font-size:12px}.tolerability-filters{grid-template-columns:1fr}.adverse-intro{font-size:14px}}
+@media(max-width:700px){.adverse-page{padding:18px 14px}.adverse-filters{grid-template-columns:1fr;gap:12px}.adverse-page .adverse-system>summary{padding:14px}.adverse-system ul{padding:4px 12px}.adverse-system li{align-items:start;flex-wrap:wrap;gap:10px}.adverse-frequency{max-width:100%;font-size:12px}.tolerability-filters{grid-template-columns:1fr}.adverse-intro{font-size:14px}}
+
+.adverse-system>summary{cursor:pointer;list-style:none}.adverse-system>summary::-webkit-details-marker{display:none}.adverse-system>summary h2{margin-right:auto}.adverse-chevron{font-size:22px!important;line-height:1;transition:transform .15s}.adverse-system[open] .adverse-chevron{transform:rotate(180deg)}.adverse-system>summary:focus-visible{outline:3px solid #326b50;outline-offset:-3px}

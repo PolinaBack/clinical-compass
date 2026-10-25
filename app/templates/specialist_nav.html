@@ -1,5 +1,5 @@
 <nav class="tab-nav specialist-nav" aria-label="Разделы карточки">
-{% for label,suffix in [('Личный профиль','/profile'),('Анкеты, назначения и динамика','/workspace/assessments'),('Дневник','/diary'),('Подготовка к беседе','/workspace/conversation'),('ИИ-анализ','/ai-analysis')] %}
+{% for label,suffix in [('Личный профиль','/profile'),('Анкеты и динамика','/workspace/assessments'),('Назначения','/assignments'),('Дневник','/diary'),('Подготовка к беседе','/workspace/conversation'),('ИИ-анализ','/ai-analysis')] %}
 <a href="/patients/{{ patient.id }}{{ suffix }}" {% if current_page == '/patients/' ~ patient.id ~ suffix or (suffix=='/profile' and ('/profile/' in current_page or '/intake/' in current_page)) %}aria-current="page"{% endif %}>{{ label }}</a>
 {% endfor %}
 </nav>

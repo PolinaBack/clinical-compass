@@ -1,0 +1,9 @@
+<div class="care-page" data-care-page>
+<header class="care-heading"><h2>Мои назначения и обследования</h2><p>Здесь собраны запросы специалиста на исследования и консультации. Можно посмотреть цель и подготовку, прикрепить результаты и отметить выполнение.</p></header>
+{% include 'care_order_notice.html' %}
+<section class="care-panel"><h3>💊 Лекарственные назначения</h3><p class="care-empty">Отправленных лекарственных назначений пока нет. Учебный лекарственный черновик остаётся у специалиста и не является рецептом.</p></section>
+<section class="care-panel"><h3>Обследования и направления</h3><p class="care-muted">Сроки и документы собраны под каждым назначением. Прикреплённые результаты будут доступны вашему специалисту.</p>
+{% if not active_orders %}<p class="care-empty">Пока нет направлений и исследований. Они появятся после назначения специалистом.</p>{% endif %}
+{% for order in active_orders %}{% include 'care_order_item.html' %}{% endfor %}
+{% include 'care_order_cancelled.html' %}</section>
+</div>

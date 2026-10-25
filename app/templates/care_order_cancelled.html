@@ -1,0 +1,1 @@
+{% if cancelled_orders %}<details class="care-history"><summary>Отменённые назначения · {{ cancelled_orders|length }}</summary>{% for order in cancelled_orders %}{% include 'care_order_item.html' %}{% endfor %}</details>{% endif %}

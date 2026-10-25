@@ -42,6 +42,12 @@ def patients_with_activity(c, doctor_id):
         JOIN resource_events e ON e.assignment_id=r.id
         JOIN accounts u ON u.id=e.actor_id AND u.role='patient' AND u.patient_id=p.id
         WHERE p.doctor_id=:did AND e.kind='read'
+        UNION ALL
+        SELECT p.id,'order_result',o.id,f.created_at,f.id,'' FROM patients p
+        JOIN care_orders o ON o.patient_id=p.id
+        JOIN care_order_files f ON f.order_id=o.id AND f.deleted_at IS NULL
+        JOIN accounts u ON u.id=f.owner_id AND u.role='patient' AND u.patient_id=p.id
+        WHERE p.doctor_id=:did
     """,
         {"did": doctor_id},
     ).fetchall()
@@ -51,7 +57,7 @@ def patients_with_activity(c, doctor_id):
             """SELECT a.* FROM audit a
             JOIN patients p ON p.id=a.patient_id AND p.doctor_id=?
             JOIN accounts u ON u.id=a.account_id AND u.role='patient' AND u.patient_id=p.id
-            WHERE a.action IN ('diary_saved','diary_note_saved','assessment_saved','intake_submitted','resource_read')
+            WHERE a.action IN ('diary_saved','diary_note_saved','assessment_saved','intake_submitted','resource_read','care_order_file_sent')
             ORDER BY a.id""",
             (doctor_id,),
         )
@@ -74,6 +80,7 @@ def patients_with_activity(c, doctor_id):
                 "comment": "assessment_saved",
                 "intake": "intake_submitted",
                 "resource": "resource_read",
+                "order_result": "care_order_file_sent",
             }[action["kind"]]
             sequence = ordering.get(
                 (
@@ -98,17 +105,22 @@ def patients_with_activity(c, doctor_id):
                 "comment": f"Добавлено пояснение к анкете {scale}",
                 "intake": "Отправлен первичный анамнез",
                 "resource": f"Прочитан материал «{action['detail']}»",
+                "order_result": "Прикреплён результат к назначению",
             }[kind]
             action["href"] = (
-                f"/assessments/{action['object_id']}"
-                if kind in ("assessment", "comment")
+                f"/patients/{pid}/assignments#order-{action['object_id']}"
+                if kind == "order_result"
                 else (
-                    f"/patients/{pid}/diary"
-                    if kind in ("diary", "note")
+                    f"/assessments/{action['object_id']}"
+                    if kind in ("assessment", "comment")
                     else (
-                        f"/patients/{pid}/profile"
-                        if kind == "intake"
-                        else "/doctor/resources#assignments"
+                        f"/patients/{pid}/diary"
+                        if kind in ("diary", "note")
+                        else (
+                            f"/patients/{pid}/profile"
+                            if kind == "intake"
+                            else "/doctor/resources#assignments"
+                        )
                     )
                 )
             )

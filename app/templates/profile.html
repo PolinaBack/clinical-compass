@@ -10,7 +10,7 @@
     {% include 'profile_nav.html' %}
     {% if not section %}
         <div class="profile-sections">
-            {% for key,label,description in [('about','Обо мне','Личные и медицинские сведения для консультации.'),('assessments','Анкеты','Назначенные и пройденные опросники.'),('video','Консультации и видеосвязь','Запись, время встречи и ссылка на видеоприём.')] %}
+            {% for key,label,description in [('about','Обо мне','Личные и медицинские сведения для консультации.'),('assessments','Анкеты','Назначенные и пройденные опросники.'),('assignments','Мои назначения и обследования','Запросы специалиста, сроки и результаты исследований.'),('video','Консультации и видеосвязь','Запись, время встречи и ссылка на видеоприём.')] %}
                 <a class="card profile-tile"
                    href="/patients/{{ patient.id }}/profile/{{ key }}">
                     <h2>{{ label }}</h2>
@@ -22,6 +22,8 @@
         {% if intake_version is defined %}{% include 'intake_overview.html' %}{% endif %}
     {% elif section == 'assessments' %}
         {% include 'assessment_list.html' %}
+    {% elif section == 'assignments' %}
+        {% include 'care_order_patient.html' %}
     {% elif section == 'family' %}
         {% include 'family_block.html' %}
     {% elif section == 'video' %}

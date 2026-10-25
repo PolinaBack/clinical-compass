@@ -28,6 +28,9 @@ def backup(source, destination):
             medicine_drafts = dst.execute(
                 "SELECT 1 FROM sqlite_master WHERE type='table' AND name='medicine_drafts'"
             ).fetchone()
+            care_orders = dst.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='care_orders'"
+            ).fetchone()
             if (
                 (
                     patient_ai
@@ -36,6 +39,10 @@ def backup(source, destination):
                 or (
                     medicine_drafts
                     and dst.execute("SELECT 1 FROM medicine_drafts LIMIT 1").fetchone()
+                )
+                or (
+                    care_orders
+                    and dst.execute("SELECT 1 FROM care_orders LIMIT 1").fetchone()
                 )
                 or attachments
                 and dst.execute(

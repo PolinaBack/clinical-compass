@@ -5,7 +5,7 @@
     <div class="section-heading">
         <div>
             <p class="eyebrow">ОБСЛЕДОВАНИЕ</p>
-            <h2>{{ 'Анкеты и назначения' if user == 'doctor' else 'Мои анкеты' }}</h2>
+            <h2>{{ 'Анкеты' if user == 'doctor' else 'Мои анкеты' }}</h2>
         </div>
         {% if user == 'doctor' %}<a href="/clinical-tools?patient_id={{ patient.id }}">Библиотека анкет</a>{% endif %}
     </div>

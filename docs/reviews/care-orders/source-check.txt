@@ -1,0 +1,5 @@
+PDF v10: uploaded bytes equal archived specification.
+SHA-256: d2174d1264820108648b3f8490403b2b00277cc3dec17a52387a67bf12ef9bad
+Reviewed sections: architecture, educational draft fields/transitions/validation, acceptance criteria.
+No independent examination/referral module specification; new forms follow current user request and screenshots.
+No supplied PDF name/link in website.

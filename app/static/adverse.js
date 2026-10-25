@@ -22,6 +22,7 @@
       for (const group of groups) {
         const size = [...group.querySelectorAll('[data-adverse-row]')].filter(row => !row.hidden).length;
         group.hidden = size === 0; group.querySelector('[data-adverse-group-count]').textContent = plural(size);
+        if (size && (system || query.trim())) group.open = true;
       }
       page.querySelector('[data-adverse-count]').textContent = `Найдено ${plural(count)} из ${rows.length}.`;
       page.querySelector('[data-adverse-empty]').hidden = count > 0;

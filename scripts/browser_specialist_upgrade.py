@@ -34,9 +34,7 @@ def check_specialist_upgrade(doctor, patient, url, grant, process):
     )
     expect(doctor.locator("main")).not_to_contain_text("PRIVATE_DRAFT_ONLY")
     expect(doctor.locator(".profile-nav")).to_have_count(0)
-    doctor.get_by_role(
-        "link", name="Анкеты, назначения и динамика", exact=True
-    ).first.click()
+    doctor.get_by_role("link", name="Анкеты и динамика", exact=True).first.click()
     expect(doctor.locator("#assessments")).to_be_visible()
     expect(doctor.locator("#questionnaire-results")).to_be_visible()
     expect(doctor.locator(".specialist-nav")).not_to_contain_text("Безопасность")

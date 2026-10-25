@@ -1,0 +1,1 @@
+PASS: separate tabs; real sends for lab/instrumental/custom requests, due dates, patient profile, upload and persisted result, completion/cancel/history, same-section error return, other card empty; native adverse disclosures by mouse/keyboard/search/reload; 5 widths without overflow, 8 axe A/AA audits, no console errors. Disposable fictional DB only.

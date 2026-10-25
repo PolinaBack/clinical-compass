@@ -166,18 +166,33 @@ def register_portal(
 
     @app.get("/patients/{pid}/profile/{section}")
     def profile_section(request: Request, pid: int, section: str, view: str = "tree"):
-        if section not in ["about", "assessments", "family", "video"]:
+        if section not in ["about", "assessments", "family", "video", "assignments"]:
             raise HTTPException(404, "Раздел не найден")
         context = patient_context(request, pid)
-        if account(request)["role"] == "doctor" and section in ("video", "assessments"):
+        if account(request)["role"] == "doctor" and section in (
+            "video",
+            "assessments",
+            "assignments",
+        ):
             return RedirectResponse(
                 (
                     f"/doctor/calendar?patient_id={pid}#meeting-workspace"
                     if section == "video"
-                    else f"/patients/{pid}/workspace/assessments"
+                    else (
+                        f"/patients/{pid}/assignments"
+                        if section == "assignments"
+                        else f"/patients/{pid}/workspace/assessments"
+                    )
                 ),
                 status_code=303,
             )
+        if section == "assignments":
+            from .routes.care_orders import context as care_context
+
+            with db() as c:
+                context.update(
+                    care_context(c, app.state.db_path, account(request), pid)
+                )
         if section == "video":
             from .services.consultations import profile_context
 

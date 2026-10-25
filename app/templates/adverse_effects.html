@@ -14,13 +14,13 @@
     </form>
     <p class="adverse-count" role="status" aria-live="polite"><span data-adverse-count>Найдено {{ record_count(count) }} из {{ total }}.</span> <span class="caption">Частота требует сверки по инструкции конкретной формы; это не индивидуальная вероятность.</span></p>
     <p class="adverse-empty" data-adverse-empty {% if count %}hidden{% endif %}>В данной неполной базе совпадений не найдено. Это не подтверждает безопасность препарата.</p>
-    <div class="adverse-groups">{% for group in groups %}<section class="adverse-system" data-adverse-system="{{ group.name }}" {% if not group.count %}hidden{% endif %}>
-        <header><h2>{{ group.name }}</h2><span data-adverse-group-count>{{ record_count(group.count) }}</span></header>
+    <div class="adverse-groups">{% for group in groups %}<details class="adverse-system" data-adverse-system="{{ group.name }}" {% if not group.count %}hidden{% endif %} {% if group.count and (system or q) %}open{% endif %}>
+        <summary><h2>{{ group.name }}</h2><span data-adverse-group-count>{{ record_count(group.count) }}</span><span class="adverse-chevron" aria-hidden="true">⌄</span></summary>
         <ul>{% for row in group.rows %}<li data-adverse-row data-key="{{ row.key }}" data-drug="{{ row.drug }}" data-system="{{ row.system }}" data-search="{{ row.label }} {{ row.medical }}" {% if not row.visible %}hidden{% endif %}>
             <div><h3>{{ row.label }}</h3><p>{{ row.medical }} · <a href="{{ row.card_url }}" data-adverse-card="/medicines/{{ row.slug }}">{{ row.name }} →</a></p></div>
             <span class="adverse-frequency {{ 'adverse-frequency-unknown' if row.frequency=='частота требует уточнения' else '' }}">{{ row.frequency }}</span>
         </li>{% endfor %}</ul>
-    </section>{% endfor %}</div>
+    </details>{% endfor %}</div>
     <p class="adverse-footnote">Редакционный реестр неполный и не заменяет актуальную ОХЛП. У {{ specified }} записей указана категория частоты, у {{ total-specified }} она требует уточнения. Записи не оценивают вероятность реакции у конкретного пациента и не подбирают лечение.</p>
 </section>
 {% endblock %}
