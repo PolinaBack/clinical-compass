@@ -21,6 +21,24 @@ def draft_context(c, path, user, patient_id, *, version=None, add=()):
         d["code"]: adverse_reactions.matches(registry, d["code"], tolerability)
         for d in drugs
     }
+    checks = (
+        {
+            d["code"]: adverse_reactions.preference_check(
+                registry, d["code"], tolerability
+            )
+            for d in drugs
+        }
+        if version is None
+        else {}
+    )
+    return_params = [("patient_id", patient_id)]
+    if version is not None:
+        return_params.append(("version", version))
+    card_return = "/medicines/prescriptions?" + urlencode(return_params)
+    for drug in drugs:
+        drug["card_url"] = (
+            "/medicines/" + drug["slug"] + "?" + urlencode(dict(return_to=card_return))
+        )
     if version is not None:
         matches = {
             item["code"]: item.get("preference_matches", [])
@@ -46,6 +64,7 @@ def draft_context(c, path, user, patient_id, *, version=None, add=()):
         tolerability=tolerability,
         tolerability_choices=adverse_reactions.preference_choices(tolerability),
         tolerability_matches=matches,
+        tolerability_checks=checks,
         **doctor_context(c, path, user, patient_id, current),
     )
 

@@ -459,6 +459,19 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
             comparison = request.session.get("medicine_comparison", [])
             comparison_link = "/medicines/combinations"
             comparison_patient = None
+            prescription_patient = None
+            if urlsplit(return_target).path == "/medicines/prescriptions":
+                values = parse_qs(urlsplit(return_target).query).get("patient_id", [])
+                if values:
+                    from app.services.medicine_drafts import patient
+
+                    try:
+                        if len(values) != 1:
+                            raise ValueError()
+                        prescription_patient = int(values[0])
+                    except ValueError:
+                        lib.fail("Некорректная карта назначения")
+                    patient(c, account(request), prescription_patient)
             if urlsplit(return_target).path == "/medicines/combinations":
                 params = parse_qs(urlsplit(return_target).query)
                 comparison = params.get("drug", [])
@@ -488,6 +501,7 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
             comparison=comparison,
             comparison_link=comparison_link,
             comparison_patient=comparison_patient,
+            prescription_patient=prescription_patient,
             card_return=return_target,
             self_return=(
                 comparison_link

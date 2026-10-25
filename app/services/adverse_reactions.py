@@ -121,6 +121,57 @@ def matches(rows, drug, snapshot):
     return result
 
 
+def preference_check(rows, drug, snapshot):
+    """Describe exact catalogue matches, including unknown and unselected states."""
+    choices = preference_choices(snapshot)
+    found = matches(rows, drug, snapshot)
+    drug_rows = [row for row in rows if row["drug"] == drug]
+    has_data = bool(drug_rows)
+    effects = []
+    for choice in choices:
+        evidence = [row for row in found if row["code"] == choice["code"]]
+        other_systems = sorted(
+            {
+                row["system"]
+                for row in drug_rows
+                if row["medical"].casefold() == choice["medical"].casefold()
+                and row["system"] != choice["system"]
+            }
+        )
+        effects.append(
+            dict(
+                **choice,
+                state=(
+                    "listed"
+                    if evidence
+                    else (
+                        "review"
+                        if other_systems
+                        else "not_found" if has_data else "unknown"
+                    )
+                ),
+                other_systems=other_systems,
+            )
+        )
+    count = sum(effect["state"] == "listed" for effect in effects)
+    review_count = sum(effect["state"] == "review" for effect in effects)
+    return dict(
+        state=(
+            "not_selected"
+            if not choices
+            else (
+                "no_data"
+                if not has_data
+                else "matches" if count else "review" if review_count else "not_found"
+            )
+        ),
+        effects=effects,
+        matched_count=count,
+        review_count=review_count,
+        total=len(effects),
+    )
+
+
 def record_count(n):
     return f"{n} " + (
         "записей"

@@ -3,7 +3,43 @@
 {% include 'medicine_preferences.html' %}
 {% if saved %}<p class="medicine-saved" role="status">Учебная схема сохранена для этой карты.</p>{% endif %}
 {% if readonly %}<p class="medicine-notice">Вы просматриваете сохранённую версию {{ draft.revision }}. <a href="/patients/{{ selected_patient.id }}/assignments#medicines">Открыть текущий черновик</a></p>{% endif %}
-{% if not readonly %}<details class="medicine-picker" id="draft-picker"><summary>+ Добавить препарат из списка</summary><label>Найти препарат<input type="search" data-medicine-picker-search placeholder="Название, МНН, группа, производитель"></label><p class="caption" data-picker-status role="status"></p><div class="medicine-picker-list">{% for d in drugs %}<div class="medicine-picker-row" data-picker-row data-search="{{ d.name }} {{ d.inn }} {{ d.aliases }} {{ d.group }} {{ d.manufacturer }}"><div><strong>{{ d.name }}</strong><p>{{ d.inn }} · {{ d.strength }}</p></div><button type="button" data-pick-draft="{{ d.code }}" {% if d.code in selected %}disabled{% endif %}>{{ 'Добавлено' if d.code in selected else '+ Добавить' }}</button></div>{% endfor %}</div><noscript><p>Без JavaScript добавьте препарат из каталога после сохранения текущего черновика.</p></noscript></details>{% endif %}
+{% if not readonly %}
+<details class="medicine-picker" id="draft-picker">
+    <summary>+ Добавить препарат из списка</summary>
+    <label>Найти препарат<input type="search" data-medicine-picker-search placeholder="Название, МНН, группа, производитель"></label>
+    <p class="caption">Рядом с каждым препаратом — проверка выбранных и отправленных пациентом пожеланий. «Не найдено» означает отсутствие записи в неполном реестре, а не отсутствие побочного эффекта.</p>
+    <p class="caption" data-picker-status role="status"></p>
+    <div class="medicine-picker-list">
+        {% for d in drugs %}
+        <div class="medicine-picker-row medicine-draft-picker-row" data-picker-row data-search="{{ d.name }} {{ d.inn }} {{ d.aliases }} {{ d.group }} {{ d.manufacturer }}">
+            <div class="medicine-picker-drug"><strong>{{ d.name }}</strong><p>{{ d.inn }} · {{ d.strength }}</p></div>
+            {% set check = tolerability_checks[d.code] %}
+            <div class="medicine-picker-check" id="picker-check-{{ d.code }}" data-picker-preferences="{{ d.code }}" data-check-state="{{ check.state }}">
+                {% if check.state == 'not_selected' %}
+                    <p class="medicine-picker-check-title">Нет выбранных эффектов для проверки</p>
+                {% elif check.state == 'no_data' %}
+                    <p class="medicine-picker-check-title">Нет данных о реакциях этого препарата</p>
+                {% else %}
+                    <p class="medicine-picker-check-title">Пожелания пациента: точных совпадений {{ check.matched_count }} из {{ check.total }}</p>
+                {% endif %}
+                {% if check.effects %}
+                <ul>
+                    {% for effect in check.effects %}
+                    <li data-picker-effect="{{ effect.code }}" data-effect-state="{{ effect.state }}">{{ '★ ' if effect.primary else '' }}{{ effect.label }} <small>· {{ effect.system }}</small><span>{% if effect.state == 'review' %}Термин найден в другой системе: {{ effect.other_systems|join(', ') }} · требуется сверка{% else %}{{ {'listed':'Есть в реестре','not_found':'В реестре не найдено','unknown':'Недостаточно данных'}[effect.state] }}{% endif %}</span></li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            <div class="medicine-actions medicine-picker-actions">
+                <a class="button medicine-secondary" href="{{ d.card_url }}" target="_blank" rel="noopener noreferrer" data-draft-card="{{ d.code }}" aria-label="Карточка {{ d.name }} · откроется в новой вкладке">Карточка</a>
+                <button type="button" data-pick-draft="{{ d.code }}" aria-describedby="picker-check-{{ d.code }}" {% if d.code in selected %}disabled{% endif %}>{{ 'Добавлено' if d.code in selected else '+ Добавить' }}</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <noscript><p>Без JavaScript проверка и карточки доступны. Чтобы добавить препарат, откройте его карточку и нажмите «Назначить пациенту» после сохранения текущего черновика.</p></noscript>
+</details>
+{% endif %}
 <form method="post" action="/patients/{{ selected_patient.id }}/assignments/medicines" data-medicine-draft data-readonly="{{ '1' if readonly else '0' }}"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="patient_id" value="{{ selected_patient.id }}"><input type="hidden" name="revision" value="{{ draft.revision }}"><input type="hidden" name="return_to" value="/patients/{{ selected_patient.id }}/assignments#medicines"><p data-draft-empty {% if selected %}hidden{% endif %}>Добавьте первый препарат. Доза и кратность заполняются вручную.</p>
 {% for d in drugs %}{% set item = selected.get(d.code, {}) %}<article class="card medicine-draft-item" id="medicine-{{ d.code }}" data-draft-item="{{ d.code }}" {% if d.code not in selected %}hidden{% endif %}><div class="medicine-draft-header"><div><h3>{{ d.name }}</h3><p>МНН: {{ d.inn }} · {{ d.strength }} · {{ d.form }}</p></div>{% if not readonly %}<button type="button" class="medicine-remove" data-remove-draft="{{ d.code }}" aria-label="Убрать {{ d.name }} из черновика">×</button>{% endif %}</div>
 {% if item.get('reference') %}<p class="caption">Сохранённая форма: {{ item.reference.name }}, {{ item.reference.form }}, {{ item.reference.strength }} · {{ item.reference.manufacturer }} · редакционная версия {{ item.reference.reference_version }}. Не сверена.</p>{% endif %}
