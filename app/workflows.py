@@ -340,6 +340,9 @@ def register_workflows(
             safety_explanations=SAFETY_EXPLANATIONS,
             read_only=read_only,
             assessment=a,
+            continuing_period=(
+                a["scale"] != "hcl33" and a["period_end"] < date.today().isoformat()
+            ),
             definition=SCALES[a["scale"]],
             instruction=INSTRUCTION,
             options=OPTIONS,
@@ -465,15 +468,8 @@ def register_workflows(
                 "comment": "",
                 "discuss": 0,
             }
-        if (
-            a["scale"] != "hcl33"
-            and a["period_end"] < date.today().isoformat()
-            and form.get("period_ack") != "true"
-        ):
-            raise HTTPException(
-                409,
-                "Подтвердите, что ответы относятся к указанному периоду, либо начните новую сессию.",
-            )
+        # Resuming on another day keeps the original session and reference dates.
+        # A date change must not block saving or require an unavailable confirmation.
         payload = json.dumps(
             {"assessment": aid, "intent": intent, "step": step, "answers": parsed},
             ensure_ascii=False,

@@ -36,6 +36,11 @@
                 <p class="caption">{{ assessment.period_start }} — {{ assessment.period_end }}</p>
             {% endif %}
         </div>
+        {% if continuing_period %}
+            <p class="questionnaire-period-note" data-assessment-period-note>
+                Анкета начата ранее. Можно продолжить заполнение; период и уже сохранённые ответы остаются прежними. Ориентируйтесь на период, указанный у вопроса.
+            </p>
+        {% endif %}
         {% include 'video_offer.html' %}
         {% if request.query_params.get('saved') %}
             <p class="success" role="status">Ответ сохранён на сервере. Это не означает, что специалист уже прочитал его.</p>

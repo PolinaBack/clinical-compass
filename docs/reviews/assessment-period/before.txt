@@ -1,0 +1,26 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_reproduces_inaccessible_period_confirmation_on_next_day _________
+
+client = <starlette.testclient.TestClient object at 0x7f2b106df3b0>
+
+    def test_reproduces_inaccessible_period_confirmation_on_next_day(client):
+        login(client,'patient1')
+        aid,sid,period=older_assessment(client)
+        data=save_data(client,aid,[],intent='next',step_item=1,answer_1='2',comment_1='Синтетический комментарий')
+        assert 'period_ack' not in data
+        response=client.post(f'/assessments/{aid}/save',data=data)
+>       assert response.status_code==200
+E       assert 409 == 200
+E        +  where 409 = <Response [409 Conflict]>.status_code
+
+tests/test_assessment_period_resume.py:35: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/starlette/testclient.py:37
+  /workspace/clinical-compass/.venv/lib/python3.12/site-packages/starlette/testclient.py:37: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_assessment_period_resume.py::test_reproduces_inaccessible_period_confirmation_on_next_day
+1 failed, 1 warning in 1.34s

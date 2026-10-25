@@ -1,0 +1,2 @@
+PASS assessment period: yesterday's PHQ-4 pause/reload/comment/discuss/back/finish, automatic PHQ-9/GAD-7 completed with original dates, old safety branch completed, HCL unchanged, no-JS completion, clinician read-only original answers, five widths, four axe checks, no failed saves or JS errors. Disposable synthetic DB only.
+PASS database: original session dates unchanged; four completed assessments, two automatic follow-ups in original session, PHQ-9 item 9 event retained, integrity and foreign keys OK.

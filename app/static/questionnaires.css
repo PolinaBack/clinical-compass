@@ -1,6 +1,7 @@
 /* Shared questionnaire appearance. Scoring, source wording and routes are unchanged. */
 .questionnaire-page {max-width:1120px;margin:24px 0;overflow-wrap:anywhere;}
 .questionnaire-page .assessment-intro {max-width:none;margin:24px 0;}
+.questionnaire-page .questionnaire-period-note {padding:16px 20px;border:1px solid var(--questionnaire-border,#e7e1f0);border-radius:16px;background:var(--questionnaire-soft,#f8f4ff);color:#46536a;line-height:1.6;}
 .questionnaire-page .assessment-intro h1,.questionnaire-page>.section-page-heading h1 {font-size:clamp(28px,3.4vw,42px);line-height:1.2;color:#17264c;margin:14px 0;}
 .questionnaire-page .eyebrow {color:var(--questionnaire-accent,#7156af);font-size:12px;letter-spacing:.12em;}
 .questionnaire-page .assessment-intro .lead {font-size:16px;line-height:1.7;color:#626a7d;}
