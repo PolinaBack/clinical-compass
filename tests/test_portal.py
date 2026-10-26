@@ -335,9 +335,8 @@ def test_positive_ninth_answer_in_single_step_creates_event_without_final_score(
     )
     assert len(rows(client, "SELECT * FROM assessment_events")) == 1
     login(client, "doctor")
-    card = client.get("/patients/1/workspace/conversation").text
+    card = client.get(f"/assessments/{aid}").text
     assert "Синтетическое пояснение" in card
-    assert "Спасибо, что рассказали" in card
     assert rows(client, "SELECT value FROM answers")[0]["value"] == 1
 
 

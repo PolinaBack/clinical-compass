@@ -90,8 +90,10 @@ def test_yes_branch_and_recent_behavior_have_separate_raw_answers(client):
     assert "Отмеченные ответы и действия по ним" not in page
     assert f'href="/assessments/{aid}"' in page
     assert (
-        "Спасибо, что рассказали"
-        in client.get("/patients/1/workspace/conversation").text
+        client.get(
+            "/patients/1/workspace/conversation", follow_redirects=False
+        ).status_code
+        == 303
     )
     assert client.get(f"/assessments/{aid}").status_code == 200
 

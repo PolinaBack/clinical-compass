@@ -1,0 +1,21 @@
+{
+  "browser": "Chromium",
+  "roles": [
+    "doctor",
+    "patient"
+  ],
+  "widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "extracts_top_level_link": true,
+  "single_active_tab": true,
+  "profile_tile_removed": true,
+  "conversation_removed": true,
+  "old_conversation_url_redirects": true,
+  "horizontal_overflow": [],
+  "javascript_errors": [],
+  "synthetic_database": true
+}

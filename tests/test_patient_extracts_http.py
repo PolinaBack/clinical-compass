@@ -1,6 +1,7 @@
 """HTTP sessions, patient visibility and printable document routes."""
 
 import secrets
+import re
 from fastapi.testclient import TestClient
 from app.main import create_app
 from app.services import patient_extracts as service
@@ -36,7 +37,9 @@ def post(client, eid, form):
 def test_document_editor_print_publication_and_private_draft_in_real_sessions(client):
     login(client, "doctor")
     eid = create(client)
-    assert "Открыть выписки" in client.get("/patients/1/profile").text
+    assert (
+        'href="/patients/1/profile/extracts"' in client.get("/patients/1/profile").text
+    )
     original = current(client, eid)
     bad = post(client, eid, form_for(original, intent="print"))
     assert bad.status_code == 422 and 'name="reviewed"' in bad.text
@@ -137,3 +140,49 @@ def test_root_keeps_public_landing_and_extract_styles_are_scoped(client):
     )
     css = client.get("/static/patient_extracts.css")
     assert css.status_code == 200 and "@page{size:A4" in css.text
+
+
+def test_extracts_main_tab_is_the_only_active_section_and_retired_conversation_redirects(
+    client,
+):
+    login(client, "doctor")
+    eid = create(client)
+    for path, expected in [
+        ("/patients/1/profile", "Личный профиль"),
+        ("/patients/1/diary", "Дневник"),
+        ("/patients/1/profile/extracts", "Выписки"),
+        (f"/patients/1/profile/extracts/{eid}/edit", "Выписки"),
+    ]:
+        html = client.get(path).text
+        menu = re.search(
+            r'<nav class="tab-nav specialist-nav".*?</nav>', html, re.S
+        ).group()
+        assert re.findall(r'<a[^>]*aria-current="page"[^>]*>(.*?)</a>', menu) == [
+            expected
+        ]
+        assert 'href="/patients/1/profile/extracts"' in menu
+        assert "conversation" not in menu and "Подготовка к беседе" not in html
+        assert "profile-extracts-entry" not in html
+    retired = client.get("/patients/1/workspace/conversation", follow_redirects=False)
+    assert (
+        retired.status_code == 303
+        and retired.headers["location"] == "/patients/1/workspace/assessments"
+    )
+    login(client, "patient1")
+    for path, expected in [
+        ("/patients/1/profile/about", "Профиль"),
+        ("/patients/1/profile/extracts", "Выписки"),
+    ]:
+        html = client.get(path).text
+        menu = re.search(r'<nav class="portal-nav".*?</nav>', html, re.S).group()
+        active = re.findall(
+            r'<a[^>]*aria-label="([^"]+)"[^>]*aria-current="page"', menu
+        )
+        assert active == [expected]
+        assert html.count('href="/patients/1/profile/extracts"') == 1
+    assert (
+        client.get(
+            "/patients/1/workspace/conversation", follow_redirects=False
+        ).status_code
+        == 403
+    )

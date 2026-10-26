@@ -7,7 +7,6 @@ from fastapi import Request, Form, HTTPException
 from fastapi.responses import RedirectResponse
 
 from .storage import now, audit
-from .scales import SCALES, OPTIONS
 from .charts import chart
 
 PROFILE_FIELDS = (
@@ -72,58 +71,7 @@ def portal_data(db, pid, doctor=False):
             "SELECT * FROM safety_reviews WHERE patient_id=? ORDER BY id DESC LIMIT 1",
             (pid,),
         ).fetchone()
-        topics = []
-        if doctor:
-            for row in c.execute(
-                "SELECT a.id assessment_id,a.scale,an.item,an.value,an.state,an.comment,an.discuss FROM answers an JOIN assessments a ON a.id=an.assessment_id WHERE a.patient_id=? AND (an.discuss=1 OR an.state='declined' OR (a.scale='safety6' AND an.value=1) OR (a.scale='phq9' AND an.item='9' AND an.value>0)) ORDER BY a.id DESC,an.item LIMIT 12",
-                (pid,),
-            ):
-                if not row["item"].isdigit():
-                    continue
-                question = SCALES[row["scale"]]["items"][int(row["item"]) - 1]
-                positive = (
-                    row["scale"] == "phq9"
-                    and row["item"] == "9"
-                    and row["state"] == "answered"
-                    and row["value"] > 0
-                )
-                topics.append(
-                    dict(row)
-                    | {
-                        "question": question,
-                        "answer_label": (
-                            ("Да" if row["value"] else "Нет")
-                            if row["state"] == "answered"
-                            and row["scale"] in ["hcl33", "safety6"]
-                            else (
-                                OPTIONS[row["value"]][1]
-                                if row["state"] == "answered"
-                                else (
-                                    "Отказ от ответа"
-                                    if row["state"] == "declined"
-                                    else "Ответ не завершён"
-                                )
-                            )
-                        ),
-                        "prompt": (
-                            "Спасибо, что рассказали. Вы отметили мысли о смерти или причинении себе боли. Можете рассказать, что происходит с вами сейчас?"
-                            if positive
-                            else (
-                                "Спасибо, что рассказали. Что вам важно обсудить об этом переживании сейчас?"
-                                if row["scale"] == "safety6"
-                                and row["state"] == "answered"
-                                and row["value"] == 1
-                                else (
-                                    "Можно не рассказывать всё сразу. Что помогло бы вам обсудить этот вопрос со мной?"
-                                    if row["state"] == "declined"
-                                    else "Вы отметили этот вопрос для беседы. С чего вам было бы удобнее начать?"
-                                )
-                            )
-                        ),
-                    }
-                )
     return dict(
-        conversation_topics=topics,
         profile=dict(profile) if profile else {},
         profile_fields=PROFILE_FIELDS,
         diary_comments=comments,

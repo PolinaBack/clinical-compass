@@ -2,7 +2,7 @@
 {% block title %}Выписки · {{ patient.name }}{% endblock %}
 {% block content %}
 <div class="section-page-heading"><h1>Выписки</h1><a href="/patients/{{ patient.id }}/profile">← Личный профиль</a></div>
-{% if user=='doctor' %}{% include 'specialist_nav.html' %}{% endif %}{% include 'profile_nav.html' %}
+{% if user=='doctor' %}{% include 'specialist_nav.html' %}{% endif %}
 <section class="card"><h2>{{ patient.name }}</h2><p>{{ 'Оформляйте документ из сведений карты, исправляйте данные для этой выписки и проверяйте их перед печатью. Пациент видит только опубликованные версии.' if user=='doctor' else 'Здесь появляются готовые документы после публикации специалистом.' }}</p>
 {% if user=='doctor' %}<form method="post" action="/patients/{{ patient.id }}/profile/extracts/new"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="client_token" value="{{ create_token }}"><button>+ Оформить справку или выписку</button></form>{% endif %}</section>
 {% if user!='doctor' %}{% include 'extract_request_form.html' %}{% endif %}

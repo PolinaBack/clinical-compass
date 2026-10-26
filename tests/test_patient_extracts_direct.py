@@ -134,7 +134,7 @@ def seed(store):
     return data
 
 
-def test_profile_tile_and_empty_patient_shelf_without_doctor_drafts(store):
+def test_main_extracts_tab_and_empty_patient_shelf_without_doctor_drafts(store):
     patient = call(
         store,
         "/patients/{pid}/profile/{section}",
@@ -143,7 +143,8 @@ def test_profile_tile_and_empty_patient_shelf_without_doctor_drafts(store):
         section="about",
         view="tree",
     )
-    assert "Открыть выписки" in patient.body.decode()
+    assert 'href="/patients/1/profile/extracts"' in patient.body.decode()
+    assert "profile-extracts-entry" not in patient.body.decode()
     assert "Выписки" in call(store, "/patients/{pid}/profile", pid=1).body.decode()
     eid = create(store)
     page = call(store, "/patients/{pid}/profile/extracts", who="p1", pid=1)

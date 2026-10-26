@@ -473,7 +473,11 @@ def create_app(db_path=None):
             return RedirectResponse(f"/patients/{pid}/assignments", status_code=303)
         if section == "care":
             raise HTTPException(410, "Раздел рисков и решений удалён из кабинета")
-        if section not in ["safety", "assessments", "conversation"]:
+        if section == "conversation":
+            return RedirectResponse(
+                f"/patients/{pid}/workspace/assessments", status_code=303
+            )
+        if section not in ["safety", "assessments"]:
             raise HTTPException(404, "Раздел не найден")
         if section == "safety":
             return RedirectResponse(

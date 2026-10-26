@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}{{ document_data.title }} · {{ patient.name }}{% endblock %}
 {% block content %}
+{% if user=='doctor' and not print_page %}{% include 'specialist_nav.html' %}{% endif %}
 <div class="extract-controls"><a href="/patients/{{ patient.id }}/profile/extracts">← Выписки</a>{% if user=='doctor' %}{% if document.author_id==account_id %}<a class="button secondary" href="/patients/{{ patient.id }}/profile/extracts/{{ document.id }}/edit">К оформлению</a>{% endif %}{% if document_data.reviewed %}<button type="button" data-print-document>Печать / сохранить PDF</button>{% endif %}{% endif %}<p>Версия {{ document.display_revision }} · {{ 'Проверена для переноса в документ' if document_data.reviewed else 'Не проверена' }}</p></div>
 {% include 'patient_extract_document.html' %}
 {% endblock %}

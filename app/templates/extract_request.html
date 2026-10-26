@@ -3,6 +3,7 @@
 {% block content %}
 <p><a href="/patients/{{ patient.id }}/profile/extracts">← Выписки и запросы</a>{% if user=='doctor' %} · <a href="/doctor/extract-requests">Все запросы пациентов</a>{% endif %}</p>
 <h1>{{ request_kinds[item.data.kind] }} · запрос №{{ item.id }}</h1>
+{% if user=='doctor' %}{% include 'specialist_nav.html' %}{% endif %}
 {% if request.query_params.get('sent') %}<p class="extract-success" role="status">Запрос отправлен вашему специалисту.</p>{% elif request.query_params.get('replied') %}<p class="extract-success" role="status">Ответ сохранён и доступен в запросе.</p>{% endif %}
 {% if request_error %}<p class="extract-error" role="alert">{{ request_error }}</p>{% endif %}
 <section class="card"><p><strong class="badge">{{ request_states[item.status] }}</strong> · {{ item.created_at|local_datetime }}</p>

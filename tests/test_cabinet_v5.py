@@ -37,11 +37,11 @@ def test_both_initial_forms_are_offered_independently_and_banner_removed(client)
 def test_specialist_sections_are_separate_and_patient_cannot_enter(client):
     login(client, "doctor")
     expected = {
-        "assessments": 'id="assessments"',
-        "conversation": 'id="conversation"',
+        "workspace/assessments": 'id="assessments"',
+        "profile/extracts": '<h1>Выписки</h1>',
     }
     for section, marker in expected.items():
-        html = client.get(f"/patients/1/workspace/{section}").text
+        html = client.get(f"/patients/1/{section}").text
         assert marker in html
         for other in expected.values():
             if other != marker:

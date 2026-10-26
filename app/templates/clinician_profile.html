@@ -3,7 +3,6 @@
 {% block content %}
 <div class="clinician-profile"><div class="section-page-heading"><h1>Личный профиль</h1><a href="/doctor">Мои пациенты</a></div>{% include 'specialist_nav.html' %}
 <section class="profile-person"><h2>{{ patient.name }}</h2>{% set preferred=intake_data.answers.get('personal',{}).get('preferred_name',{}) %}{% if preferred.status=='answered' %}<p>Как обращаться: {{ preferred.value }}</p>{% endif %}<p class="caption">{{ 'Сведения из отправленного первичного анамнеза' if intake_submission else 'Пациент ещё не отправил первичный анамнез' }}{% if intake_submission %} · версия {{ intake_submission.id }} от {{ intake_submission.created_at|local_datetime }}{% endif %}</p></section>
-{% include 'extracts_entry.html' %}
 {% if intake_view != 'summary' %}<p><a href="/patients/{{ patient.id }}/profile">← К сводке личного профиля</a></p>{% include 'intake_overview.html' %}
 {% else %}
 <div class="profile-stat-grid">{% for label,value in [('Завершено разделов',clinical_profile.completion.completed ~ ' / ' ~ clinical_profile.completion.total),('Записи о заболеваниях',clinical_profile.diseases|length),('Препараты',clinical_profile.all_medicines|length),('Документы',clinical_profile.files_count)] %}<section class="card profile-stat"><p>{{ label }}</p><strong>{{ value }}</strong><small>По отправленной анкете</small></section>{% endfor %}</div>
