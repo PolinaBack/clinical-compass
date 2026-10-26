@@ -1,0 +1,16 @@
+{
+  "browser": "Chromium",
+  "editor_widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "horizontal_overflow": false,
+  "confirmation_error_preserves_form": true,
+  "confirm_preview_save_print": true,
+  "pdf_format": "A4",
+  "pdf_pages": 3,
+  "patient_browser_flow": "incomplete: test timed out waiting for exact post-login URL; HTTP role/publication checks passed",
+  "full_browser_scenario": "not passed"
+}

@@ -1,0 +1,52 @@
+.profile-extracts-entry{margin:20px 0}
+.extract-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.extract-form,.extract-preview{min-width:0}
+.extract-form>.card{margin:0 0 20px}
+.extract-form .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.extract-patient-summary{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;margin:20px 0}
+.extract-patient-summary>div{padding:14px;background:var(--soft);border:1px solid var(--line);border-radius:12px;min-width:0}
+.extract-patient-summary span,.extract-patient-summary strong{display:block;overflow-wrap:anywhere}
+.extract-patient-summary strong span{display:inline}
+.extract-patient-summary>div>span{font-size:.85rem;color:var(--muted)}
+.extract-form details{padding:12px;border:1px solid var(--line);border-radius:12px;margin:14px 0;background:#fff}
+.extract-form summary{min-height:44px;cursor:pointer;font-weight:650;padding:8px 0;overflow-wrap:anywhere}
+.extract-form label.check{display:flex;align-items:flex-start;gap:10px}
+.extract-form label.check input{width:20px;height:20px;flex:0 0 20px;margin:3px 0}
+.extract-form :is(input,select,textarea){max-width:100%}
+.extract-identity-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}
+.extract-identity-checks>div{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);padding:14px;border-radius:12px;overflow-wrap:anywhere}
+.extract-review-badge{align-self:flex-start;font-size:.85rem;background:#fff3d9;color:#684b17;border-radius:9px;padding:7px}
+.extract-review-badge[data-reviewed=true]{background:#e3f5eb;color:#205a3d}
+.extract-source-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.extract-source-grid .extract-source-field{margin:0;min-width:0}
+.extract-source-field small{display:block;color:var(--muted);font-weight:400}
+.extract-actions,.extract-controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:20px 0}
+.extract-actions p{width:100%}
+.extract-success{background:#e3f5eb;color:#205a3d;border:1px solid #a4ccb6;border-radius:12px;padding:16px}
+.extract-error{background:#fff3dc;border:1px solid #dbb56d;border-radius:12px;padding:16px;margin:18px 0}
+.document-preview-header{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px}
+.document-preview-header h2{margin:0;flex:1}.document-preview-header p{flex-basis:100%;margin:0}
+.document-paper{background:#fff;color:#17202a;border:1px solid #d5d9dd;box-shadow:0 7px 24px #1533290a;padding:32px;min-height:900px;font-family:Arial,sans-serif;overflow-wrap:anywhere;border-radius:4px}
+.document-letterhead{border-bottom:3px solid #60726c;padding-bottom:16px;margin-bottom:20px}
+.document-letterhead h2{font-size:19px;margin:0 0 9px;color:#17202a}.document-letterhead p{font-size:12px;margin:0}
+.document-watermark{border:1px dashed #996d78;color:#79505d;font-size:11px;padding:6px;display:table;margin-left:auto}
+.document-title{text-align:center;font-size:24px;line-height:1.4;color:#17202a}
+.document-demographics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 22px;margin:24px 0}
+.document-demographics>div{display:flex;flex-wrap:wrap;gap:5px}.document-demographics dt{font-weight:700}.document-demographics dd{margin:0;overflow-wrap:anywhere}
+.document-section h3{font-size:17px;text-align:center;border-bottom:1px solid #cfd6d3;padding-bottom:10px;margin:24px 0 14px}
+.document-source h4{font-size:15px;margin:20px 0 8px}.document-preserve{white-space:pre-wrap;line-height:1.55}
+.document-source-note{font-size:11px;color:#52605c}.document-signature{border-top:1px solid #cfd6d3;margin-top:36px;padding-top:18px}
+.document-sample-note{font-size:11px;color:#79505d;line-height:1.5}.document-draft{font-weight:700;background:#fff3dc;padding:12px}
+@media(max-width:1250px){.extract-layout{grid-template-columns:1fr}.extract-preview{max-width:900px;width:100%;margin:auto}}
+@media(max-width:650px){.extract-patient-summary,.extract-identity-checks,.extract-source-grid,.extract-form .grid.two{grid-template-columns:1fr}.document-paper{padding:20px;min-height:0}.document-demographics{grid-template-columns:1fr}.extract-actions>button{width:100%}}
+@media print{
+ @page{size:A4;margin:16mm}
+ html,body,.portal-shell{background:white!important;color:#111!important;font-size:11pt!important}
+ .site-header,.site-footer,.skip-link,.demo-line,#voice-status,nav,.extract-editor-intro,.extract-form,.extract-controls,.document-preview-header,.extract-list,.section-page-heading{display:none!important}
+ body main,#main{display:block!important;margin:0!important;padding:0!important;max-width:none!important;width:auto!important}
+ .extract-layout,.extract-preview{display:block!important;width:auto!important;max-width:none!important;margin:0!important}
+ .document-paper{border:0!important;box-shadow:none!important;border-radius:0;padding:0!important;min-height:0!important;width:auto!important;max-width:none!important;font-size:11pt!important}
+ .document-paper h2,.document-paper h3,.document-paper h4{break-after:avoid}.document-letterhead,.document-signature,.document-demographics{break-inside:avoid}
+ .document-paper p{orphans:3;widows:3}.document-paper a{color:inherit;text-decoration:none}
+ .document-paper .document-preserve{white-space:pre-wrap!important;overflow-wrap:anywhere!important}
+}

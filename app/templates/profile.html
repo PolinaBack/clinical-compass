@@ -19,6 +19,7 @@
             {% endfor %}
         </div>
     {% elif section == 'about' %}
+        {% include 'extracts_entry.html' %}
         {% if intake_version is defined %}{% include 'intake_overview.html' %}{% endif %}
     {% elif section == 'assessments' %}
         {% include 'assessment_list.html' %}
