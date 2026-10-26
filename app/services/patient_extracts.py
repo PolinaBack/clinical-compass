@@ -359,3 +359,34 @@ def withdraw(c, user, pid, eid, form):
         (now(), eid),
     )
     audit(c, user["id"], "patient_extract_withdrawn", pid, eid)
+
+
+def print_candidate(saved, form):
+    """Quick print edits the letterhead/identity and preserves the entire document."""
+    data = deepcopy(saved)
+    for key in ("organization", "specialist"):
+        if key in form:
+            data[key] = str(form[key]).strip()
+    for key in ("full_name", "birth_date"):
+        if "identity_" + key in form:
+            data["identity"][key] = str(form["identity_" + key]).strip()
+    data["reviewed"] = form.get("reviewed") == "yes"
+    data["date"] = today().isoformat()
+    return data
+
+
+def confirm_print(c, path, user, pid, eid, form):
+    item = read(c, path, user, pid, eid, edit=True)
+    if str(form.get("revision", "")) != str(item["revision"]):
+        raise HTTPException(
+            409,
+            "Документ изменён в другом окне. Откройте актуальный макет перед печатью",
+        )
+    data = print_candidate(item["data"], form)
+    if not data["reviewed"]:
+        raise HTTPException(
+            422,
+            "Отметьте «Я проверил(а) сведения и макет документа» над листом, затем нажмите «Подтвердить и печатать»",
+        )
+    validate(data, publish=True)
+    return store_version(c, path, user, pid, eid, item, data)

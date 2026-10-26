@@ -1,0 +1,24 @@
+{
+  "browser": "Chromium",
+  "batch_documents": 3,
+  "same_type_different_purposes": true,
+  "add_remove_renumber": true,
+  "shared_file": true,
+  "top_request_print_shortcut": true,
+  "quick_preview_without_full_editor": true,
+  "explicit_review_before_first_print": true,
+  "automatic_print_invocations": 1,
+  "manual_print_fallback": true,
+  "repeated_shortcut_prints": true,
+  "pdf_pages": 1,
+  "pdf_format": "A4",
+  "widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "horizontal_overflow": [],
+  "javascript_errors": [],
+  "synthetic_database": true
+}

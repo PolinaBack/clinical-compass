@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Предпросмотр и печать · {{ document_data.title }}{% endblock %}
+{% block content %}
+<div class="extract-controls"><a href="/patients/{{ patient.id }}/profile/extracts{% if extract_request_id %}/requests/{{ extract_request_id }}{% endif %}">← {{ 'К запросу' if extract_request_id else 'Выписки' }}</a><a class="button secondary" href="/patients/{{ patient.id }}/profile/extracts/{{ document.id }}/edit">Изменить документ</a></div>
+<div class="extract-print-review">
+<section class="card extract-controls"><h1>Предпросмотр и печать</h1>
+{% if print_error %}<p class="extract-error" role="alert">{{ print_error }}</p>{% endif %}
+<p>Данные уже перенесены в макет ниже. Проверьте их перед печатью.</p>
+<form method="post" action="/patients/{{ patient.id }}/profile/extracts/{{ document.id }}/print"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ form_revision }}">
+<div class="grid two"><label>Медицинская организация<input name="organization" value="{{ document_data.organization }}"></label><label>ФИО специалиста<input name="specialist" value="{{ document_data.specialist }}" required></label><label>ФИО пациента<input name="identity_full_name" value="{{ document_data.identity.full_name }}" required></label><label>Дата рождения<input type="date" name="identity_birth_date" value="{{ document_data.identity.birth_date }}" max="{{ today }}"></label></div>
+<label class="check"><input type="checkbox" name="reviewed" value="yes" required {% if document_data.reviewed %}checked{% endif %}>Я проверил(а) сведения и макет документа</label>
+{% if print_conflict %}<p><a href="/patients/{{ patient.id }}/profile/extracts/{{ document.id }}/print" target="_blank" rel="noopener">Открыть актуальный макет в новой вкладке</a></p>{% endif %}
+<button {% if print_conflict %}disabled{% endif %}>Подтвердить и печатать</button><p class="caption">Откроется окно печати браузера, где можно выбрать принтер или сохранение PDF.</p></form></section>
+{% include 'patient_extract_document.html' %}</div>
+{% endblock %}

@@ -57,6 +57,8 @@ FIELDS = (
     "due_date",
     "comment",
 )
+DOCUMENT_FIELDS = ("kind", "purpose", "purpose_other", "due", "due_date")
+MAX_DOCUMENTS = 50
 
 
 def token(value):
@@ -98,6 +100,33 @@ def prefill(c, user, pid):
 def candidate(form):
     data = {key: str(form.get(key, "")).strip() for key in FIELDS}
     data["discuss"] = form.get("discuss") == "yes"
+    return data
+
+
+def requested_documents(form):
+    """Older single-document forms remain valid; current forms carry numbered rows."""
+    if "document_count" not in form:
+        return [{key: str(form.get(key, "")).strip() for key in DOCUMENT_FIELDS}]
+    try:
+        count = int(form["document_count"])
+        if not 1 <= count <= MAX_DOCUMENTS:
+            raise ValueError()
+    except (TypeError, ValueError):
+        raise HTTPException(
+            422, "Добавьте хотя бы один документ; за раз можно заказать до 50"
+        ) from None
+    return [
+        {
+            key: str(form.get(f"doc_{index}_{key}", "")).strip()
+            for key in DOCUMENT_FIELDS
+        }
+        for index in range(count)
+    ]
+
+
+def batch_form(form):
+    data = candidate(form)
+    data["documents"] = requested_documents(form)
     return data
 
 
@@ -206,8 +235,8 @@ def get(c, path, user, pid, rid):
     result["files"] = [
         dict(r)
         for r in c.execute(
-            "SELECT id,event_id,filename,mime,byte_size,scan_status,created_at FROM extract_request_files WHERE request_id=? ORDER BY id",
-            (rid,),
+            "SELECT f.id,f.request_id,f.event_id,f.filename,f.mime,f.byte_size,f.scan_status,f.created_at FROM extract_request_files f JOIN extract_requests r ON r.id=f.request_id WHERE r.patient_id=? AND (f.request_id=? OR (f.request_id=? AND f.event_id IS NULL)) ORDER BY f.id",
+            (pid, rid, result["data"].get("shared_file_request", rid)),
         )
     ]
     result["published"] = False
@@ -244,6 +273,10 @@ def submit(c, path, user, pid, form, prepared):
             raise HTTPException(409, "Эта форма относится к другому пациенту")
         return old["id"]
     data = validate(candidate(form))
+    return store_request(c, path, user, pid, nonce, data, prepared)
+
+
+def store_request(c, path, user, pid, nonce, data, prepared):
     encrypted = documents.pack(c, path, data)
     rid = c.execute(
         "INSERT INTO extract_requests(patient_id,requested_by,client_token,payload,created_at,updated_at) VALUES(?,?,?,?,?,?)",
@@ -252,6 +285,63 @@ def submit(c, path, user, pid, form, prepared):
     save_files(c, path, user, rid, prepared)
     audit(c, user["id"], "extract_requested", pid, rid)
     return rid
+
+
+def submit_many(c, path, user, pid, form, prepared):
+    intake.check_scope(c, user, pid, write=True)
+    nonce = token(str(form.get("client_token", "")))
+    old = c.execute(
+        "SELECT id,patient_id,payload FROM extract_requests WHERE requested_by=? AND client_token=?",
+        (user["id"], nonce),
+    ).fetchone()
+    if old:
+        if old["patient_id"] != pid:
+            raise HTTPException(409, "Эта форма относится к другому пациенту")
+        total = documents.unpack(c, path, old["payload"]).get("batch_total", 1)
+        ids = [old["id"]]
+        for index in range(1, total):
+            saved = c.execute(
+                "SELECT id FROM extract_requests WHERE patient_id=? AND requested_by=? AND client_token=?",
+                (pid, user["id"], batch_token(nonce, index)),
+            ).fetchone()
+            if not saved:
+                raise HTTPException(
+                    409,
+                    "Не удалось восстановить отправленный заказ. Обновите страницу выписок",
+                )
+            ids.append(saved["id"])
+        return ids
+    parts = requested_documents(form)
+    common = candidate(form)
+    checked = []
+    for index, part in enumerate(parts):
+        try:
+            checked.append(validate(dict(common, **part)))
+        except HTTPException as exc:
+            raise HTTPException(
+                exc.status_code, f"Документ {index + 1}: {exc.detail}"
+            ) from None
+    ids = []
+    for index, data in enumerate(checked):
+        data.update(batch_total=len(checked), batch_position=index + 1)
+        if ids and prepared:
+            data["shared_file_request"] = ids[0]
+        ids.append(
+            store_request(
+                c,
+                path,
+                user,
+                pid,
+                nonce if index == 0 else batch_token(nonce, index),
+                data,
+                prepared if index == 0 else [],
+            )
+        )
+    return ids
+
+
+def batch_token(nonce, index):
+    return hashlib.sha256(f"{nonce}:{index}".encode()).hexdigest()
 
 
 def event(c, path, user, pid, rid, status, text, nonce, prepared=()):

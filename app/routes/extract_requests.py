@@ -96,20 +96,23 @@ def register_extract_requests(app, db, account, access, csrf_check, render):
     async def create_request(request: Request, pid: int):
         access(request, pid, True)
         form = await request.form(
-            max_files=1, max_fields=30, max_part_size=float("inf")
+            max_files=1, max_fields=400, max_part_size=float("inf")
         )
         csrf_check(request, str(form.get("csrf", "")))
         try:
             prepared = await service.uploads(form)
             with db() as c:
                 c.execute("BEGIN IMMEDIATE")
-                rid = service.submit(
+                ids = service.submit_many(
                     c, app.state.db_path, account(request), pid, form, prepared
                 )
         except HTTPException as exc:
             if exc.status_code not in (409, 422):
                 raise
-            data = service.candidate(form)
+            try:
+                data = service.batch_form(form)
+            except HTTPException:
+                data = service.candidate(form)
             data["client_token"] = str(
                 form.get("client_token", "")
             ) or secrets.token_urlsafe(24)
@@ -125,7 +128,12 @@ def register_extract_requests(app, db, account, access, csrf_check, render):
                 ),
                 exc.status_code,
             )
-        return RedirectResponse(root(pid) + f"/requests/{rid}?sent=1", status_code=303)
+        target = root(pid) + (
+            f"/requests/{ids[0]}?sent=1"
+            if len(ids) == 1
+            else f"?sent_count={len(ids)}#document-requests"
+        )
+        return RedirectResponse(target, status_code=303)
 
     @app.get("/patients/{pid}/profile/extracts/requests/{rid}")
     def request_detail(request: Request, pid: int, rid: int):
@@ -172,16 +180,26 @@ def register_extract_requests(app, db, account, access, csrf_check, render):
         form = await request.form(max_files=0, max_fields=5)
         csrf_check(request, str(form.get("csrf", "")))
         try:
+            intent = str(form.get("intent", "edit"))
+            if intent not in ("edit", "print"):
+                raise HTTPException(422, "Выберите оформление или печать документа")
             with db() as c:
                 c.execute("BEGIN IMMEDIATE")
                 eid = service.make_draft(
                     c, app.state.db_path, account(request), pid, rid, form
                 )
         except HTTPException as exc:
-            if exc.status_code != 409:
+            if exc.status_code not in (409, 422):
                 raise
-            return detail(request, pid, rid, error=str(exc.detail), status=409)
-        return RedirectResponse(root(pid) + f"/{eid}/edit", status_code=303)
+            return detail(
+                request, pid, rid, error=str(exc.detail), status=exc.status_code
+            )
+        return RedirectResponse(
+            root(pid)
+            + f"/{eid}/"
+            + ("print?autoprint=1" if intent == "print" else "edit"),
+            status_code=303,
+        )
 
     def scoped_file(c, request, pid, rid, fid):
         user = account(request)

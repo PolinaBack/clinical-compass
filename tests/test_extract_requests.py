@@ -163,7 +163,7 @@ def test_deadline_validation_preserves_form_and_patient_cannot_choose_ready_stat
     assert (
         bad.status_code == 422
         and "Сохраните мой комментарий" in bad.text
-        and 'name="due_date"' in bad.text
+        and 'name="doc_0_due_date"' in bad.text
     )
     assert send(client, new_form(birth_date="2099-01-01")).status_code == 422
     assert (

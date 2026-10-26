@@ -60,6 +60,38 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
         response.headers["Cache-Control"] = "no-store"
         return response
 
+    def print_review(
+        request, pid, doc, data=None, error="", status=200, form_revision=None
+    ):
+        data = data or doc["data"]
+        try:
+            calculated = service.calculations(data)
+        except (ValueError, TypeError, ArithmeticError, HTTPException):
+            calculated = dict(age=None, bmi=None)
+        with db() as c:
+            linked = c.execute(
+                "SELECT id FROM extract_requests WHERE patient_id=? AND document_id=?",
+                (pid, doc["id"]),
+            ).fetchone()
+        response = render(
+            request,
+            "patient_extract_print_review.html",
+            patient=dict(id=pid, name=data["source"]["patient_name"]),
+            section="extracts",
+            document=doc,
+            document_data=data,
+            calculations=calculated,
+            diagnosis_states=service.DIAGNOSES,
+            print_error=error,
+            print_conflict=status == 409,
+            form_revision=form_revision or doc["revision"],
+            today=today().isoformat(),
+            extract_request_id=linked["id"] if linked else None,
+        )
+        response.status_code = status
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
     @app.get("/patients/{pid}/profile/extracts")
     def extracts(request: Request, pid: int):
         access(request, pid)
@@ -228,12 +260,7 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
             if not doc["data"]["reviewed"]:
                 if user["role"] == "doctor" and doc["author_id"] == user["id"]:
                     doc = service.read(c, app.state.db_path, user, pid, eid, edit=True)
-                    return editor(
-                        request,
-                        pid,
-                        doc,
-                        error="Подтвердите заполненные сведения в форме ниже, затем нажмите «Сохранить и печатать».",
-                    )
+                    return print_review(request, pid, doc)
                 raise HTTPException(404, "Готовая выписка не найдена")
             patient = dict(
                 c.execute("SELECT id,name FROM patients WHERE id=?", (pid,)).fetchone()
@@ -253,3 +280,33 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
         )
         response.headers["Cache-Control"] = "no-store"
         return response
+
+    @app.post("/patients/{pid}/profile/extracts/{eid}/print")
+    async def confirm_print(request: Request, pid: int, eid: int):
+        access(request, pid)
+        user = account(request)
+        form = await request.form(max_files=0, max_fields=12)
+        csrf_check(request, str(form.get("csrf", "")))
+        try:
+            with db() as c:
+                c.execute("BEGIN IMMEDIATE")
+                version = service.confirm_print(
+                    c, app.state.db_path, user, pid, eid, form
+                )
+        except HTTPException as exc:
+            if exc.status_code not in (409, 422):
+                raise
+            with db() as c:
+                doc = service.read(c, app.state.db_path, user, pid, eid, edit=True)
+            return print_review(
+                request,
+                pid,
+                doc,
+                service.print_candidate(doc["data"], form),
+                str(exc.detail),
+                exc.status_code,
+                str(form.get("revision", "")),
+            )
+        return RedirectResponse(
+            root(pid) + f"/{eid}/print?revision={version}&autoprint=1", status_code=303
+        )
