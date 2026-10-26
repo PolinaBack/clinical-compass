@@ -304,17 +304,15 @@ def create_app(db_path=None):
             )
             if not user or not valid or user["role"] != expected:
                 audit(c, None, "login_failed")
-                return templates.TemplateResponse(
-                    request=request,
-                    name="login.html",
-                    context={
-                        "portal": portal,
-                        "error": "Неверные данные или другой тип кабинета",
-                        "csrf": request.session.get("csrf"),
-                        "user": None,
-                    },
-                    status_code=401,
+                response = render(
+                    request,
+                    "login.html",
+                    portal=portal,
+                    error="Неверные данные или другой тип кабинета",
+                    user=None,
                 )
+                response.status_code = 401
+                return response
             audit(c, user["id"], "login")
         request.session.clear()
         role = "doctor" if user["role"] == "doctor" else f"patient{user['patient_id']}"

@@ -1,0 +1,18 @@
+{
+  "working_database_byte_identical": true,
+  "accounts_passwords_patients_and_assignments_preserved": true,
+  "migrations": false,
+  "original_requirement_rows_and_cells_preserved": 806,
+  "baseline": "public layout before 1e68aa5",
+  "cabinet_library_changes_preserved": true,
+  "pytest_passed": 20,
+  "browser_pages": 3,
+  "browser_widths": [
+    320,
+    390,
+    768,
+    1280,
+    1920
+  ],
+  "browser_js_errors": 0
+}

@@ -1,0 +1,1 @@
+PASS: restored public palette, typography and entry layout on all three pages at five widths; no overflow or JS errors; invalid-password form and successful login; current library and medicine creation remain available; logout returns to restored home.

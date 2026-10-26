@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% set entry_page = request.url.path == '/' or request.url.path.startswith('/login') %}
 <html lang="ru">
     <head>
         <meta charset="utf-8">
@@ -8,6 +9,7 @@
             {% block title %}Клинический компас{% endblock %}
         </title>
         <link rel="stylesheet" href="{{ asset_url('style.css') }}">
+        {% if not entry_page %}
         <link rel="stylesheet" href="{{ asset_url('interface.css') }}">
         <link rel="stylesheet" href="{{ asset_url('diary.css') }}">
         {% if user=='doctor' %}<link rel="stylesheet" href="{{ asset_url('clinician_workspace.css') }}">{% endif %}
@@ -25,28 +27,33 @@
         {% if current_page is defined and user=='doctor' and (current_page.startswith('/medicines') or current_page.startswith('/doctor/resources') or current_page=='/doctor/library' or current_page.startswith('/clinical-tools') or current_page.endswith('/assignments')) %}<link rel="stylesheet" href="{{ asset_url('library_theme.css') }}">{% endif %}
         <script src="{{ asset_url('diary.js') }}" defer></script>
         {% if '/diary/questions/' in current_page %}<script src="{{ asset_url('diary_question_builder.js') }}" defer></script>{% endif %}
+        {% endif %}
         <script src="{{ asset_url('app.js') }}" defer></script><script src="{{ asset_url('workflows.js') }}" defer></script>
     </head>
-    <body class="portal-shell {{ 'signed-in' if user else '' }} {{ 'specialist-space' if user == 'doctor' else 'patient-space' }} {{ 'minimal-ui' if interface_prefs and interface_prefs.minimal else '' }}">
+    <body class="{% if entry_page %}public-entry patient-space{% else %}portal-shell {{ 'signed-in' if user else '' }} {{ 'specialist-space' if user == 'doctor' else 'patient-space' }} {{ 'minimal-ui' if interface_prefs and interface_prefs.minimal else '' }}{% endif %}">
         <a class="skip-link" href="#main">К содержанию</a>
         <header class="site-header">
             <div class="header-inner">
                 <a class="brand" href="/"><span class="brand-symbol" aria-hidden="true">
                     <svg viewBox="0 0 64 64" aria-hidden="true">
+                        {% if entry_page %}
+                        <path d="M32 8V56M8 32H56M15 15L49 49M49 15L15 49" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+                        {% else %}
                         <circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="3" />
                         <path d="M42 20L36 36L21 44L27 28Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" />
                         <path d="M32 1V8" stroke="currentColor" stroke-width="3" />
+                        {% endif %}
                     </svg>
                 </span><span>клинический
                 <br>
                 <b>компас</b></span></a>
-            {% if user %}{% include 'portal_nav.html' %}{% else %}<nav class="header-nav" aria-label="Основная навигация"><a href="/#how">Как это работает</a><a href="/faq">Вопросы и ответы</a></nav>{% endif %}
+            {% if user and not entry_page %}{% include 'portal_nav.html' %}{% else %}<nav class="header-nav" aria-label="Основная навигация"><a href="/#how">Как это работает</a><a href="/faq">Вопросы и ответы</a>{% if entry_page %}<a href="/#resources">Полезные материалы</a>{% endif %}</nav>{% endif %}
             <div class="header-actions">
-                {% if user and user != 'doctor' %}<a class="help-link" href="/help-now" aria-label="Экстренная помощь"><span class="help-full">Экстренная помощь</span><span class="help-short" aria-hidden="true">Помощь</span></a>{% endif %}
+                {% if entry_page or (user and user != 'doctor') %}<a class="help-link" href="/help-now" aria-label="Экстренная помощь">{% if entry_page %}Экстренная помощь{% else %}<span class="help-full">Экстренная помощь</span><span class="help-short" aria-hidden="true">Помощь</span>{% endif %}</a>{% endif %}
                 {% if user %}
                     <form action="/logout" method="post">
                         <input type="hidden" name="csrf" value="{{ csrf }}">
-                        <button class="text-button logout-button" aria-label="Выйти из кабинета"><svg class="category-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4H4v16h6M14 7l5 5-5 5M8 12h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="logout-label">Выйти</span></button>
+                        <button class="text-button logout-button" aria-label="Выйти из кабинета">{% if not entry_page %}<svg class="category-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 4H4v16h6M14 7l5 5-5 5M8 12h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>{% endif %}<span class="logout-label">Выйти</span></button>
                     </form>
                 {% elif not user %}
                     <a class="button small" href="/login/patient">Войти</a>
@@ -62,7 +69,7 @@
         {% block content %}{% endblock %}
     </main>
     <footer class="site-footer">
-        <a class="brand" href="/">Клинический компас</a>
+        <a class="brand" href="/">{{ '✳ ' if entry_page else '' }}Клинический компас</a>
         <p>
             Помогаем подготовиться к разговору.
             <br>
