@@ -24,11 +24,15 @@
     interval.closest('label').hidden = frequency !== 'interval';
     interval.disabled = frequency !== 'interval';
     form.elements.start.required = frequency === 'interval';
-    document.querySelector('[data-builder-preview-title]').textContent = form.elements.title.value || 'Ваш вопрос';
+    document.querySelector('[data-builder-preview-title]').textContent = form.elements.prompt.value || form.elements.title.value || 'Ваш вопрос';
+    const color = form.elements.palette.selectedOptions[0];
+    preview.closest('section').style.background = color.dataset.background;
+    preview.closest('section').style.borderTop = `4px solid ${color.dataset.accent}`;
     preview.replaceChildren();
     const options = form.elements.options.value.split('\n').map(v => v.trim()).filter(Boolean);
     let control;
-    if (kind === 'text') control = input('textarea');
+    if (kind === 'effects') { control = document.createElement('p'); control.textContent = 'До трёх ощущений по системам органов и одно основное. Полный вид доступен по кнопке предпросмотра.'; }
+    else if (kind === 'text') control = input('textarea');
     else if (['boolean', 'choice'].includes(kind)) {
       control = input('select');
       const values = kind === 'boolean' ? ['Выберите ответ', 'Да', 'Нет'] : ['Выберите ответ', ...options];
@@ -41,7 +45,7 @@
       const type = kind === 'scale' ? 'range' : ['file','voice'].includes(kind) ? 'file' : ['date','time'].includes(kind) ? kind : 'number';
       control = input('input', type);
       if (kind === 'scale') { control.min = form.elements.minimum.value || '0'; control.max = form.elements.maximum.value || '10'; control.step = '1'; }
-      if (kind === 'number') { control.step = 'any'; if (form.elements.minimum.value) control.min = form.elements.minimum.value; if (form.elements.maximum.value) control.max = form.elements.maximum.value; }
+      if (kind === 'number') { control.step = form.elements.step.value || 'any'; if (form.elements.minimum.value) control.min = form.elements.minimum.value; if (form.elements.maximum.value) control.max = form.elements.maximum.value; }
       if (kind === 'duration') { control.min = '0'; control.max = '10080'; control.step = 'any'; }
       if (kind === 'voice') control.accept = '.wav,.mp3,.ogg,.webm,.m4a,.flac';
       if (kind === 'file') control.accept = '.pdf,.jpg,.jpeg,.png';

@@ -74,7 +74,7 @@
       form.querySelector('.diary-status').textContent = 'Отметка добавлена. Нажмите «Сохранить запись», когда закончите.';
     });
     dialog.addEventListener('close', () => {
-      if (dialog.dataset.applied !== 'true') (snapshots.get(dialog) || []).forEach(([input, value, checked]) => { if(input.type==='file'){const transfer=new DataTransfer();value.forEach(file=>transfer.items.add(file));input.files=transfer.files;}else input.value=value; if(input.type==='checkbox')input.checked=checked; });
+      if (dialog.dataset.applied !== 'true') (snapshots.get(dialog) || []).forEach(([input, value, checked]) => { if(input.type==='file'){const transfer=new DataTransfer();value.forEach(file=>transfer.items.add(file));input.files=transfer.files;}else { if(input.matches('[data-effect-primary]') && value && ![...input.options].some(option=>option.value===value)) input.add(new Option(value,value)); input.value=value; } if(input.type==='checkbox')input.checked=checked; });
       sync(dialog);
       if (!dialogs.some(other => other.open)) openers.get(dialog)?.focus();
     });

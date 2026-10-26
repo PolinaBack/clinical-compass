@@ -1,6 +1,23 @@
-{% if metric.kind=='boolean' %}<select name="metric_{{ metric.id }}" aria-label="{{ metric.title }}" data-value><option value="">Не отмечено</option><option value="true">Да</option><option value="false">Нет</option></select>
-{% elif metric.kind in ['choice','multi'] %}{% if metric.kind=='choice' %}<select name="metric_{{ metric.id }}" aria-label="{{ metric.title }}" data-value><option value="">Выбрать</option>{% for option in metric.options %}<option>{{ option }}</option>{% endfor %}</select>{% else %}<fieldset><legend>{{ metric.title }}</legend>{% for option in metric.options %}<label class="check"><input type="checkbox" name="metric_{{ metric.id }}" value="{{ option }}" data-value>{{ option }}</label>{% endfor %}</fieldset>{% endif %}
-{% elif metric.kind=='text' %}<textarea name="metric_{{ metric.id }}" aria-label="{{ metric.title }}" maxlength="1000" data-value></textarea>
-{% elif metric.kind in ['file','voice'] %}<input type="file" name="files_{{ metric.id }}" aria-label="{{ metric.title }}" accept="{{ '.wav,.mp3,.ogg,.webm,.m4a,.flac' if metric.kind=='voice' else '.pdf,.jpg,.jpeg,.png,.wav,.mp3,.ogg,.webm,.m4a,.flac' }}" multiple data-value><p>Сохранится вместе с записью дневника, только для вас и ведущего специалиста. Голос — до 3 минут; автоматическая расшифровка не запускается.</p>
-{% elif metric.kind in ['time','date'] %}<input type="{{ metric.kind }}" name="metric_{{ metric.id }}" aria-label="{{ metric.title }}" data-value>
-{% else %}<input type="number" name="metric_{{ metric.id }}" aria-label="{{ metric.title }}" {% if metric.minimum is not none %}min="{{ metric.minimum }}"{% endif %}{% if metric.maximum is not none %}max="{{ metric.maximum }}"{% endif %}{% if metric.kind=='duration' %}min="0" max="10080"{% endif %}step="{{ '1' if metric.kind=='scale' else 'any' }}" data-value>{% endif %}
+{% if metric.kind=='boolean' %}
+<select name="metric_{{ metric.id }}" aria-label="{{ metric.title }}" data-value><option value="">Не отмечено</option><option value="true">Да</option><option value="false">Нет</option></select>
+{% elif metric.kind in ['choice','multi'] %}
+{% if metric.kind=='choice' %}<select name="metric_{{ metric.id }}" aria-label="{{ metric.title }}" data-value><option value="">Выбрать</option>{% for option in metric.options %}<option>{{ option }}</option>{% endfor %}</select>
+{% else %}<fieldset><legend>{{ metric.title }}</legend>{% for option in metric.options %}<label class="check"><input type="checkbox" name="metric_{{ metric.id }}" value="{{ option }}" data-value>{{ option }}</label>{% endfor %}</fieldset>{% endif %}
+{% elif metric.kind=='effects' %}
+<div data-diary-effects>
+    <p>Выберите до трёх ощущений и одно основное. Сообщение о симптомах не устанавливает связь с лекарством.</p><p data-effects-count aria-live="polite">Выбрано 0 из 3</p>
+    <div class="personal-effects-options">{% for group,options in metric.effect_groups.items() %}<details><summary>{{ group }}</summary><fieldset><legend>{{ group }}</legend>{% for option in options %}<label class="check"><input type="checkbox" name="metric_{{ metric.id }}" value="{{ option }}" data-value data-effect-choice>{{ option }}</label>{% endfor %}</fieldset></details>{% endfor %}</div>
+    <label>Основное ощущение<select name="primary_{{ metric.id }}" data-effect-primary data-value><option value="">Выберите из отмеченных</option>{% for group,options in metric.effect_groups.items() %}<optgroup label="{{ group }}">{% for option in options %}<option>{{ option }}</option>{% endfor %}</optgroup>{% endfor %}</select></label>
+    <label>Когда заметили и насколько сильно? · необязательно<textarea name="effect_note_{{ metric.id }}" maxlength="1000"></textarea></label>
+</div>
+{% elif metric.kind=='text' %}
+<textarea name="metric_{{ metric.id }}" aria-label="{{ metric.title }}" maxlength="1000" data-value></textarea>
+{% elif metric.kind in ['file','voice'] %}
+<input type="file" name="files_{{ metric.id }}" aria-label="{{ metric.title }}" accept="{{ '.wav,.mp3,.ogg,.webm,.m4a,.flac' if metric.kind=='voice' else '.pdf,.jpg,.jpeg,.png,.wav,.mp3,.ogg,.webm,.m4a,.flac' }}" multiple data-value><p>Сохранится вместе с записью дневника, только для вас и ведущего специалиста. Голос — до 3 минут; автоматическая расшифровка не запускается.</p>
+{% elif metric.kind in ['time','date'] %}
+<input type="{{ metric.kind }}" name="metric_{{ metric.id }}" aria-label="{{ metric.title }}" data-value>
+{% else %}
+{% if metric.kind=='scale' %}<label class="personal-slider">{{ metric.title }} · шкала<input type="range" min="{{ metric.minimum }}" max="{{ metric.maximum }}" step="1" value="{{ (metric.minimum+metric.maximum)/2 }}" data-personal-sync="metric-value-{{ metric.id }}"><output data-personal-output="metric-value-{{ metric.id }}" aria-live="polite">—</output></label>{% endif %}
+<input id="metric-value-{{ metric.id }}" type="number" name="metric_{{ metric.id }}" aria-label="{{ metric.title }}{% if metric.unit %}, {{ metric.unit }}{% endif %}" {% if metric.minimum is not none %}min="{{ metric.minimum }}"{% endif %}{% if metric.maximum is not none %}max="{{ metric.maximum }}"{% endif %}{% if metric.kind=='duration' %}min="0" max="10080"{% endif %}step="{{ '1' if metric.kind=='scale' else metric.get('step') or 'any' }}" data-value>
+{% if metric.unit %}<span>{{ metric.unit }}</span>{% endif %}
+{% endif %}

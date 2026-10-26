@@ -27,6 +27,7 @@ from .routes.interface import register_interface
 from .services.interface import read_interface
 from .services.diary import read_diary_extras, sleep_rating
 from .routes.diary import register_diary
+from .routes.diary_library import register_diary_library
 from .routes.intake import register_intake
 from .services import diary_questions as questions
 from .services import clinical_attachments as attachment_files
@@ -116,6 +117,15 @@ def create_app(db_path=None):
     from .services.ai_display import readable_text
 
     templates.env.filters["ai_readable_text"] = readable_text
+    from .services.diary_library import palette, schedule_label, CATEGORIES
+    from .services.diary_questions import FREQUENCIES
+
+    templates.env.globals.update(
+        diary_palette=palette,
+        diary_schedule=schedule_label,
+        diary_colors=CATEGORIES,
+        diary_frequencies=FREQUENCIES,
+    )
     templates.env.globals["asset_url"] = asset_url
 
     def account(request):
@@ -480,6 +490,7 @@ def create_app(db_path=None):
 
     register_consultations(app, db, account, access, csrf_check)
     register_diary(app, db, account, access, csrf_check, render, patient_context)
+    register_diary_library(app, db, account, csrf_check, render)
     register_intake(app, db, account, access, csrf_check, render, patient_context)
     register_portal(
         app, db, account, identity, access, csrf_check, render, patient_context

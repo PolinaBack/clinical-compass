@@ -1,0 +1,16 @@
+{% set colors=diary_palette(metric.get('palette',metric.category)) %}
+<div class="personal-diary-card" data-personal-card style="--personal-bg:{{ colors.background }};--personal-accent:{{ colors.accent }}">
+    <p class="personal-category">{{ colors.title }}</p>
+    <p class="personal-question">{{ metric.get('prompt',metric.title) }}</p>
+    {% if metric.hint %}<p class="caption">{{ metric.hint }}</p>{% endif %}
+    <p class="caption">{{ metric.recall_period }}{% if metric.time_window %} · {{ metric.time_window }}{% endif %} · {{ diary_schedule(metric) }}</p>
+    {% if not preview_mode|default(false) %}<input type="hidden" name="version_{{ metric.id }}" value="{{ metric.version }}">{% endif %}
+    {% include 'diary_question_input.html' %}
+    {% if metric.minimum_label or metric.maximum_label %}<p class="personal-anchors">{{ metric.minimum_label }} · {{ metric.maximum_label }}</p>{% endif %}
+    {% if metric.template_key|default('')=='ready-safetyHelp' %}<p class="personal-contact-note">Эта отметка не вызывает экстренную помощь и не гарантирует срочного ответа. Если помощь нужна сейчас, используйте <a href="/help-now">экстренные контакты</a>.</p>{% endif %}
+    <p class="caption">Ответ можно оставить пустым.</p>
+    <label>Статус ответа · {{ metric.title }}<select name="status_{{ metric.id }}" aria-label="Статус ответа · {{ metric.title }}" data-question-status><option value="unanswered">Пока не отвечено</option><option value="answered">Ответил(а)</option><option value="unknown">Не знаю</option><option value="not_remembered">Не помню</option><option value="skipped">Пропустить сейчас</option><option value="discuss">Обсудить лично</option><option value="declined">Не хочу отвечать</option></select></label>
+    {% if metric.required %}<p>Нужна отметка; можно выбрать «не знаю», «не помню» или личное обсуждение.</p>{% endif %}
+    <details><summary>Комментарий и тема для приёма</summary><label>Комментарий · {{ metric.title }}<textarea name="comment_{{ metric.id }}" maxlength="1000"></textarea></label></details>
+    <label class="check"><input type="checkbox" name="discuss_{{ metric.id }}" value="yes">Обсудить со специалистом</label>
+</div>

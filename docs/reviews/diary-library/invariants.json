@@ -1,0 +1,11 @@
+{
+  "working_database_unchanged": true,
+  "original_requirement_rows_unchanged": 806,
+  "source_cards_and_titles_match": true,
+  "cards": 43,
+  "categories": 10,
+  "scales": 14,
+  "source_pdf_sha256": "f55774175aeadf0873a238be33764ab6a88ba0859c86e3083f945615de7e807e",
+  "catalog_sha256": "c4dd103f08f5b35bdc3ca190fd21048f4531a51a8e6d34951a62e08439dbf734",
+  "changed_python_compilation": "passed"
+}

@@ -1,7 +1,7 @@
 <section class="card" id="assigned-metrics">
     <h2>Показатели дневника</h2>
     <p>Базовые карточки: самочувствие, сон и лечение. Дополнительные показатели добавляете вы для этого пациента.</p>
-    <p><a class="button" href="/patients/{{ patient.id }}/diary/questions/new">Добавить свой вопрос</a></p>
+    <p><a class="button" href="/doctor/diary-cards?patient_id={{ patient.id }}">Добавить дополнительный показатель</a></p>
     {% for metric in diary_metrics_all %}
         <p><strong>{{ metric.title }}</strong> · {{ metric.kind }} · версия {{ metric.version }} · {{ 'активен' if metric.active else 'временно выключен' }}{% if metric.unit %} · {{ metric.unit }}{% endif %}</p><p><a href="/patients/{{ patient.id }}/diary/questions/{{ metric.id }}/edit">Изменить вопрос</a></p><form method="post" action="/patients/{{ patient.id }}/diary/questions/{{ metric.id }}/active"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="revision" value="{{ metric.version }}"><input type="hidden" name="active" value="{{ 'no' if metric.active else 'yes' }}"><button class="secondary">{{ 'Временно выключить' if metric.active else 'Включить вопрос' }}</button></form>
     {% else %}<p class="muted">Дополнительные показатели пока не добавлены.</p>{% endfor %}

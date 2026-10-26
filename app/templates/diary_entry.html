@@ -18,8 +18,8 @@
             <output id="treatment-preview">Отметить лечение</output><small>Последняя запись: {% if latest_diary %}{{ {'none':'Не применимо','taken':'Выполнено','missed':'Был пропуск'}[latest_diary.adherence] }} · {{ latest_diary.day }}{% else %}нет данных{% endif %}</small>
         </button>
         {% for metric in diary_metrics %}
-            <button type="button" class="diary-card category-specialized" data-open="metric-dialog-{{ metric.id }}" data-diary-question="{{ metric.id }}" data-question-config="{{ metric|tojson|forceescape }}">
-                {{ icon('specialized') }}<strong>{{ metric.title }}</strong><span>Добавлено специалистом</span>
+            {% set colors=diary_palette(metric.get('palette',metric.category)) %}<button type="button" class="diary-card category-specialized personal-diary-tile" style="--category-bg:{{ colors.background }};--category-accent:{{ colors.accent }}" data-open="metric-dialog-{{ metric.id }}" data-diary-question="{{ metric.id }}" data-question-config="{{ metric|tojson|forceescape }}">
+                {{ icon('specialized') }}<strong>{{ metric.title }}</strong><span>{{ colors.title }}</span><span>{{ metric.get('prompt',metric.title) }}</span>
                 <output id="metric-preview-{{ metric.id }}">Заполнить</output>
                 {% set previous = diary_metric_latest.get(metric.id) %}
                 <small>{{ (previous.display ~ ' ' ~ metric.unit ~ ' · ' ~ previous.day) if previous else 'Нет данных' }}</small>
@@ -53,14 +53,8 @@
     </dialog>
     {% for metric in diary_metrics %}
         <dialog id="metric-dialog-{{ metric.id }}" class="diary-dialog" aria-labelledby="metric-heading-{{ metric.id }}" data-preview="metric-preview-{{ metric.id }}">
-            <h3 id="metric-heading-{{ metric.id }}">{{ metric.title }}</h3><p>{{ metric.hint or 'Вопрос добавлен вашим специалистом.' }}</p><p>{{ metric.recall_period }}{% if metric.time_window %} · {{ metric.time_window }}{% endif %}</p>
-            <input type="hidden" name="version_{{ metric.id }}" value="{{ metric.version }}">
-            <label>{{ metric.title }}{% if metric.unit %}, {{ metric.unit }}{% endif %}</label>
-            {% include 'diary_question_input.html' %}
-            {% if metric.minimum_label or metric.maximum_label %}<p>{{ metric.minimum_label }} · {{ metric.maximum_label }}</p>{% endif %}
-            <label>Статус ответа · {{ metric.title }}<select name="status_{{ metric.id }}" aria-label="Статус ответа · {{ metric.title }}" data-question-status><option value="unanswered">Пока не отвечено</option><option value="answered">Ответил(а)</option><option value="unknown">Не знаю</option><option value="not_remembered">Не помню</option><option value="skipped">Пропустить сейчас</option><option value="discuss">Обсудить лично</option><option value="declined">Не хочу отвечать</option></select></label>
-            {% if metric.required %}<p>Нужна отметка; можно выбрать «не знаю», «не помню» или личное обсуждение.</p>{% endif %}
-            <details><summary>Комментарий и тема для приёма</summary><label>Комментарий · {{ metric.title }}<textarea name="comment_{{ metric.id }}" maxlength="1000"></textarea></label><label class="check"><input type="checkbox" name="discuss_{{ metric.id }}" value="yes">Хочу обсудить на приёме</label></details>
+            <h3 id="metric-heading-{{ metric.id }}">{{ metric.title }}</h3>
+            {% set preview_mode=false %}{% include 'diary_personal_card.html' %}
             <div class="dialog-actions"><button type="button" data-apply>Применить показатель</button><button type="button" class="secondary" data-cancel>Отмена</button></div>
     </dialog>
     {% endfor %}

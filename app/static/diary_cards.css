@@ -1,0 +1,30 @@
+.diary-library-filters{display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:16px;align-items:end}
+.diary-library-filters label{min-width:0;margin:0}
+.diary-library-filters button{margin:0 0 8px}
+.diary-library-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:start}
+.diary-library-item{min-width:0;border:1px solid var(--line);border-top:5px solid var(--personal-accent);border-radius:22px;background:#fff;overflow:hidden;scroll-margin-top:24px}
+.diary-library-item>header{padding:22px;background:var(--personal-bg)}
+.diary-library-item h2{font-size:1.35rem;line-height:1.35;margin:10px 0}
+.diary-library-item>details{margin:16px;border-radius:14px}
+.diary-library-item>details>summary{font-weight:650;min-height:44px;padding:10px}
+.diary-library-item>details>p{padding:0 12px}
+.diary-library-item>form,.diary-library-item>p{margin:20px}
+.personal-diary-card{padding:20px;background:var(--personal-bg);border:1px solid var(--line);border-top:4px solid var(--personal-accent);border-radius:18px;color:var(--ink);min-width:0}
+.personal-category{font-size:.85rem;font-weight:700;letter-spacing:.025em;color:var(--ink)}
+.personal-question{font-weight:650;font-size:1.1rem;line-height:1.5}
+.personal-diary-card label{display:block}
+.personal-diary-card label.check{display:flex;align-items:flex-start;gap:10px}
+.personal-diary-card label.check input{flex:0 0 20px;width:20px;height:20px;margin:3px 0}
+.personal-diary-card input[type=range]{width:100%;accent-color:var(--personal-accent);min-height:44px}
+.personal-slider output{display:block;font-size:1.5rem;font-weight:700}
+.personal-anchors,.personal-contact-note{font-size:.9rem;line-height:1.5}
+.personal-effects-options{max-height:330px;overflow:auto;overscroll-behavior:contain}
+.personal-effects-options details{background:#ffffffb3;margin:8px 0;padding:8px;border-radius:10px}
+.personal-effects-options fieldset{border:0;padding:0;margin:0}
+.personal-effects-options legend{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.personal-success,.personal-assigned{color:#215841;background:#e9f8f0;border:1px solid #a6c9b5;border-radius:12px;padding:14px;font-weight:650}
+.personal-diary-card :is(p,label,summary,option),.diary-library-item :is(p,h2){overflow-wrap:anywhere}
+.personal-diary-card :is(input,select,textarea){max-width:100%}
+.personal-diary-card .caption{color:#495564}
+@media(max-width:850px){.diary-library-filters{grid-template-columns:1fr 1fr}.diary-library-grid{grid-template-columns:1fr}}
+@media(max-width:460px){.diary-library-filters{grid-template-columns:1fr}.personal-diary-card{padding:14px}.diary-library-item>header{padding:16px}.diary-library-item>details{margin:10px}}

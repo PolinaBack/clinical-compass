@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Готовые карточки персонального дневника · Клинический компас{% endblock %}
+{% block content %}
+{% include 'library_back.html' %}
+<div class="page-intro"><h1>Готовые карточки персонального дневника</h1><p class="lead">43 готовые карточки в 10 категориях. Откройте карточку, чтобы попробовать заполнение так, как его увидит пациент.</p></div>
+{% if patient %}<p><a href="/patients/{{ patient.id }}/diary#assigned-metrics">← Дневник: {{ patient.name }}</a></p>{% endif %}
+{% if assignment_added %}<p class="personal-success" role="status">Карточка добавлена в дневник выбранного пациента.</p>{% endif %}
+<section class="card"><form method="get" action="/doctor/diary-cards" class="diary-library-filters">
+    <label>Пациент для назначения<select name="patient_id"><option value="">Только просмотр библиотеки</option>{% for item in patients %}<option value="{{ item.id }}" {% if patient and patient.id==item.id %}selected{% endif %}>{{ item.name }}</option>{% endfor %}</select></label>
+    <label>Категория<select name="category"><option value="">Все 10 категорий</option>{% for key,item in categories.items() %}<option value="{{ key }}" {% if category==key %}selected{% endif %}>{{ item.title }}</option>{% endfor %}<option value="own" {% if category=='own' %}selected{% endif %}>Мои карточки</option></select></label>
+    <label>Найти карточку<input type="search" name="q" value="{{ q }}" maxlength="200" placeholder="Название или вопрос"></label>
+    <button>Показать</button>
+</form><p>Показано {{ cards|length }} из {{ total }}. Пробные ответы в библиотеке не сохраняются.</p><a class="button secondary" href="{{ custom_url }}">+ Создать свою карточку</a></section>
+{% if not patient %}<p class="notice">Для добавления карточек выберите пациента выше и нажмите «Показать».</p>{% endif %}
+<div class="diary-library-grid">
+{% for card in cards %}{% set colors=diary_palette(card.get('palette',card.category)) %}{% set existing=assigned.get(card.template_key) %}
+<article class="diary-library-item" id="card-{{ card.template_key }}" data-diary-template="{{ card.template_key }}" style="--personal-bg:{{ colors.background }};--personal-accent:{{ colors.accent }}">
+    <header><span class="personal-category">{{ colors.title }}</span>{% if card.custom %}<span>Своя карточка</span>{% endif %}<h2>{{ card.title }}</h2><p>{{ card.prompt }}</p><p class="caption">{{ card.answer_type|default('Своя карточка') }}{% if card.unit %} · {{ card.unit }}{% endif %} · {{ card.recommended_frequency|default(diary_schedule(card)) }}</p></header>
+    <details><summary>Как увидит пациент</summary>{% set metric=dict(card,id='preview-' ~ card.template_key) %}{% set preview_mode=true %}{% include 'diary_personal_card.html' %}</details>
+    {% if card.description or card.doctor_note %}<details><summary>Для специалиста</summary><p>{{ card.description }}</p><p>{{ card.doctor_note }}</p>{% if card.value_help %}<p>{{ card.value_help }}</p>{% endif %}</details>{% endif %}
+    {% if patient %}
+    {% if existing and existing.active %}<p class="personal-assigned">✓ Уже в дневнике</p><p><a href="/patients/{{ patient.id }}/diary/questions/{{ existing.id }}/edit">Изменить вопрос и расписание</a></p>
+    {% else %}<form method="post" action="/doctor/diary-cards/{{ card.template_key }}/assign" class="diary-template-assignment"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="patient_id" value="{{ patient.id }}"><input type="hidden" name="category" value="{{ category }}"><input type="hidden" name="q" value="{{ q }}">
+        {% if existing %}<p>Карточка временно выключена; включение сохранит её настройки и ответы.</p><input type="hidden" name="frequency" value="template">{% else %}<label>Частота заполнения<select name="frequency">{% for key,label in frequencies.items() %}<option value="{{ key }}" {% if key==card.default_frequency %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>{% endif %}
+        <button>{{ 'Включить карточку' if existing else '+ Добавить пациенту' }}</button>
+    </form>{% endif %}
+    {% endif %}
+</article>
+{% else %}<p>По этому запросу карточки не найдены.</p>{% endfor %}
+</div>
+{% endblock %}

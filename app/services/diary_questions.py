@@ -21,6 +21,7 @@ FORMATS = {
     "date": "Дата",
     "file": "Файл / фотография",
     "voice": "Голосовая заметка",
+    "effects": "Нежелательные ощущения · до 3 и одно основное",
 }
 MODULES = {
     "wellbeing": "Общее самочувствие",
@@ -41,6 +42,19 @@ MODULES = {
     "materials": "Материалы",
     "consultation": "Подготовка к консультации",
     "specialized": "Другое",
+    "safety": "Безопасность",
+}
+
+FREQUENCIES = {
+    "daily": "Ежедневно",
+    "weekdays": "В выбранные дни недели",
+    "interval": "Через заданное число дней",
+    "event": "По событию",
+    "as_needed": "По потребности",
+    "agreed": "По согласованию",
+    "optional": "По желанию",
+    "after_task": "После задания",
+    "intake_days": "В дни приёма",
 }
 
 
@@ -124,6 +138,13 @@ def definitions(c, pid, all_questions=False):
             version=version,
             active=bool(config["active"]) if config else True,
         )
+        m.setdefault("prompt", m["title"])
+        m.setdefault("palette", m["category"])
+        m.setdefault("step", None)
+        if m["kind"] == "effects":
+            from app.services.diary_library import catalog
+
+            m.setdefault("effect_groups", catalog()["effects"])
         if m["active"] or all_questions:
             result.append(m)
     return sorted(result, key=lambda m: (m["position"], m["id"]))
@@ -178,6 +199,17 @@ def configuration(form):
     if category not in MODULES:
         raise HTTPException(422, "Проверьте категорию")
     result = dict(title=title, kind=kind, category=category, advanced=True)
+    prompt = str(form.get("prompt", "")).strip() or title
+    if len(prompt) > 300:
+        raise HTTPException(422, "Вопрос для пациента — до 300 символов")
+    from app.services.diary_library import CATEGORIES, catalog
+
+    palette = str(form.get("palette", category))
+    if "palette" in form and palette not in CATEGORIES:
+        raise HTTPException(422, "Выберите цвет карточки")
+    result.update(prompt=prompt, palette=palette)
+    if kind == "effects":
+        result["effect_groups"] = catalog()["effects"]
     for key, limit in [
         ("unit", 24),
         ("hint", 600),
@@ -232,8 +264,16 @@ def configuration(form):
             422, "Нужны от 2 до 20 разных вариантов, по одному на строке"
         )
     result["options"] = options if kind in ("choice", "multi") else []
+    step = form.get("step", "")
+    result["step"] = (
+        float(number(step, "Шаг"))
+        if step and kind == "number"
+        else 1 if kind == "scale" else None
+    )
+    if result["step"] is not None and not 0.000001 <= result["step"] <= 1e12:
+        raise HTTPException(422, "Шаг должен быть от 0,000001 до 1 000 000 000 000")
     freq = str(form.get("frequency", "daily"))
-    if freq not in ("daily", "weekdays", "interval"):
+    if freq not in FREQUENCIES:
         raise HTTPException(422, "Проверьте частоту")
     try:
         weekdays = [int(v) for v in form.getlist("weekdays")]
@@ -297,10 +337,14 @@ def configuration(form):
 
 
 def save_definition(c, pid, user, form, mid=None):
+    definition = configuration(form)
+    return save_config(c, pid, user, definition, mid, form)
+
+
+def save_config(c, pid, user, definition, mid=None, form=None):
     from app.services.intake import check_scope
 
     check_scope(c, user, pid, doctor=True)
-    definition = configuration(form)
     if mid:
         old = next((m for m in definitions(c, pid, True) if m["id"] == mid), None)
         if not old:
@@ -309,6 +353,15 @@ def save_definition(c, pid, user, form, mid=None):
             raise HTTPException(409, "Вопрос уже изменился. Обновите страницу.")
         if "position" not in form:
             definition["position"] = old["position"]
+        for key in (
+            "template_key",
+            "recommended_frequency",
+            "description",
+            "doctor_note",
+            "value_help",
+        ):
+            if key in old:
+                definition[key] = old[key]
         ensure_version(c, old, user)
         version = old["version"] + 1
     else:
@@ -385,7 +438,15 @@ def due(m, day, base=None):
 
 def parse(c, pid, form, day, base, prepared):
     all_defs = {str(m["id"]): m for m in definitions(c, pid, True)}
-    for prefix in ("metric_", "status_", "comment_", "discuss_", "version_"):
+    for prefix in (
+        "metric_",
+        "status_",
+        "comment_",
+        "discuss_",
+        "version_",
+        "primary_",
+        "effect_note_",
+    ):
         if any(k[len(prefix) :] not in all_defs for k in form if k.startswith(prefix)):
             raise HTTPException(422, "Этот вопрос не назначен пациенту")
     result = []
@@ -397,13 +458,27 @@ def parse(c, pid, form, day, base, prepared):
         status = str(form.get("status_" + key, "unanswered"))
         if status not in STATES or len(form.getlist("status_" + key)) > 1:
             raise HTTPException(422, "Недопустимый статус ответа")
-        if m["kind"] != "multi" and len(raw) > 1:
+        if m["kind"] not in ("multi", "effects") and len(raw) > 1:
             raise HTTPException(422, "Ожидается один ответ")
         upload = prepared.get(int(key), [])
         if upload and m["kind"] not in ("file", "voice"):
             raise HTTPException(422, "Этот вопрос не принимает вложения")
-        value = raw if m["kind"] == "multi" else str(raw[0]).strip() if raw else ""
+        value = (
+            raw
+            if m["kind"] in ("multi", "effects")
+            else str(raw[0]).strip() if raw else ""
+        )
         present = bool(value) or bool(upload)
+        if (
+            m["kind"] == "effects"
+            and not value
+            and (form.get("primary_" + key) or form.get("effect_note_" + key))
+            and status in ("unanswered", "answered")
+        ):
+            raise HTTPException(
+                422,
+                "Сначала выберите ощущение; свободный комментарий можно оставить ниже",
+            )
         if present and status == "unanswered":
             status = "answered"
         if status == "answered" and not present:
@@ -452,6 +527,13 @@ def parse(c, pid, form, day, base, prepared):
                     raise HTTPException(
                         422, m["title"] + ": значение вне назначенного диапазона"
                     )
+                if m.get("step") and (
+                    n
+                    - number(m["minimum"] if m["minimum"] is not None else 0, "Минимум")
+                ) % number(m["step"], "Шаг"):
+                    raise HTTPException(
+                        422, m["title"] + ": используйте шаг " + str(m["step"])
+                    )
                 answer = display = str(n)
             elif kind == "boolean":
                 if value not in ("true", "false"):
@@ -466,6 +548,32 @@ def parse(c, pid, form, day, base, prepared):
                     raise HTTPException(422, "Выберите предложенные варианты")
                 answer = value
                 display = ", ".join(selected)
+            elif kind == "effects":
+                options = {v for group in m["effect_groups"].values() for v in group}
+                primary = str(form.get("primary_" + key, ""))
+                note = str(form.get("effect_note_" + key, "")).strip()
+                if (
+                    not 1 <= len(value) <= 3
+                    or len(value) != len(set(value))
+                    or any(v not in options for v in value)
+                ):
+                    raise HTTPException(
+                        422, "Выберите не более трёх предложенных ощущений"
+                    )
+                if primary not in value or len(form.getlist("primary_" + key)) != 1:
+                    raise HTTPException(
+                        422, "Отметьте основное ощущение среди выбранных"
+                    )
+                if len(note) > 1000:
+                    raise HTTPException(422, "Пояснение — до 1000 символов")
+                answer = dict(
+                    effects=value,
+                    primary=primary,
+                    note=note,
+                    source="Со слов пациента",
+                    recorded_at=now(),
+                )
+                display = ", ".join(value) + ". Основное: " + primary
             elif kind == "time":
                 if not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", value):
                     raise HTTPException(422, "Введите время ЧЧ:ММ")
@@ -514,6 +622,29 @@ def save_answers(c, db_path, pid, user, did, items):
     for item in items:
         m = item["metric"]
         ensure_version(c, m, user)
+        if m["kind"] == "effects" and item["status"] == "answered":
+            from app.services.medicine_reactions import unpack
+
+            schemes = []
+            seen = set()
+            for row in c.execute(
+                "SELECT * FROM medicine_plan_shares WHERE patient_id=? ORDER BY id DESC",
+                (pid,),
+            ):
+                if row["draft_id"] in seen:
+                    continue
+                seen.add(row["draft_id"])
+                value = unpack(c, db_path, row["payload"])
+                schemes.extend(
+                    dict(
+                        name=entry.get("reference", {}).get("name", entry["code"]),
+                        dose=entry.get("dose", ""),
+                        draft_id=row["draft_id"],
+                        revision=row["draft_revision"],
+                    )
+                    for entry in value["items"]
+                )
+            item["answer"]["medicine_context"] = schemes
         if item["uploads"]:
             ids = [
                 files.save(

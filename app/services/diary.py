@@ -111,6 +111,16 @@ def read_diary_extras(c, pid):
                     )
                 )
             )
+            if (
+                status == "answered"
+                and definition["kind"] == "effects"
+                and isinstance(answer, dict)
+            ):
+                text = (
+                    ", ".join(answer.get("effects", []))
+                    + ". Основное: "
+                    + answer.get("primary", "")
+                )
             attachment_ids = (
                 answer
                 if definition["kind"] in ("file", "voice") and isinstance(answer, list)
@@ -140,6 +150,20 @@ def read_diary_extras(c, pid):
             comment=detail["comment"] if detail else "",
             discuss=bool(detail["discuss"]) if detail else False,
             attachment_ids=attachment_ids,
+            effect_note=(
+                answer.get("note", "")
+                if detail
+                and isinstance(answer, dict)
+                and definition["kind"] == "effects"
+                else ""
+            ),
+            medicine_context=(
+                answer.get("medicine_context", [])
+                if detail
+                and isinstance(answer, dict)
+                and definition["kind"] == "effects"
+                else []
+            ),
         )
         history.setdefault(did, []).append(item)
         latest[mid] = item
