@@ -97,15 +97,15 @@ def test_manual_card_is_a_real_shared_catalogue_entry_and_keeps_old_rows(client)
     assert page.status_code == 200 and data["name"] in page.text
 
 
-def test_empty_optional_metadata_does_not_allow_duplicate_cards(client):
+def test_same_name_and_missing_metadata_do_not_block_another_card(client):
     login(client, "doctor")
     data = form(client, form="", strength="", manufacturer="")
     assert client.post("/medicines/new/save", data=data).status_code == 200
     duplicate = data | {"client_token": secrets.token_urlsafe(24)}
     result = client.post("/medicines/new/save", data=duplicate)
-    assert result.status_code == 409 and "уже есть в каталоге" in result.text
+    assert result.status_code == 200
     with connect(client.app.state.db_path) as c:
-        assert len(lib.current(c, "drug")) == 13
+        assert len(lib.current(c, "drug")) == 14
 
 
 def test_link_fetch_reads_real_adapter_output_before_explicit_save(client, monkeypatch):
@@ -281,7 +281,7 @@ def test_patient_csrf_and_unexpected_fields_cannot_create_a_drug(client):
         == 422
     )
     assert (
-        client.post("/medicines/new/save", data=data | {"inn": ""}).status_code == 422
+        client.post("/medicines/new/save", data=data | {"inn": ""}).status_code == 200
     )
     login(client, "patient1")
     assert client.get("/medicines/new").status_code == 403

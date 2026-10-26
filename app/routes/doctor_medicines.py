@@ -62,3 +62,18 @@ def register_doctor_medicines(app, db, account, doctor_access, csrf_check, rende
                 raise
             return page(request, dict(form), error=exc.detail, status=exc.status_code)
         return RedirectResponse("/medicines/" + code.lower(), status_code=303)
+
+    @app.post("/medicines/{code}/delete")
+    async def remove(request: Request, code: str):
+        doctor_access(request)
+        form = await request.form(max_files=0, max_fields=2)
+        csrf_check(request, str(form.get("csrf", "")))
+        with db() as c:
+            c.execute("BEGIN IMMEDIATE")
+            service.remove(c, account(request), code.upper())
+        request.session["medicine_comparison"] = [
+            item
+            for item in request.session.get("medicine_comparison", [])
+            if item != code.upper()
+        ]
+        return RedirectResponse("/medicines?deleted=1", status_code=303)

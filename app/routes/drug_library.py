@@ -38,9 +38,7 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
         doctor_access(request)
         with db() as c:
             drugs = lib.search(c, q[:200], group, status)
-            groups = sorted(
-                {d["group"] for d in lib.current(c, "drug").values() if d.get("group")}
-            )
+            groups = sorted({d["group"] for d in lib.search(c) if d.get("group")})
         return render(
             request,
             "medicines.html",
@@ -236,7 +234,8 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
             drugs = lib.current(c, "drug")
             if len(selected) > 20 or any(d not in drugs for d in selected):
                 lib.fail("Некорректный набор для проверки")
-            if action == "add" and code in drugs:
+            selected = [d for d in selected if not drugs[d].get("archived")]
+            if action == "add" and code in drugs and not drugs[code].get("archived"):
                 selected = list(dict.fromkeys(selected + [code]))
             elif action == "remove" and code in drugs:
                 selected = [d for d in selected if d != code]
@@ -296,9 +295,10 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
 
                 patient(c, account(request), draft_patient)
             if len(codes) > 20 or any(
-                code not in {d["code"] for d in drugs} for code in codes
+                code not in lib.current(c, "drug") for code in codes
             ):
                 lib.fail("Неизвестный препарат в наборе")
+            codes = [code for code in codes if code in {d["code"] for d in drugs}]
             if len(codes) >= 2:
                 results = lib.check_pairs(c, codes)
         target = "/medicines/combinations?" + urlencode(
@@ -477,6 +477,11 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
             request,
             "medicine_card.html",
             drug=drug,
+            can_remove=bool(
+                drug.get("reference_override")
+                and drug.get("created_by") == account(request)["id"]
+                and not drug.get("archived")
+            ),
             refs=refs,
             facts=facts,
             fields=lib.FIELDS,

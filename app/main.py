@@ -264,8 +264,6 @@ def create_app(db_path=None):
 
     @app.get("/")
     def home(request: Request):
-        if request.session.get("account_id") and account(request)["role"] == "patient":
-            return RedirectResponse("/me", status_code=303)
         return render(request, "home.html", **public_forum_data(db))
 
     @app.get("/login/{portal}")

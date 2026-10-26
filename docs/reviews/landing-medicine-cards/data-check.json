@@ -1,0 +1,11 @@
+{
+  "working_database_byte_identical": true,
+  "accounts_passwords_patients_and_assignments_preserved": true,
+  "no_new_migrations": true,
+  "original_requirement_rows_and_cells_preserved": 806,
+  "final_targeted_passed": 9,
+  "prior_extended_passed": 94,
+  "full_post_fix_rerun": false,
+  "browser_deletion_completed": false,
+  "live_external_site_success_tested": false
+}

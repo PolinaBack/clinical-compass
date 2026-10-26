@@ -13,6 +13,13 @@ def draft_context(c, path, user, patient_id, *, version=None, add=()):
     patient = drafts.patient(c, user, patient_id)
     current = drafts.read(c, path, user, patient_id, version)
     drugs = library.search(c)
+    active_codes = {d["code"] for d in drugs}
+    selected_codes = {item["code"] for item in current["items"]}
+    drugs += [
+        d
+        for d in library.search(c, include_archived=True)
+        if d.get("archived") and d["code"] in selected_codes
+    ]
     tolerability = (
         current.get("tolerability", {})
         if version is not None
@@ -48,7 +55,7 @@ def draft_context(c, path, user, patient_id, *, version=None, add=()):
         }
     selected = {item["code"]: item for item in current["items"]}
     for code in add:
-        if code not in {d["code"] for d in drugs}:
+        if code not in active_codes:
             raise HTTPException(422, "Препарат отсутствует в справочнике")
         if version is None:
             selected.setdefault(code, dict(code=code))

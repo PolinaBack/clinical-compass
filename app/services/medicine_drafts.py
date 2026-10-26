@@ -162,7 +162,20 @@ def save(c, path, user, pid, form):
     except (ValueError, TypeError):
         raise HTTPException(422, "Обновите страницу черновика") from None
     drugs = {d["code"]: d for d in library.search(c)}
+    old = read(c, path, user, pid)
+    archived = {
+        d["code"]: d
+        for d in library.search(c, include_archived=True)
+        if d.get("archived")
+    }
+    for item in old["items"]:
+        if item["code"] in archived:
+            drugs[item["code"]] = archived[item["code"]]
     items = parse(form, drugs)
+    old_references = {item["code"]: item["reference"] for item in old["items"]}
+    for item in items:
+        if item["code"] in archived:
+            item["reference"] = old_references[item["code"]]
     from app.services import adverse_reactions
 
     tolerability = adverse_reactions.preference_snapshot(c, pid, path)
@@ -171,7 +184,6 @@ def save(c, path, user, pid, form):
         item["preference_matches"] = adverse_reactions.matches(
             registry, item["code"], tolerability
         )
-    old = read(c, path, user, pid)
     if revision != old["revision"]:
         raise HTTPException(
             409,

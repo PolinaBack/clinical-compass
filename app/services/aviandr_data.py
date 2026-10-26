@@ -368,7 +368,7 @@ def collect(c, path, user, pid):
         shared = dict(
             id=plan["id"], created_at=plan["created_at"], items=value.get("items", [])
         )
-    drugs = {d["code"]: d for d in drug_library.search(c)}
+    drugs = {d["code"]: d for d in drug_library.search(c, include_archived=True)}
     therapy = []
     for f in facts:
         if f["kind"] == "therapy":

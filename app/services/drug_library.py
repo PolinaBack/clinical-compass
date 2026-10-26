@@ -640,7 +640,7 @@ def sources(c, code=None, include_inactive=False):
     return result
 
 
-def search(c, q="", group="", status=""):
+def search(c, q="", group="", status="", *, include_archived=False):
     from app.services.medicine_reference import enrich
 
     drugs = current(c, "drug")
@@ -648,6 +648,8 @@ def search(c, q="", group="", status=""):
     words = normalize(q).split()
     result = []
     for code, d in drugs.items():
+        if d.get("archived") and not include_archived:
+            continue
         d = enrich(d)
         hay = normalize(
             " ".join(

@@ -100,6 +100,7 @@ def enrich(drug):
             **{
                 k: drug.get(k) or "Не указано"
                 for k in (
+                    "inn",
                     "manufacturer",
                     "form",
                     "strength",

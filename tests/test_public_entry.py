@@ -62,3 +62,10 @@ def test_patient_still_enters_own_current_cabinet(client):
     assert 'class="portal-shell signed-in patient-space' in page.text
     assert "/static/interface.css?" in page.text
     assert client.get("/patients/2/diary").status_code == 403
+    home = client.get("/", follow_redirects=False)
+    assert home.status_code == 200
+    assert_public(home)
+    assert 'href="/login/patient">Я пациент</a>' in home.text
+    assert 'href="/login/specialist">Я специалист</a>' in home.text
+    assert 'class="landing-hero"' in home.text
+    assert "Не обязательно" in home.text and "в одиночку." in home.text

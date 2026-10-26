@@ -45,16 +45,13 @@ def values(form):
                 422, "Слишком длинное или неверное значение поля карточки"
             )
         result[key] = value.strip()
-    if not result["name"] or not result["inn"]:
-        raise HTTPException(
-            422, "Укажите название препарата и МНН / действующее вещество"
-        )
+    result["name"] = result["name"] or "Лекарство без названия"
     if result["source_url"]:
         checked_url(result["source_url"])
     return result
 
 
-def save(c, user, form):
+def doctor(c, user):
     active = c.execute(
         "SELECT * FROM accounts WHERE id=? AND active=1", (user["id"],)
     ).fetchone()
@@ -64,6 +61,10 @@ def save(c, user, form):
         or active["auth_version"] != user["auth_version"]
     ):
         raise HTTPException(403, "Лекарство добавляет специалист")
+
+
+def save(c, user, form):
+    doctor(c, user)
     data = values(form)
     token = form.get("client_token", "")
     if not isinstance(token, str) or not 20 <= len(token) <= 100:
@@ -83,25 +84,6 @@ def save(c, user, form):
                 409, "Эта форма уже сохранена с другими данными. Откройте новую форму"
             )
         return code
-    identity = tuple(
-        library.normalize(data[k])
-        for k in ("name", "inn", "form", "strength", "manufacturer")
-    )
-    for value in library.search(c):
-        # Display defaults such as «Не указано» are not part of the identity.
-        if value.get("reference_override"):
-            value = existing[value["code"]]
-        if (
-            tuple(
-                library.normalize(value.get(k, ""))
-                for k in ("name", "inn", "form", "strength", "manufacturer")
-            )
-            == identity
-        ):
-            raise HTTPException(
-                409,
-                "Такая карточка уже есть в каталоге; существующие сведения не изменены",
-            )
     reference = dict(
         sections=[
             dict(
@@ -123,10 +105,17 @@ def save(c, user, form):
         code=code,
         substance=data["inn"],
         created_by=user["id"],
+        source_url=data["source_url"],
         reference_override=reference,
     )
+    ident = write(c, user, code, drug, content, "new")
+    audit(c, user["id"], "doctor_medicine_added", object_id=ident)
+    return code
+
+
+def write(c, user, code, drug, content, status):
     payload = dict(entities=[["drug", code, drug]], sheets={})
-    change = dict(kind="drug", key=code, status="new", before=None, after=drug)
+    change = dict(kind="drug", key=code, status=status, before=None, after=drug)
     base = c.execute(
         "SELECT coalesce(max(id),0) FROM drug_imports WHERE committed_at IS NOT NULL"
     ).fetchone()[0]
@@ -137,7 +126,7 @@ def save(c, user, form):
         "INSERT INTO drug_imports(kind,filename,sha256,content,payload,report,actor_id,created_at) VALUES('library',?,?,?,?,?,?,?)",
         (
             f"doctor-card-{code}.json",
-            checksum,
+            hashlib.sha256(content).hexdigest(),
             content,
             library.dump(payload),
             library.dump(report),
@@ -146,5 +135,19 @@ def save(c, user, form):
         ),
     ).lastrowid
     library.commit(c, ident)
-    audit(c, user["id"], "doctor_medicine_added", object_id=ident)
-    return code
+    return ident
+
+
+def remove(c, user, code):
+    doctor(c, user)
+    drug = library.current(c, "drug").get(code)
+    if not drug:
+        raise HTTPException(404, "Карточка не найдена")
+    if not drug.get("reference_override") or drug.get("created_by") != user["id"]:
+        raise HTTPException(403, "Удалить добавленную карточку может её автор")
+    if drug.get("archived"):
+        return
+    drug.pop("_import", None)
+    drug.update(archived=True, archived_by=user["id"], archived_at=now())
+    ident = write(c, user, code, drug, library.dump(drug).encode("utf-8"), "changed")
+    audit(c, user["id"], "doctor_medicine_removed", object_id=ident)
