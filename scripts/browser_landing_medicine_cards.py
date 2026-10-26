@@ -54,7 +54,9 @@ def check_landing_medicine_cards(page, url):
             )
             audits.append(dict(width=width, violations=violations))
             assert not violations, audits[-1]
-    page.locator("#medicine-resource summary").click()
+    page.locator("#medicine-resource").get_by_text(
+        "Удалить лекарство из библиотеки", exact=True
+    ).click()
     page.locator("#medicine-resource").get_by_role(
         "button", name="Удалить из библиотеки", exact=True
     ).click()

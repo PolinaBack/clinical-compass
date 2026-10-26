@@ -4,11 +4,15 @@
 {% if error %}<p class="medicine-notice" role="alert">{{ error }}</p>{% endif %}
 <section class="card"><h2>По ссылке</h2><form method="post" action="/medicines/new/fetch"><input type="hidden" name="csrf" value="{{ csrf }}"><label>Ссылка на страницу препарата<input type="url" name="source_url" required maxlength="2000" placeholder="https://…" value="{{ values.get('source_url','') }}"></label><button>Получить данные по ссылке</button></form><p class="caption">Поддерживаются доступные HTML-страницы. Защита сайта или загрузка через JavaScript могут помешать чтению; в таком случае заполните поля ниже.</p></section>
 <section class="card"><h2>Сведения о препарате</h2><p>Можно сохранить всё, что удалось получить. МНН и остальные неизвестные сведения заполнять необязательно; название может состоять из одного слова.</p>
-<form method="post" action="/medicines/new/save" data-new-medicine><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="client_token" value="{{ client_token }}"><input type="hidden" name="source_url" value="{{ values.get('source_url','') }}">
-<div class="medicine-new-grid">{% for key,label in metadata.items() %}<label>{{ label }}<input name="{{ key }}" value="{{ values.get(key,'') }}" maxlength="500"></label>{% endfor %}</div>
-{% if values.get('source_url') %}<p class="caption">Получено со страницы: {{ values.source_url }}. Проверьте, что сведения относятся к нужному препарату и форме.</p>{% endif %}
-{% for key,title in sections.items() %}<details class="medicine-new-section" {% if values.get('section_'+key) %}open{% endif %}><summary>{{ title }}</summary><label><span class="sr-only">{{ title }}</span><textarea name="section_{{ key }}" rows="5" maxlength="15000">{{ values.get('section_'+key,'') }}</textarea></label></details>{% endfor %}
+<form method="post" action="/medicines/new/save" data-new-medicine><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="client_token" value="{{ client_token }}">
+<div class="medicine-new-grid">{% for key,label in metadata.items() %}<label>{{ label }}<textarea name="{{ key }}" rows="2">
+{{ values.get(key,'') }}</textarea></label>{% endfor %}</div>
+<label>Ресурс / ссылка<textarea name="source_url" rows="2">
+{{ values.get('source_url','') }}</textarea></label>
+{% for key,title in sections.items() %}<details class="medicine-new-section" {% if values.get('section_'+key) %}open{% endif %}><summary>{{ title }}</summary><label><span class="sr-only">{{ title }}</span><textarea name="section_{{ key }}" rows="5">
+{{ values.get('section_'+key,'') }}</textarea></label></details>{% endfor %}
+<details class="medicine-new-section"><summary>Полученный текст / дополнительные сведения</summary><label><span class="sr-only">Полученный текст / дополнительные сведения</span><textarea name="source_text" rows="10">
+{{ values.get('source_text','') }}</textarea></label></details>
 <p class="medicine-notice">Сведения из ссылки и ручные записи требуют проверки специалистом. Сохранение карточки не назначает препарат и не добавляет проверенные правила для ИИ.</p>
 <div class="medicine-actions"><button>Сохранить карточку</button><a class="button medicine-secondary" href="/medicines">Вернуться к препаратам</a></div></form></section>
-{% if excerpt %}<details class="card"><summary>Извлечённый текст страницы</summary><p class="medicine-preserve">{{ excerpt }}</p></details>{% endif %}
 {% endblock %}

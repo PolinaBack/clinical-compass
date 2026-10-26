@@ -41,7 +41,11 @@ def register_doctor_medicines(app, db, account, doctor_access, csrf_check, rende
         try:
             html, final_url = await run_in_threadpool(medicine_web.fetch, url)
             values, excerpt = await run_in_threadpool(medicine_web.parse, html)
-            return page(request, {**values, "source_url": final_url}, excerpt=excerpt)
+            return page(
+                request,
+                {**values, "source_url": final_url, "source_text": excerpt},
+                excerpt=excerpt,
+            )
         except HTTPException as exc:
             if exc.status_code != 422:
                 raise
@@ -51,7 +55,9 @@ def register_doctor_medicines(app, db, account, doctor_access, csrf_check, rende
     async def save(request: Request):
         doctor_access(request)
         user = account(request)
-        form = await request.form(max_files=0, max_fields=40)
+        form = await request.form(
+            max_files=0, max_fields=40, max_part_size=float("inf")
+        )
         csrf_check(request, str(form.get("csrf", "")))
         try:
             with db() as c:

@@ -1,0 +1,14 @@
+{
+  "working_database_byte_identical": true,
+  "patients_accounts_passwords_and_assignments_unchanged": true,
+  "new_migrations": false,
+  "original_requirement_rows_and_cells_preserved": 806,
+  "pytest_passed": 29,
+  "form_encodings": [
+    "urlencoded",
+    "multipart"
+  ],
+  "text_field_over_one_MiB_preserved": true,
+  "browser_tested": false,
+  "real_external_site_success_tested": false
+}

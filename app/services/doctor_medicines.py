@@ -2,7 +2,7 @@
 
 import hashlib
 from app.services import drug_library as library
-from app.services.medicine_web import SECTIONS, checked_url
+from app.services.medicine_web import SECTIONS
 from app.services.clinical_forms import today
 from app.storage import now, audit
 from fastapi import HTTPException
@@ -26,6 +26,7 @@ def values(form):
         "csrf",
         "client_token",
         "source_url",
+        "source_text",
         *METADATA,
         *("section_" + k for k in SECTIONS),
     }
@@ -34,20 +35,16 @@ def values(form):
             422, "Проверьте поля карточки; повторяющиеся значения не принимаются"
         )
     result = {}
-    for key in [*METADATA, *("section_" + k for k in SECTIONS), "source_url"]:
+    for key in [
+        *METADATA,
+        *("section_" + k for k in SECTIONS),
+        "source_url",
+        "source_text",
+    ]:
         value = form.get(key, "")
-        if not isinstance(value, str) or len(value) > (
-            15000
-            if key.startswith("section_")
-            else 2000 if key == "source_url" else 500
-        ):
-            raise HTTPException(
-                422, "Слишком длинное или неверное значение поля карточки"
-            )
-        result[key] = value.strip()
-    result["name"] = result["name"] or "Лекарство без названия"
-    if result["source_url"]:
-        checked_url(result["source_url"])
+        if not isinstance(value, str):
+            raise HTTPException(422, "Поля карточки принимают текст")
+        result[key] = value
     return result
 
 
@@ -95,7 +92,7 @@ def save(c, user, form):
             for k, title in SECTIONS.items()
         ],
         reactions=[],
-        links=[data["source_url"]] if data["source_url"] else [],
+        links=[data["source_url"]] if library.safe_url(data["source_url"]) else [],
         reference_date=today().isoformat(),
         revision="doctor-card-v1",
         discrepancy="Карточка добавлена специалистом. Содержание не становится проверенной официальной инструкцией автоматически.",
@@ -106,6 +103,7 @@ def save(c, user, form):
         substance=data["inn"],
         created_by=user["id"],
         source_url=data["source_url"],
+        source_text=data["source_text"],
         reference_override=reference,
     )
     ident = write(c, user, code, drug, content, "new")

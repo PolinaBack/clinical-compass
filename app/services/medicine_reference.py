@@ -97,6 +97,11 @@ def enrich(drug):
     if drug.get("reference_override"):
         return {
             **drug,
+            "name": (
+                drug.get("name")
+                if drug.get("name", "").strip()
+                else "Лекарство без названия"
+            ),
             **{
                 k: drug.get(k) or "Не указано"
                 for k in (

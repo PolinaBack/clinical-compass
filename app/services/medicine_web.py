@@ -357,15 +357,11 @@ def parse(html):
     }.items():
         if result.get(key):
             continue
-        match = re.search(
-            r"(?:" + labels + r")\s*:?\s*\n?\s*([^\n]{1,200})", plain, re.I
-        )
+        match = re.search(r"(?:" + labels + r")\s*:?\s*\n?\s*([^\n]+)", plain, re.I)
         if match:
             result[key] = match[1].strip()
     for key, parts in page.sections.items():
-        result["section_" + key] = re.sub(r"\n\s*\n+", "\n", "".join(parts)).strip()[
-            :15000
-        ]
+        result["section_" + key] = re.sub(r"\n\s*\n+", "\n", "".join(parts)).strip()
     if result.get("section_group"):
-        result["group"] = result["section_group"][:300]
-    return result, plain.strip()[:20000]
+        result["group"] = result["section_group"]
+    return result, plain.strip()
