@@ -1,0 +1,21 @@
+[
+  {
+    "file": "app/static/journey/seasons-2186c57a9e0d.png",
+    "sha256": "2186c57a9e0d51814bcd19644f71966dac0d2d916d254247c6fabaa74505e174",
+    "width": 2172,
+    "height": 724,
+    "mode": "RGB",
+    "alpha": null
+  },
+  {
+    "file": "app/static/journey/traveler-38542bafe0c0.png",
+    "sha256": "38542bafe0c08546902d839537046ae19b404888c5a67c6e78314bc0fdce6f56",
+    "width": 2172,
+    "height": 724,
+    "mode": "RGBA",
+    "alpha": [
+      0,
+      255
+    ]
+  }
+]

@@ -1,12 +1,13 @@
-.patient-journey{--journey-height:clamp(96px,9.6vw,160px);--traveler-height:clamp(62px,7.1vw,110px);--season-y:66.666667%;--traveler-x:66.666667%;max-width:1680px;padding:8px 12px 0;margin:0 auto;color:var(--ink)}
-.patient-journey[data-season=spring]{--season-y:0%;--traveler-x:0%}
-.patient-journey[data-season=summer]{--season-y:33.333333%;--traveler-x:33.333333%}
-.patient-journey[data-season=winter]{--season-y:100%;--traveler-x:100%}
+.patient-journey{--journey-height:clamp(60px,5.2vw,84px);--traveler-height:calc(var(--journey-height)*1.04);--season-y:66.666667%;--traveler-x:67.096378%;max-width:1680px;padding:6px 12px 0;margin:0 auto;color:var(--ink)}
+/* The source sprites have transparent margins; these viewports center each complete cutout. */
+.patient-journey[data-season=spring]{--season-y:0%;--traveler-x:5.678330%}
+.patient-journey[data-season=summer]{--season-y:33.333333%;--traveler-x:36.187845%}
+.patient-journey[data-season=winter]{--season-y:100%;--traveler-x:99.201965%}
 .patient-journey .journey-caption{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 5px 5px;font-size:12px;line-height:1.35;color:#53485f}
 .journey-caption [data-journey-title]{font-weight:650}.journey-caption [data-journey-counter]{text-align:right;font-variant-numeric:tabular-nums}
-.journey-scene{position:relative;isolation:isolate;height:var(--journey-height);overflow:hidden;border-radius:24px;background:#dcdfb5 url('journey/seasons-4e26c277d67c.png') center var(--season-y)/auto 400% no-repeat;box-shadow:inset 0 0 0 1px #3b443a12}
+.journey-scene{position:relative;isolation:isolate;height:var(--journey-height);overflow:hidden;border-radius:20px;background:#dcdfb5 url('journey/seasons-2186c57a9e0d.png') center var(--season-y)/auto 400% no-repeat;box-shadow:inset 0 0 0 1px #3b443a12}
 .journey-runway{position:absolute;inset:0 calc(var(--traveler-height)*.375 + 9px)}
-.journey-walker{position:absolute;left:var(--journey-position);top:72%;height:var(--traveler-height);width:calc(var(--traveler-height)*.75);transform:translate(-50%,-100%);background:url('journey/traveler-cf249a04c66c.png') var(--traveler-x) center/400% 100% no-repeat;image-rendering:auto;transition:left .9s linear;filter:drop-shadow(0 3px 2px #1c302c28)}
+.journey-walker{position:absolute;left:var(--journey-position);top:93%;height:var(--traveler-height);width:calc(var(--traveler-height)*.75);transform:translate(-50%,-100%);background:url('journey/traveler-38542bafe0c0.png') var(--traveler-x) center/400% 100% no-repeat;image-rendering:auto;transition:left .9s linear;filter:drop-shadow(0 2px 1px #1c302c28)}
 .patient-journey #journey-explanation{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .journey-fill{display:none}
 html:has([data-diary-journey]){scroll-padding-top:var(--patient-header-offset,210px)}

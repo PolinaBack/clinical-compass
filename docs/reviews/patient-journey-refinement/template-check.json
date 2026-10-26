@@ -1,0 +1,34 @@
+{
+  "patient_tabs": [
+    {
+      "route": "/patients/{pid}/diary",
+      "params": {}
+    },
+    {
+      "route": "/patients/{pid}/profile/{section}",
+      "params": {
+        "section": "about"
+      }
+    },
+    {
+      "route": "/patients/{pid}/profile/{section}",
+      "params": {
+        "section": "assessments"
+      }
+    },
+    {
+      "route": "/patients/{pid}/results",
+      "params": {}
+    },
+    {
+      "route": "/patients/{pid}/profile/extracts",
+      "params": {}
+    }
+  ],
+  "profile_redirect_to_about": true,
+  "counter_from_saved_diary": true,
+  "above_navigation": true,
+  "doctor_unchanged": true,
+  "mode": "direct route and template rendering; no HTTP middleware or browser",
+  "synthetic_database": true
+}
