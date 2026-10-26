@@ -35,22 +35,15 @@ def test_request_is_scoped_idempotent_and_private_until_submission(client):
     assert "По просьбе врача" in client.get("/patients/1/profile/about").text
     assert "По просьбе врача" in client.get("/patients/1/profile/assessments").text
     assert save(client, "medicines", a_current="Нет").status_code == 200
-    assert all(
-        r["answered_at"] is None
-        for r in records(client, "patient_information_requests")
-    )
+    requests = records(client, "patient_information_requests")
+    assert requests[0]["answered_at"] and requests[1]["answered_at"] is None
     login(client, "doctor")
-    assert (
-        "Пациент ещё не отправил первичный анамнез"
-        in client.get("/patients/1/profile").text
-    )
+    assert "Ответ по запросу врача" in client.get("/patients/1/profile").text
     login(client, "patient1")
-    assert send(client).status_code == 200
     requests = records(client, "patient_information_requests")
     assert requests[0]["answered_at"] and requests[0]["submission_id"]
     assert requests[1]["answered_at"] is None  # Medicines are not an allergy answer.
     assert save(client, "medicines", a_reactions="Нет").status_code == 200
-    assert send(client).status_code == 200
     assert all(
         r["answered_at"] for r in records(client, "patient_information_requests")
     )

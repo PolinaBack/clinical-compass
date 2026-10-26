@@ -454,9 +454,10 @@ def create_app(db_path=None):
         )
         with db() as c:
             extras = read_diary_extras(c, pid)
-            from .services.information_requests import listing
+            from .services.information_requests import listing, states
 
             information_requests = listing(c, account(request), pid)
+            information_request_states = states(c, account(request), pid)
         return dict(
             patient=p,
             today=clinical_today().isoformat(),
@@ -464,6 +465,7 @@ def create_app(db_path=None):
             consent=has_consent(pid),
             assessment_data=overview(db, pid),
             information_requests=information_requests,
+            information_request_states=information_request_states,
             latest_diary=max(
                 data["diary"], key=lambda r: (r["day"], r["id"]), default=None
             ),

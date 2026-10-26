@@ -1,0 +1,20 @@
+{
+  "browser": "Chromium",
+  "section_explicit_save": "passed",
+  "entity_explicit_save": "passed",
+  "both_autosaves_stay_private": true,
+  "only_matching_topic_closes": true,
+  "doctor_open_tab_updates": true,
+  "patient_open_tab_removes_notice_and_badges": true,
+  "private_personal_draft_not_shared": true,
+  "widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "horizontal_overflow": [],
+  "javascript_errors": [],
+  "synthetic_database": true,
+  "restart_preserved_completion_and_private_draft": true
+}

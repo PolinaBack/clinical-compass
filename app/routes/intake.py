@@ -122,6 +122,15 @@ def intake_context(c, user, pid, view="summary", submission_id=None):
 
 
 def register_intake(app, db, account, access, csrf_check, render, patient_context):
+    @app.get("/api/patients/{pid}/information-requests")
+    def information_status(request: Request, pid: int):
+        access(request, pid)
+        from app.services.information_requests import packet
+
+        with db() as c:
+            value = packet(c, account(request), pid)
+        return JSONResponse(value, headers={"Cache-Control": "no-store"})
+
     @app.post("/patients/{pid}/information-requests")
     async def information_request(request: Request, pid: int):
         user = account(request)
@@ -221,6 +230,12 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
         with db() as c:
             c.execute("BEGIN IMMEDIATE")
             revision = service.save_category(c, pid, account(request), category, form)
+            sent_topics = []
+            if "application/json" not in request.headers.get("accept", ""):
+                from app.services.information_requests import send_saved_section
+
+                sent_topics = send_saved_section(c, account(request), pid, category)
+                revision = service.draft(c, pid)["revision"]
             snapshot = service.snapshot(c, pid)
             calculations = service.computations(snapshot)
             progress = next(
@@ -264,7 +279,9 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
                 pid,
                 "/" + next_category["key"] if next_category else "?view=review",
             )
-        return redirect(pid, "/" + category + "?saved=1")
+        return redirect(
+            pid, "/" + category + ("?requested_sent=1" if sent_topics else "?saved=1")
+        )
 
     @app.get("/patients/{pid}/intake/entities/new/{kind}")
     def new_entity(request: Request, pid: int, kind: str, related: int | None = None):
@@ -338,6 +355,13 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
         with db() as c:
             c.execute("BEGIN IMMEDIATE")
             eid = service.save_entity(c, pid, account(request), kind, form, eid)
+            from app.services.information_requests import send_saved_section
+
+            sent_topics = []
+            if "application/json" not in request.headers.get("accept", ""):
+                sent_topics = send_saved_section(
+                    c, account(request), pid, ENTITY_CATEGORY[kind], kind=kind
+                )
             current = service.draft(c, pid)
             saved_entity = next(e for e in service.entities(c, pid) if e["id"] == eid)
             entity_progress = service.question_progress(
@@ -354,10 +378,13 @@ def register_intake(app, db, account, access, csrf_check, render, patient_contex
                     entity_id=eid,
                     entity_version=version,
                     progress=entity_progress,
+                    information_sent=sent_topics,
                 )
             )
         return RedirectResponse(
-            f"/patients/{pid}/intake/entities/{eid}?saved=1", status_code=303
+            f"/patients/{pid}/intake/entities/{eid}"
+            + ("?requested_sent=1" if sent_topics else "?saved=1"),
+            status_code=303,
         )
 
     @app.post("/patients/{pid}/intake/submit")

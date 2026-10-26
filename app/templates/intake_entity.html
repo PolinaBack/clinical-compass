@@ -10,6 +10,8 @@
 {% else %}{{ fields(entity_fields,entity_answers,'entity',false) }}{% if entity %}{{ review('entity:' ~ entity.id ~ ':' ~ entity.version) }}{% endif %}{% endif %}
 {% if entity_kind in ['condition','symptom','family'] %}{% include 'intake_memory.html' %}{% endif %}
 {% if entity_kind=='family' %}<p><a href="/patients/{{ patient.id }}/profile/family">Открыть связанное семейное дерево</a>. Запись сохраняется как семейный анамнез, а не диагноз пациента.</p>{% endif %}
+{% set request_category=category.key %}{% set request_entity_kind=entity_kind %}{% include 'information_request_notice.html' %}
+{% if request.query_params.get('requested_sent') %}<p role="status" class="success">Ответ по запросу врача отправлен. Остальные черновики не отправлялись.</p>{% endif %}
 {% include 'intake_support.html' %}
 
 {% if not intake_readonly and consent %}<section class="card intake-add-panel"><h2>Добавить связанные сведения</h2><p class="intake-panel-hint">Можно добавить лекарства, посещения и обследования, затем выбрать связь в карточке. Название препарата не используется для угадывания диагноза.</p><div class="intake-add-actions">{% for kind in ['medication','visit','exam'] %}<a class="button secondary" href="/patients/{{ patient.id }}/intake/entities/new/{{ kind }}{% if entity %}?related={{ entity.id }}{% endif %}"><span aria-hidden="true">＋</span> {{ entity_labels[kind] }}</a>{% endfor %}</div></section>{% endif %}

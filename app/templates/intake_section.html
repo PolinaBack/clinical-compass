@@ -12,6 +12,7 @@
 {% include 'intake_category_banner.html' %}
 {% set request_category=category.key %}{% include 'information_request_notice.html' %}
 {% if request.query_params.get('saved') or request.query_params.get('files_saved') %}<p role="status" class="success">Сохранено в черновике.</p>{% endif %}
+{% if request.query_params.get('requested_sent') %}<p role="status" class="success">Ответ по запросу врача отправлен. Остальные черновики не отправлялись.</p>{% endif %}
 {% include 'intake_section_records.html' %}
 {% if not intake_readonly and consent %}
 <form id="intake-answer-form" method="post" action="/patients/{{ patient.id }}/intake/sections/{{ category.key }}" data-intake-autosave>

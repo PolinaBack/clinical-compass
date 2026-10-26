@@ -20,7 +20,7 @@
 {% for c in intake_categories if not c.optional %}
 <a class="intake-category" href="/patients/{{ patient.id }}/{{ 'profile/family' if c.key=='family' else 'profile/about/' ~ c.key }}{% if intake_readonly and intake_submission %}?submission_id={{ intake_submission.id }}{% endif %}" style="--intake-bg:{{ c.bg }};--intake-accent:{{ c.accent }}">
 <div class="intake-category-top"><span class="intake-category-icon">{{ icon(c.icon) }}</span><span class="intake-card-state">{% if not c.total %}Открыть дерево{% elif c.percent==100 %}✓ Заполнено{% elif c.done or c.deferred or c.records or c.file_count %}В процессе{% else %}Не начато{% endif %}</span></div>
-<h3>{{ c.title }}</h3>{% if information_requests|default([])|selectattr('category','equalto',c.key)|list %}<span class="badge">По просьбе врача</span>{% endif %}<p>{{ c.description }}</p>
+<h3>{{ c.title }}</h3>{% if information_requests|default([])|selectattr('category','equalto',c.key)|list %}<span class="badge" data-information-request-category="{{ c.key }}">По просьбе врача</span>{% endif %}<p>{{ c.description }}</p>
 {% if c.total %}<div class="intake-card-progress"><progress class="intake-progress" value="{{ c.percent }}" max="100" aria-label="{{ c.title }}: заполнение">{{ c.percent }}%</progress><span>{{ c.percent }}%</span></div>{% endif %}
 </a>{% endfor %}</div>
 {% elif intake_view in ['summary','review'] or intake_readonly and user!='doctor' %}
