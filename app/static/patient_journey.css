@@ -1,0 +1,18 @@
+.patient-journey{--journey-height:clamp(96px,9.6vw,160px);--traveler-height:clamp(62px,7.1vw,110px);--season-y:66.666667%;--traveler-x:66.666667%;max-width:1680px;padding:8px 12px 0;margin:0 auto;color:var(--ink)}
+.patient-journey[data-season=spring]{--season-y:0%;--traveler-x:0%}
+.patient-journey[data-season=summer]{--season-y:33.333333%;--traveler-x:33.333333%}
+.patient-journey[data-season=winter]{--season-y:100%;--traveler-x:100%}
+.patient-journey .journey-caption{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 5px 5px;font-size:12px;line-height:1.35;color:#53485f}
+.journey-caption [data-journey-title]{font-weight:650}.journey-caption [data-journey-counter]{text-align:right;font-variant-numeric:tabular-nums}
+.journey-scene{position:relative;isolation:isolate;height:var(--journey-height);overflow:hidden;border-radius:24px;background:#dcdfb5 url('journey/seasons-4e26c277d67c.png') center var(--season-y)/auto 400% no-repeat;box-shadow:inset 0 0 0 1px #3b443a12}
+.journey-runway{position:absolute;inset:0 calc(var(--traveler-height)*.375 + 9px)}
+.journey-walker{position:absolute;left:var(--journey-position);top:72%;height:var(--traveler-height);width:calc(var(--traveler-height)*.75);transform:translate(-50%,-100%);background:url('journey/traveler-cf249a04c66c.png') var(--traveler-x) center/400% 100% no-repeat;image-rendering:auto;transition:left .9s linear;filter:drop-shadow(0 3px 2px #1c302c28)}
+.patient-journey #journey-explanation{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.journey-fill{display:none}
+html:has([data-diary-journey]){scroll-padding-top:var(--patient-header-offset,210px)}
+.signed-in.patient-space:has([data-diary-journey]) :is(:target,a,button,input,select,textarea,summary){scroll-margin-top:var(--patient-header-offset,210px)}
+.minimal-ui .journey-scene{height:10px;background:var(--soft);border-radius:9px;box-shadow:none}.minimal-ui .journey-fill{display:block;height:100%;width:var(--journey-position);background:var(--primary);border-radius:inherit}.minimal-ui .journey-runway{display:none}
+@media(max-width:600px){.patient-journey{padding:6px 6px 0}.patient-journey .journey-caption{font-size:11px;gap:6px}.journey-scene{border-radius:17px}}
+@media(min-width:900px){.journey-scene{background-size:100% 400%}}
+@media(prefers-reduced-motion:reduce){.journey-walker{transition:none}}
+@media print{.patient-journey{display:none!important}}

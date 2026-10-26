@@ -11,6 +11,7 @@
         <link rel="stylesheet" href="{{ asset_url('style.css') }}">
         {% if not entry_page %}
         <link rel="stylesheet" href="{{ asset_url('interface.css') }}">
+        {% if patient_journey %}<link rel="stylesheet" href="{{ asset_url('patient_journey.css') }}"><script src="{{ asset_url('patient_journey.js') }}" defer></script>{% endif %}
         <link rel="stylesheet" href="{{ asset_url('diary.css') }}">
         {% if user=='doctor' %}<link rel="stylesheet" href="{{ asset_url('clinician_workspace.css') }}">{% endif %}
         {% if current_page=='/doctor/calendar' %}<script src="{{ asset_url('doctor_calendar.js') }}" defer></script><link rel="stylesheet" href="{{ asset_url('meetings.css') }}"><script src="{{ asset_url('meetings.js') }}" defer></script>{% endif %}
@@ -36,6 +37,7 @@
     <body class="{% if entry_page %}public-entry patient-space{% else %}portal-shell {{ 'signed-in' if user else '' }} {{ 'specialist-space' if user == 'doctor' else 'patient-space' }} {{ 'minimal-ui' if interface_prefs and interface_prefs.minimal else '' }}{% endif %}">
         <a class="skip-link" href="#main">К содержанию</a>
         <header class="site-header">
+            {% if patient_journey and not entry_page %}{% include 'patient_journey.html' %}{% endif %}
             <div class="header-inner">
                 <a class="brand" href="/"><span class="brand-symbol" aria-hidden="true">
                     <svg viewBox="0 0 64 64" aria-hidden="true">

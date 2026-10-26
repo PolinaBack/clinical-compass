@@ -30,6 +30,9 @@ from .routes.diary import register_diary
 from .routes.diary_library import register_diary_library
 from .routes.patient_extracts import register_patient_extracts
 from .routes.extract_requests import register_extract_requests
+from .routes.patient_journey import register_patient_journey
+from .services import patient_journey
+from .services.clinical_forms import today as clinical_today
 from .routes.intake import register_intake
 from .services import diary_questions as questions
 from .services import clinical_attachments as attachment_files
@@ -194,10 +197,11 @@ def create_app(db_path=None):
             if len(location) <= 1024 and local_destination(request, location):
                 request.session["last_html_page"] = location
         interface_prefs = dict(minimal=False, revision=0, cards=[])
+        journey = None
         if request.session.get("account_id"):
             with db() as c:
                 active = c.execute(
-                    "SELECT id FROM accounts WHERE id=? AND active=1 AND auth_version=?",
+                    "SELECT id,role,patient_id FROM accounts WHERE id=? AND active=1 AND auth_version=?",
                     (
                         request.session["account_id"],
                         request.session.get("auth_version"),
@@ -205,7 +209,13 @@ def create_app(db_path=None):
                 ).fetchone()
                 if active:
                     interface_prefs = read_interface(c, active["id"])
-        return templates.TemplateResponse(
+                    if (
+                        active["role"] == "patient"
+                        and request.url.path != "/"
+                        and not request.url.path.startswith("/login")
+                    ):
+                        journey = patient_journey.progress(c, active["patient_id"])
+        response = templates.TemplateResponse(
             request=request,
             name=template,
             context={
@@ -216,9 +226,13 @@ def create_app(db_path=None):
                 "faq_items": FAQ,
                 "current_page": request.url.path,
                 "interface_prefs": interface_prefs,
+                "patient_journey": journey,
                 **context,
             },
         )
+        if journey is not None:
+            response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request, exc):
@@ -445,7 +459,7 @@ def create_app(db_path=None):
             information_requests = listing(c, account(request), pid)
         return dict(
             patient=p,
-            today=date.today().isoformat(),
+            today=clinical_today().isoformat(),
             points=points,
             consent=has_consent(pid),
             assessment_data=overview(db, pid),
@@ -510,6 +524,7 @@ def create_app(db_path=None):
     register_diary(app, db, account, access, csrf_check, render, patient_context)
     register_diary_library(app, db, account, csrf_check, render)
     register_extract_requests(app, db, account, access, csrf_check, render)
+    register_patient_journey(app, db, account)
     register_patient_extracts(app, db, account, access, csrf_check, render)
     register_intake(app, db, account, access, csrf_check, render, patient_context)
     register_portal(
@@ -533,7 +548,7 @@ def create_app(db_path=None):
     ):
         access(request, pid, True)
         csrf_check(request, csrf)
-        if day > date.today() or adherence not in ["taken", "missed", "none"]:
+        if day > clinical_today() or adherence not in ["taken", "missed", "none"]:
             raise HTTPException(422, "Проверьте дату и отметку выполнения назначения")
         quality = sleep_rating(sleep_quality)
         form = await request.form()

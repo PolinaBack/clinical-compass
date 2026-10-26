@@ -1,0 +1,8 @@
+{
+  "working_database_unchanged": true,
+  "original_requirement_rows_unchanged": 806,
+  "changed_python_compilation": "passed",
+  "javascript_syntax": "passed",
+  "generated_assets_hashes_match": true,
+  "schema_migrations_added": false
+}

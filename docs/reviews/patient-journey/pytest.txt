@@ -1,0 +1,43 @@
+............F...............                                             [100%]
+=================================== FAILURES ===================================
+_ test_saved_dates_are_unique_not_scores_or_streaks_and_future_invalid_dates_do_not_count _
+
+store = (<fastapi.applications.FastAPI object at 0x7f3d10d66b10>, PosixPath('/tmp/pytest-of-agent/pytest-124/test_saved_dates_...ersion': 0, 'doctor_id': None, 'id': 2, ...}, 'p2': {'active': 1, 'auth_version': 0, 'doctor_id': None, 'id': 3, ...}})
+
+    def test_saved_dates_are_unique_not_scores_or_streaks_and_future_invalid_dates_do_not_count(
+        store,
+    ):
+        _, path, _ = store
+        reference = date(2026, 10, 26)
+        with connect(path) as c:
+            for day, value, state in [
+                ("2026-10-01", 0, "none"),
+                ("2026-10-01", 10, "taken"),
+                ("2026-10-25", 4, "missed"),
+                ("2026-10-27", 0, "none"),
+                ("2026-02-30", 0, "none"),
+                ("unknown", 0, "none"),
+            ]:
+                insert(c, 1, day, value, state)
+            for index in range(15):
+                insert(c, 2, (reference - timedelta(days=index)).isoformat())
+            original = c.execute("SELECT * FROM diary ORDER BY id").fetchall()
+            result = journey.progress(c, 1, reference)
+            assert result["days"] == result["unique_days"] == 2
+>           assert result["percent"] == pytest.approx(2 / 90 * 100)
+E           assert 2.22222 == 2.2222222222222223 ± 2.2e-06
+E
+E             comparison failed
+E             Obtained: 2.22222
+E             Expected: 2.2222222222222223 ± 2.2e-06
+
+tests/test_patient_journey.py:63: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/starlette/testclient.py:37
+  /workspace/clinical-compass/.venv/lib/python3.12/site-packages/starlette/testclient.py:37: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_patient_journey.py::test_saved_dates_are_unique_not_scores_or_streaks_and_future_invalid_dates_do_not_count
+1 failed, 27 passed, 1 warning in 39.69s

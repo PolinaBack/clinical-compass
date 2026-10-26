@@ -1,0 +1,6 @@
+<section class="patient-journey" data-diary-journey data-patient="{{ session_pid }}" data-season="{{ patient_journey.season }}" data-days="{{ patient_journey.days }}" style="--journey-position:{{ patient_journey.percent }}%" aria-label="Ваш путь по заполнению дневника">
+<p class="journey-caption"><span data-journey-title>{{ patient_journey.season_title }}</span><span data-journey-counter>{{ patient_journey.days }} из {{ patient_journey.goal }} дней{% if patient_journey.complete %} · путь пройден{% endif %}</span></p>
+<div class="journey-scene" role="progressbar" aria-label="Заполненные дни дневника" aria-valuemin="0" aria-valuemax="90" aria-valuenow="{{ patient_journey.days }}" aria-valuetext="{{ patient_journey.value_text }}" aria-describedby="journey-explanation">
+<div class="journey-fill" aria-hidden="true"></div><div class="journey-runway" aria-hidden="true"><span class="journey-walker"></span></div>
+</div><p class="visually-hidden" id="journey-explanation">Каждый отдельный день с сохранённой записью дневника — один равный шаг. Полный путь — 90 дней. Пропуски и смена сезона сохраняют накопленный прогресс.</p>
+</section>

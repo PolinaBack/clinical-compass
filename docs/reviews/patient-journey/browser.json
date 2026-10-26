@@ -1,0 +1,36 @@
+{
+  "browser": "Chromium",
+  "visual_season_states": [
+    "spring",
+    "summer",
+    "autumn",
+    "winter"
+  ],
+  "season_screenshots": "CSS states exercised; calendar mapping covered by unit tests",
+  "widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "header_above_navigation": true,
+  "real_diary_save_advances_one_step": true,
+  "duplicate_date_does_not_advance": true,
+  "unsaved_fields_do_not_advance": true,
+  "equal_steps_pixels": [
+    14.671875,
+    14.6875
+  ],
+  "live_refresh_from_api": true,
+  "offline_keeps_saved_progress": true,
+  "reduced_motion": true,
+  "minimal_view": true,
+  "no_javascript": true,
+  "hidden_in_print": true,
+  "public_and_doctor_unchanged": true,
+  "horizontal_overflow": [],
+  "javascript_errors": [],
+  "asset_errors": [],
+  "axe_violations": [],
+  "synthetic_database": true
+}
