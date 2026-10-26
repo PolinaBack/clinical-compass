@@ -10,17 +10,11 @@
       const state = data.states[box.dataset.informationRequestControl];
       if (!['received','pending','empty'].includes(state) || state === box.dataset.informationState) return;
       box.dataset.informationState = state;
-      if (state === 'received') {
-        const note = document.createElement('p'); note.className = 'information-request-received'; note.textContent = 'Ответ получен';
-        const link = document.createElement('a'); link.href = `/patients/${pid}/profile/about/${box.dataset.category}`; link.textContent = 'Открыть сведения';
-        box.replaceChildren(note,link);
-      } else {
-        const form = document.createElement('form'); form.method = 'post'; form.action = `/patients/${pid}/information-requests`; form.className = 'information-request-form';
-        for (const [name,value] of [['csrf',document.querySelector('meta[name=csrf-token]')?.content || ''],['topic',box.dataset.informationRequestControl]]) {
-          const input = document.createElement('input'); input.type = 'hidden'; input.name = name; input.value = value; form.append(input);
-        }
-        const button = document.createElement('button'); button.type = 'submit'; button.disabled = state === 'pending'; button.textContent = state === 'pending' ? 'Запрос отправлен' : 'Запросить у пациента'; form.append(button); box.replaceChildren(form);
+      const form = document.createElement('form'); form.method = 'post'; form.action = `/patients/${pid}/information-requests`; form.className = 'information-request-form';
+      for (const [name,value] of [['csrf',document.querySelector('meta[name=csrf-token]')?.content || ''],['topic',box.dataset.informationRequestControl]]) {
+        const input = document.createElement('input'); input.type = 'hidden'; input.name = name; input.value = value; form.append(input);
       }
+      const button = document.createElement('button'); button.type = 'submit'; button.disabled = state === 'pending'; button.textContent = state === 'pending' ? 'Запрос отправлен' : 'Запросить у пациента'; form.append(button); box.replaceChildren(form);
     });
     const pending = new Set(data.pending.map(item => String(item.id)));
     notices.forEach(notice => {

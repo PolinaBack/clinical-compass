@@ -53,8 +53,19 @@ def test_request_is_scoped_idempotent_and_private_until_submission(client):
         assert "По просьбе врача" not in restarted.get("/patients/1/profile/about").text
         assert len(records(restarted, "patient_information_requests")) == 2
     login(client, "doctor")
+    page = client.get("/patients/1/profile")
+    assert "Ответ получен" not in page.text
+    assert page.text.count('class="information-request-form"') == 4
     assert request_info(client).status_code == 200
     assert len(records(client, "patient_information_requests")) == 3
+    login(client, "patient1")
+    assert "По просьбе врача" in client.get("/patients/1/profile/about").text
+    assert save(client, "medicines", a_current="Нет").status_code == 200
+    assert all(
+        r["answered_at"] for r in records(client, "patient_information_requests")
+    )
+    assert len(records(client, "intake_submissions")) == 2
+    login(client, "doctor")
     with connect(client.app.state.db_path) as c:
         c.execute("INSERT INTO doctors(id,name) VALUES(2,'Другой врач')")
         c.execute("UPDATE patients SET doctor_id=2 WHERE id=2")

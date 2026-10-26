@@ -1,6 +1,7 @@
 """Saved requested sections are delivered without publishing unrelated drafts."""
 
 import json
+import re
 from app.services import intake
 from app.storage import connect
 from tests.helpers import login, token
@@ -61,7 +62,12 @@ def test_saved_requested_medicines_close_both_views_without_sending_personal_hea
         'data-information-request-control="medicines" data-information-state="received"'
         in page.text
     )
-    assert "Открыть сведения" in page.text and "Ответ по запросу врача" in page.text
+    control = re.search(
+        r'data-information-request-control="medicines".*?</div>', page.text, re.S
+    ).group()
+    assert control.count("<button") == 1 and "Запросить у пациента" in control
+    assert "disabled" not in control and "<a " not in control
+    assert "Ответ получен" not in control and "Ответ по запросу врача" in page.text
 
 
 def test_async_drafts_stay_private_until_explicit_section_save_and_later_full_submission_still_sends_other_changes(
