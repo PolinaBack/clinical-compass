@@ -4,6 +4,8 @@ import secrets
 from fastapi import HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from app.services import patient_extracts as service
+from app.services import extract_requests
+from app.routes.extract_requests import shelf_context
 from app.services.clinical_forms import today
 from app.storage import audit
 
@@ -24,6 +26,11 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
         form_revision=None,
     ):
         data = data or doc["data"]
+        with db() as c:
+            linked = c.execute(
+                "SELECT id FROM extract_requests WHERE patient_id=? AND document_id=?",
+                (pid, doc["id"]),
+            ).fetchone()
         try:
             calculations = service.calculations(data)
         except (ValueError, TypeError, ArithmeticError, HTTPException):
@@ -47,6 +54,7 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
             conflict=conflict,
             form_revision=form_revision or doc["revision"],
             today=today().isoformat(),
+            extract_request_id=linked["id"] if linked else None,
         )
         response.status_code = status
         response.headers["Cache-Control"] = "no-store"
@@ -61,6 +69,7 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
             patient = dict(
                 c.execute("SELECT id,name FROM patients WHERE id=?", (pid,)).fetchone()
             )
+            requests_context = shelf_context(c, app.state.db_path, user, pid)
         response = render(
             request,
             "patient_extracts.html",
@@ -69,6 +78,7 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
             documents=documents,
             account_id=user["id"],
             create_token=secrets.token_urlsafe(24),
+            **requests_context,
         )
         response.headers["Cache-Control"] = "no-store"
         return response
@@ -132,6 +142,9 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
                     service.refresh(c, app.state.db_path, user, pid, eid, form)
                 elif intent == "withdraw":
                     service.withdraw(c, user, pid, eid, form)
+                    extract_requests.document_state(
+                        c, app.state.db_path, user, pid, eid, False
+                    )
                 else:
                     if intent == "print":
                         service.validate(
@@ -146,6 +159,10 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
                         form,
                         publish=intent == "publish",
                     )
+                    if intent == "publish":
+                        extract_requests.document_state(
+                            c, app.state.db_path, user, pid, eid, True
+                        )
         except HTTPException as error:
             if error.status_code not in (409, 422):
                 raise

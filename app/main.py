@@ -29,6 +29,7 @@ from .services.diary import read_diary_extras, sleep_rating
 from .routes.diary import register_diary
 from .routes.diary_library import register_diary_library
 from .routes.patient_extracts import register_patient_extracts
+from .routes.extract_requests import register_extract_requests
 from .routes.intake import register_intake
 from .services import diary_questions as questions
 from .services import clinical_attachments as attachment_files
@@ -368,7 +369,16 @@ def create_app(db_path=None):
             from .services.patient_activity import patients_with_activity
 
             patients = patients_with_activity(c, account(request)["doctor_id"])
-        response = render(request, "doctor.html", patients=patients)
+            pending_extract_requests = c.execute(
+                "SELECT count(*) FROM extract_requests r JOIN patients p ON p.id=r.patient_id WHERE p.doctor_id=? AND r.status NOT IN ('ready','declined')",
+                (account(request)["doctor_id"],),
+            ).fetchone()[0]
+        response = render(
+            request,
+            "doctor.html",
+            patients=patients,
+            pending_extract_requests=pending_extract_requests,
+        )
         response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -495,6 +505,7 @@ def create_app(db_path=None):
     register_consultations(app, db, account, access, csrf_check)
     register_diary(app, db, account, access, csrf_check, render, patient_context)
     register_diary_library(app, db, account, csrf_check, render)
+    register_extract_requests(app, db, account, access, csrf_check, render)
     register_patient_extracts(app, db, account, access, csrf_check, render)
     register_intake(app, db, account, access, csrf_check, render, patient_context)
     register_portal(

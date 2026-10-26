@@ -10,7 +10,14 @@ from app.services.clinical_forms import today
 from app.services.extract_sources import collect
 from app.storage import audit, now
 
-TITLES = ("Медицинское заключение", "Выписка из медицинской карты", "Справка")
+TITLES = (
+    "Медицинское заключение",
+    "Выписка из медицинской карты",
+    "Справка",
+    "Направление",
+    "Копия медицинской документации",
+    "Ответ на запрос рецепта",
+)
 DIAGNOSES = {
     "working": "Рабочая формулировка",
     "preliminary": "Предварительный диагноз",

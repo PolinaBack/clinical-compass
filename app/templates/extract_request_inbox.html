@@ -1,0 +1,4 @@
+{% extends 'base.html' %}{% block title %}Запросы справок и выписок{% endblock %}{% block content %}
+<p><a href="/doctor">← Мои пациенты</a></p><h1>Запросы справок и выписок</h1><p>Запросы закреплённых за вами пациентов. Сначала показаны ожидающие ответа.</p>
+<div class="grid two">{% for item in items %}<article class="card"><h2>{{ item.patient_name }}</h2><h3>{{ request_kinds[item.data.kind] }}</h3><p><span class="badge">{{ request_states[item.status] }}</span> · {{ item.updated_at|local_datetime }}</p><a class="button secondary" href="/patients/{{ item.patient_id }}/profile/extracts/requests/{{ item.id }}">Открыть запрос</a></article>{% else %}<section class="card"><p>Запросов пока нет.</p></section>{% endfor %}</div>
+{% endblock %}

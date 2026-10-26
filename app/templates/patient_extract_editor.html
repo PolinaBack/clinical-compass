@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Оформление выписки · {{ patient.name }}{% endblock %}
 {% block content %}
-<div class="extract-editor-intro"><a href="/patients/{{ patient.id }}/profile/extracts">← Выписки</a><h1>Оформление справки и выписки</h1><p>{{ patient.name }} · версия {{ document.revision }}. Исправления сохраняются в документе, исходный анамнез не меняется.</p>{% include 'specialist_nav.html' %}
+<div class="extract-editor-intro"><a href="/patients/{{ patient.id }}/profile/extracts">← Выписки</a>{% if extract_request_id %}<p><a href="/patients/{{ patient.id }}/profile/extracts/requests/{{ extract_request_id }}">← К запросу пациента</a></p>{% endif %}<h1>Оформление справки и выписки</h1><p>{{ patient.name }} · версия {{ document.revision }}. Исправления сохраняются в документе, исходный анамнез не меняется.</p>{% include 'specialist_nav.html' %}
 {% if request.query_params.get('saved') %}<p class="extract-success" role="status">Документ сохранён.{% if request.query_params.get('refreshed') %} Сведения карты обновлены; проверьте их перед печатью.{% endif %}</p>{% endif %}
 {% if document_error %}<div class="extract-error" role="alert"><p>{{ document_error }}</p>{% if conflict %}<a href="/patients/{{ patient.id }}/profile/extracts/{{ document.id }}/edit" target="_blank" rel="noopener">Открыть актуальную версию в новой вкладке</a><p>Текст этой формы оставлен для сравнения и копирования.</p>{% endif %}</div>{% endif %}</div>
 <div class="extract-layout">

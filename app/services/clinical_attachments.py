@@ -54,6 +54,9 @@ def cipher(db_path, c):
                 "aviandr_runs",
                 "forum_attachments",
                 "patient_extract_versions",
+                "extract_requests",
+                "extract_request_events",
+                "extract_request_files",
             )
         )
         patient_ai = c.execute(

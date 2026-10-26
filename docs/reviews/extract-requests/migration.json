@@ -1,0 +1,8 @@
+{
+  "original_tables_preserved": 87,
+  "original_rows_preserved": 1301,
+  "two_migration_runs": "passed",
+  "integrity": "ok",
+  "foreign_keys": "passed",
+  "working_database_unchanged": true
+}

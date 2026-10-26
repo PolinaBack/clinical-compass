@@ -1,5 +1,11 @@
 (() => {
   document.querySelectorAll('[data-print-document]').forEach(button => button.addEventListener('click', () => window.print()));
+  document.querySelectorAll('[data-document-request]').forEach(requestForm => {
+    const due = requestForm.querySelector('[data-request-due]');
+    const date = requestForm.querySelector('[data-request-date]');
+    function deadline() {date.required = due.value === 'date';}
+    due.addEventListener('change', deadline); deadline();
+  });
   const form = document.querySelector('[data-extract-editor]');
   if (!form) return;
   const review = form.elements.reviewed;

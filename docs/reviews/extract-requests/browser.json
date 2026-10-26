@@ -1,0 +1,16 @@
+{
+  "browser": "Chromium",
+  "full_request_reply_clarification_draft_publication_flow": "passed",
+  "autofill": true,
+  "patient_upload": true,
+  "doctor_reply_file_download": true,
+  "widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "horizontal_overflow": [],
+  "javascript_errors": [],
+  "synthetic_database": true
+}
