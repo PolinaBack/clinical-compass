@@ -94,7 +94,6 @@ def test_bootstrap_all_sheets_and_search(client):
         "/medicines/aviandr",
         "/medicines/d12",
         "/reference/aviandr/archive",
-        "/medicines/scenarios",
         "/medicines/import/template",
     ]:
         assert client.get(path).status_code == 200
@@ -274,7 +273,8 @@ def test_official_review_provenance_withdrawal_expiry(client):
     assert iid(upload(client, content, "synthetic.xlsx", **meta)) == ident
     assert review(client, ident, "withdraw").status_code == 303
     assert "СИНТЕТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ" not in client.get("/medicines/aviandr").text
-    assert "отозвал проверку" in client.get(f"/medicines/import/{ident}").text
+    assert client.get(f"/medicines/import/{ident}").status_code == 410
+    assert "отозвал проверку" in client.get("/medicines/aviandr").text
     meta["valid_until"] = (date.today() - timedelta(days=1)).isoformat()
     assert upload(client, content, "synthetic.xlsx", **meta).status_code == 422
 

@@ -1,0 +1,2 @@
+PASS: all ten changed Python files compile and match Black formatting.
+PASS: git diff --check.

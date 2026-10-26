@@ -1,0 +1,12 @@
+{
+  "working_database_byte_identical_to_previous_tasks": true,
+  "patients_preserved": 6,
+  "original_tables": 88,
+  "integrity": "ok",
+  "foreign_keys": "ok",
+  "no_migrations": true,
+  "original_requirement_rows_and_cells_unchanged": 806,
+  "automatic_source_verification": false,
+  "live_external_site_success_tested": false,
+  "browser_link_transport": "explicit synthetic fixture"
+}

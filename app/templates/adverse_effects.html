@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Побочные эффекты · Клинический компас{% endblock %}
-{% block content %}
-<p><a href="/doctor/library">← Библиотека</a></p>
-{% include 'medicine_nav.html' %}
+{% block content %}{% include 'medicine_nav.html' %}
+
+
 <section class="adverse-page" data-adverse-page>
     <h1>Нежелательные реакции по системам</h1>
     <p class="adverse-intro">{{ total }} записей, сгруппированных по системам органов и лекарствам. Сохранены медицинские и понятные пациенту названия.</p>

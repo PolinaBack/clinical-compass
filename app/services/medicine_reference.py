@@ -94,6 +94,23 @@ def card(code):
 
 
 def enrich(drug):
+    if drug.get("reference_override"):
+        return {
+            **drug,
+            **{
+                k: drug.get(k) or "Не указано"
+                for k in (
+                    "manufacturer",
+                    "form",
+                    "strength",
+                    "package",
+                    "registration",
+                    "atc",
+                    "group",
+                )
+            },
+            "reference": drug["reference_override"],
+        }
     info = card(drug["code"])
     if not info:
         return {

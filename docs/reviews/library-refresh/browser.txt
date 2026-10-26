@@ -1,0 +1,3 @@
+PASS: three white library cards; five section back links; manual and synthetic-link creation; editable fetched fields; search; five widths; two axe A/AA audits; private-address rejection; retired pages 410; no JS errors
+PASS: new form and library navigation also available without JavaScript
+PASS: synthetic database integrity; no automatic source verification; linked-site transport was an explicitly synthetic test fixture

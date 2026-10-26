@@ -34,6 +34,7 @@ from .portal import register_portal, portal_data
 from .community import register_community, public_forum_data
 from .family import register_family
 from .routes.drug_library import register_drug_library
+from .routes.doctor_medicines import register_doctor_medicines
 from .routes.medicine_drafts import register_medicine_drafts
 from .routes.care_orders import register_care_orders
 from .routes.medicine_reactions import register_medicine_reactions
@@ -685,6 +686,9 @@ def create_app(db_path=None):
 
     # Fixed draft routes must precede the drug-card /{slug} catch-all.
     register_medicine_drafts(
+        app, db, account, doctor_reference_access, csrf_check, render
+    )
+    register_doctor_medicines(
         app, db, account, doctor_reference_access, csrf_check, render
     )
     register_drug_library(app, db, account, doctor_reference_access, csrf_check, render)

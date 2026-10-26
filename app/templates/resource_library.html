@@ -1,5 +1,5 @@
-{% extends 'base.html' %}{% block title %}Рекомендованные ресурсы · Клинический компас{% endblock %}{% block content %}
-<p><a href="/doctor/library">← Библиотека</a></p><h1>Рекомендованные ресурсы</h1><p>Статьи и практики, которые можно предложить прочитать между встречами.</p>
+{% extends 'base.html' %}{% block title %}Рекомендованные ресурсы · Клинический компас{% endblock %}{% block content %}{% include 'library_back.html' %}
+<h1>Рекомендованные ресурсы</h1><p>Статьи и практики, которые можно предложить прочитать между встречами.</p>
 <p class="caption">Ресурсы пока что никем не проверяются. Перед назначением ознакомьтесь с содержанием статьи.</p>
 <details class="card"><summary>Добавить свой ресурс</summary><form method="post" action="/doctor/resources"><input type="hidden" name="csrf" value="{{ csrf }}"><label>Название статьи<input name="title" maxlength="250" required></label><label>Ссылка HTTPS<input name="url" type="url" maxlength="2000" required placeholder="https://..."></label><label>Описание · по желанию<textarea name="description" maxlength="1500"></textarea></label><button>Добавить карточку</button></form></details>
 <label>Найти ресурс<input type="search" data-resource-search placeholder="Название или источник"></label>

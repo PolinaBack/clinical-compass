@@ -38,7 +38,9 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
         doctor_access(request)
         with db() as c:
             drugs = lib.search(c, q[:200], group, status)
-            groups = sorted({d["group"] for d in lib.current(c, "drug").values()})
+            groups = sorted(
+                {d["group"] for d in lib.current(c, "drug").values() if d.get("group")}
+            )
         return render(
             request,
             "medicines.html",
@@ -71,17 +73,8 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
     @app.get("/medicines/import")
     def import_page(request: Request):
         doctor_access(request)
-        with db() as c:
-            imports = c.execute(
-                "SELECT id,kind,filename,created_at,committed_at,actor_id FROM drug_imports ORDER BY id DESC LIMIT 100"
-            ).fetchall()
-            drugs = lib.search(c)
-        return render(
-            request,
-            "medicine_import.html",
-            imports=imports,
-            drugs=drugs,
-            fields=lib.FIELDS,
+        raise HTTPException(
+            410, "Страница удалена. Добавить лекарство можно в каталоге препаратов."
         )
 
     @app.post("/medicines/import/preview")
@@ -162,25 +155,9 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
     @app.get("/medicines/import/{iid}")
     def show_import(request: Request, iid: int):
         doctor_access(request)
-        with db() as c:
-            row = get_import(c, iid, account(request), owner=False)
-            report = json.loads(row["report"])
-            payload = json.loads(row["payload"])
-            events = c.execute(
-                """SELECT e.*,a.username FROM drug_source_events e JOIN accounts a ON a.id=e.actor_id
-                               WHERE import_id=? ORDER BY e.id DESC""",
-                (iid,),
-            ).fetchall()
-        return render(
-            request,
-            "medicine_preview.html",
-            item=row,
-            report=report,
-            payload=payload,
-            events=events,
-            fields=lib.FIELDS,
-            severities=lib.SEVERITIES,
-            own=row["actor_id"] == account(request)["id"],
+        raise HTTPException(
+            410,
+            "Отдельная страница источников удалена. Сведения доступны в карточке препарата.",
         )
 
     @app.post("/medicines/import/{iid}/confirm")
@@ -407,7 +384,7 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
     @app.get("/medicines/scenarios")
     def scenarios(request: Request):
         doctor_access(request)
-        return render(request, "medicine_scenarios.html")
+        raise HTTPException(410, "Страница сценариев удалена")
 
     @app.get("/medicines/{slug}")
     def drug_card(request: Request, slug: str):
@@ -420,6 +397,14 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
                 raise HTTPException(404, "Лекарство не найдено")
             drug = editorial.enrich(drug)
             refs = lib.sources(c, code, include_inactive=True)
+            for source in refs:
+                source["events"] = [
+                    dict(r)
+                    for r in c.execute(
+                        "SELECT e.*,a.username FROM drug_source_events e JOIN accounts a ON a.id=e.actor_id WHERE import_id=? ORDER BY e.id DESC",
+                        (source["id"],),
+                    )
+                ]
             facts = {field: [] for field in lib.FIELDS}
             for s in refs:
                 if s["active"]:

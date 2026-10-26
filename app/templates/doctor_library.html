@@ -3,10 +3,9 @@
 {% block title %}Библиотека · Клинический компас{% endblock %}
 {% block content %}
 <div class="page-intro"><h1>Библиотека</h1><p class="lead">Справочники и материалы для работы с пациентами.</p></div>
-<div class="library-sections" aria-label="Разделы библиотеки">
-    <a class="library-section" href="/medicines">{{ icon('medication') }}<h2>Лекарства</h2><p>Поиск препаратов, источники, импорт справочника и проверка сочетаний.</p><span>Открыть препараты →</span></a>
-    <a class="library-section" href="/medicines/adverse-effects">{{ icon('reactions') }}<h2>Побочные эффекты</h2><p>Нежелательные реакции по системам организма, препаратам и понятным названиям.</p><span>Открыть реестр реакций →</span></a>
-    <a class="library-section" href="/doctor/resources">{{ icon('materials') }}<h2>Рекомендованные ресурсы</h2><p>Статьи и практики, свои материалы и назначение чтения пациенту.</p><span>Открыть ресурсы →</span></a>
-    <a class="library-section" href="/clinical-tools">{{ icon('consultation') }}<h2>Анкеты</h2><p>Клинические опросники и инструменты оценки для консультации.</p><span>Открыть анкеты →</span></a>
+<div class="grid two forum-entry-grid library-entry-grid" aria-label="Разделы библиотеки">
+    <section class="card">{{ icon('medication') }}<h2>Лекарства</h2><p>Карточки препаратов и проверка сочетаний.</p><a class="button" href="/medicines">Открыть лекарства</a></section>
+    <section class="card">{{ icon('materials') }}<h2>Рекомендованные ресурсы</h2><p>Статьи и практики, свои материалы и назначение чтения пациенту.</p><a class="button" href="/doctor/resources">Открыть ресурсы</a></section>
+    <section class="card">{{ icon('consultation') }}<h2>Анкеты</h2><p>Клинические опросники и инструменты оценки для консультации.</p><a class="button" href="/clinical-tools">Открыть анкеты</a></section>
 </div>
 {% endblock %}

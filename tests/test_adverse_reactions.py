@@ -179,12 +179,15 @@ def test_optional_choice_no_js_security_and_text_labels(client):
     assert preferences(client, []).status_code == 303
     assert preferences(client, ["S014"], "S014", submit=True).status_code == 303
     page = client.get("/patients/1/profile/about/medicines")
-    assert "data-tolerability-picker" in page.text and 'value="S014"' in page.text
+    assert "data-tolerability-picker" not in page.text
+    page = client.get("/patients/1/profile/assignments")
+    # Legacy answers remain stored; the new questionnaire requires a doctor request.
+    assert "data-med-preferences" not in page.text
     with connect(client.app.state.db_path) as c:
         assert "Головная боль" in {o["label"] for o in ELIGIBLE.values()}
     assert client.get("/medicines/adverse-effects").status_code == 403
     login(client, "doctor")
-    page = client.get("/patients/1/profile/about/medicines")
+    page = client.get("/patients/1/assignments")
     assert "Тошнота" in page.text and "<p>S014</p>" not in page.text
     assert preferences(client, ["S014"], "S014").status_code == 403
-    assert client.get("/doctor/library").text.count('class="library-section"') == 4
+    assert "library-entry-grid" in client.get("/doctor/library").text

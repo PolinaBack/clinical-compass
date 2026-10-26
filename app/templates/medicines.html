@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
-{% block content %}
+{% block content %}{% include 'medicine_nav.html' %}
 <div class="section-page-heading"><p class="medicine-eyebrow">Библиотека специалиста</p><h1>Библиотека препаратов</h1><p>Справочные карточки, проверка сочетаний и учебные черновики назначений.</p></div>
-{% include 'medicine_nav.html' %}
+
 <p class="medicine-notice">Редакционная справка · сведения требуют сверки по актуальной инструкции конкретной формы. Не является основанием для реального назначения.</p>
+<section class="card medicine-add-entry"><h2>Добавить лекарство</h2><p>Получите данные по ссылке или заполните сведения самостоятельно.</p><a class="button" href="/medicines/new">+ Добавить лекарство</a></section>
 <form class="card medicine-search" action="/medicines" method="get" role="search" data-catalog-search>
     <label for="medicine-query">Название, МНН или действующее вещество</label>
     <input id="medicine-query" name="q" value="{{ q }}" type="search" maxlength="200" autocomplete="off" list="medicine-suggestions" placeholder="Поиск по названию, МНН, группе или производителю">

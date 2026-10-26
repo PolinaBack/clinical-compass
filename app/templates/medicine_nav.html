@@ -1,7 +1,5 @@
-<nav class="medicine-nav" aria-label="Библиотека препаратов">
+{% include 'library_back.html' %}<nav class="medicine-nav" aria-label="Библиотека препаратов">
     <a href="/medicines/adverse-effects" {% if current_page == '/medicines/adverse-effects' %}aria-current="page"{% endif %}>Побочные эффекты</a>
     <a href="/medicines" {% if current_page == '/medicines' %}aria-current="page"{% endif %}>Поиск препаратов</a>
     <a href="/medicines/combinations" {% if current_page == '/medicines/combinations' %}aria-current="page"{% endif %}>Проверка сочетаний</a>
-    <a href="/medicines/import" {% if current_page == '/medicines/import' %}aria-current="page"{% endif %}>Импорт и источники</a>
-    <a href="/medicines/scenarios" {% if current_page == '/medicines/scenarios' %}aria-current="page"{% endif %}>Сценарии с Авиандром</a>
 </nav>
