@@ -17,6 +17,7 @@ from app.experimental_ai.free_text import MODES
 
 MESSAGES = {
     **ERRORS,
+    "unsafe_response": "В прежнем запуске текст не был сохранён. Запустите объяснение заново.",
     "card_changed": "Данные карты, проверенные правила или версия расчёта изменились. Запустите новое текстовое объяснение.",
     "permission_changed": "Доступ к карте изменился; обработка остановлена.",
     "input_too_large": "Контекст слишком большой для одного запроса. Проверяемый расчёт доступен; текстовая генерация не выполнена.",
@@ -158,11 +159,10 @@ def process_one(path=None, provider=None):
             user, _ = scope(
                 c, row["actor_id"], row["patient_id"], row["actor_auth_version"]
             )
-            if (
+            meta["input_changed_during_generation"] = (
                 build(c, path, user, row["patient_id"])["checksum"]
                 != row["snapshot_hash"]
-            ):
-                raise ExperimentError("card_changed")
+            )
             c.execute(
                 "UPDATE aviandr_runs SET status='completed',stage='completed',result=?,provenance=?,finished_at=?,heartbeat_at=? WHERE id=? AND status='running'",
                 (pack(c, path, result), canonical(meta), now(), now(), ident),

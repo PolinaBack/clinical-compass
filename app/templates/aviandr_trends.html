@@ -1,6 +1,6 @@
 <section class="aviandr-panel aviandr-trends" id="av-trends" aria-labelledby="av-trends-title">
     <header><p class="aviandr-mode">Сохранённые наблюдения</p><h3 id="av-trends-title">Динамика состояния</h3>
-    <p class="caption">{{ av_report.data.period_start }} — {{ av_report.data.period_end }}. Пропуски разрывают линию и не считаются нулём. Изменение показателя не доказывает эффект лекарства.</p></header>
+    <p class="caption">{{ av_report.data.period_start }} — {{ av_report.data.period_end }}. Линии соединяют сохранённые значения; пунктир отмечает промежутки без записей. Пропуски не считаются нулём. Изменение показателя не доказывает эффект лекарства.</p></header>
     <div class="aviandr-trend-grid">
         {% for trend in av_report.trends %}
         <article class="aviandr-trend" data-trend="{{ trend.key }}"><h4>{{ trend.title }}</h4>
@@ -10,7 +10,8 @@
             <svg class="aviandr-trajectory" viewBox="0 0 760 175" role="img" aria-label="{{ trend.title }}, {{ trend.unit }}: фактические значения по датам">
                 <path d="M30 20V145H735" fill="none" stroke="#82988b"/>
                 <text x="2" y="28">{{ trend.maximum }}</text><text x="6" y="145">0</text>
-                {% for points in trend.segments %}<polyline points="{{ points }}" fill="none" stroke="#2d7356" stroke-width="3"/>{% endfor %}
+                {% for points in trend.segments %}<polyline points="{{ points }}" fill="none" stroke="#2d7356" stroke-width="3" vector-effect="non-scaling-stroke"/>{% endfor %}
+                {% set previous=namespace(index=none,x=none,y=none) %}{% for point in av_report.data.observations %}{% if point[trend.key] is not none %}{% set x=30+700*loop.index0/29 %}{% set y=145-120*point[trend.key]/trend.maximum %}{% if previous.index is not none and loop.index0-previous.index>1 %}<line data-gap-connection x1="{{ previous.x }}" y1="{{ previous.y }}" x2="{{ x }}" y2="{{ y }}" stroke="#2d7356" stroke-width="3" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/>{% endif %}{% set previous.index=loop.index0 %}{% set previous.x=x %}{% set previous.y=y %}{% endif %}{% endfor %}
                 {% for point in av_report.data.observations %}{% if point[trend.key] is not none %}<circle cx="{{ 30+700*loop.index0/29 }}" cy="{{ 145-120*point[trend.key]/trend.maximum }}" r="3" fill="#2d7356"/>{% endif %}{% endfor %}
                 <text x="30" y="170">{{ av_report.data.period_start }}</text><text x="585" y="170">{{ av_report.data.period_end }}</text>
             </svg>
@@ -18,21 +19,4 @@
         </article>
         {% endfor %}
     </div>
-    {% if av_report.trajectories %}<h4 class="aviandr-questionnaire-heading">Заполненные анкеты по датам</h4><div class="aviandr-trend-grid">
-    {% for trajectory in av_report.trajectories %}
-        <article class="aviandr-trend" data-questionnaire-trend="{{ trajectory.scale }}">
-            <h4>{{ {'phq4':'PHQ-4','phq9':'PHQ-9','gad7':'GAD-7'}.get(trajectory.scale, trajectory.scale|upper) }}</h4>
-            <p class="caption">Полных измерений: {{ trajectory.points|length }} · версия {{ trajectory.version or 'не указана в записи' }}</p>
-            {% if trajectory.chart is defined %}
-            <svg class="aviandr-trajectory" viewBox="0 0 760 175" role="img" aria-label="{{ trajectory.scale|upper }}: полная сумма по датам одной версии">
-                <path d="M30 20V145H735" fill="none" stroke="#82988b"/>
-                <text x="2" y="28">{{ trajectory.chart.maximum }}</text><text x="6" y="145">0</text>
-                <polyline points="{{ trajectory.chart.points }}" fill="none" stroke="#2d7356" stroke-width="3"/>
-                {% for coordinates in trajectory.chart.points.split(' ') %}{% set xy=coordinates.split(',') %}<circle cx="{{ xy[0] }}" cy="{{ xy[1] }}" r="4" fill="#2d7356"/>{% endfor %}
-                <text x="30" y="170">{{ trajectory.chart.first }}</text><text x="585" y="170">{{ trajectory.chart.last }}</text>
-            </svg>{% endif %}
-            <p>Изменение записанной суммы: {{ trajectory.delta if trajectory.delta is not none else 'нужно повторное измерение' }}.</p>
-            <p class="caption">{% for point in trajectory.points %}<a href="/assessments/{{ point.id }}">{{ point.day }} · {{ point.total }}</a>{{ '; ' if not loop.last }}{% endfor %}</p>
-        </article>
-    {% endfor %}</div>{% else %}<p class="aviandr-empty">Полных анкет одной из поддержанных шкал пока нет. Незавершённые ответы доступны в исходных данных.</p>{% endif %}
 </section>

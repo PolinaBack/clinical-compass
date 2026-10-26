@@ -152,7 +152,9 @@ def test_new_manual_edit_generates_new_snapshot_no_cached_demo(client):
 
 
 @pytest.mark.parametrize("change", ["card", "doctor", "participation", "account"])
-def test_changes_during_real_http_roundtrip_abort_save(client, change):
+def test_changes_during_roundtrip_preserve_received_answer_but_respect_access(
+    client, change
+):
     login(client, "doctor")
     seed(client)
     enqueue(client)
@@ -178,10 +180,16 @@ def test_changes_during_real_http_roundtrip_abort_save(client, change):
         )
 
     ai.process_one(client.app.state.db_path, provider([], handler))
+    if change == "card":
+        assert latest(client)["status"] == "completed"
+        assert latest(client)["result"] is not None
+        assert latest(client)["provenance"]["input_changed_during_generation"] is True
+        page = client.get("/patients/1/ai-analysis")
+        assert 'id="patient-ai-result"' in page.text
+        assert "Карта изменилась" in page.text
+        return
     assert latest(client)["result"] is None
-    assert latest(client)["error_code"] == (
-        "card_changed" if change == "card" else "permission_changed"
-    )
+    assert latest(client)["error_code"] == "permission_changed"
 
 
 def test_private_intake_draft_not_read_published_manual_answer_is_read(client):
@@ -267,6 +275,16 @@ def test_provider_errors_never_substitute_prepared_summary(client, failure, code
 
     ai.process_one(client.app.state.db_path, provider([], fail))
     job = latest(client)
+    if failure in ("invalid", "unsafe"):
+        assert job["status"] == "completed" and not job["error_code"]
+        assert job["result"]["output_format"] == "free_text"
+        assert job["provenance"]["output_validation"] == "not_checked"
+        assert 'id="patient-ai-result"' in client.get("/patients/1/ai-analysis").text
+        if failure == "invalid":
+            assert job["result"]["text"] == "PRIVATE ERROR"
+        else:
+            assert "Назначить сертралин" in json.loads(job["result"]["text"])["summary"]
+        return
     assert (
         job["status"] == "error" and job["result"] is None and job["error_code"] == code
     )

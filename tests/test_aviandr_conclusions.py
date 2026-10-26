@@ -103,7 +103,8 @@ def test_offline_page_displays_all_four_conclusions_without_calling_model(
     assert value.text.count("data-conclusion") == 4
     assert value.text.count("data-card-questions") == 4
     assert value.text.count("data-basis") == 4
-    assert value.text.count('id="av-details-') == 4
+    assert 'id="av-details-' not in value.text
+    assert "Подробнее" not in value.text
     assert "Расчёт от" in value.text and "МСК" in value.text
     assert "Динамика состояния" in value.text
     assert all(
@@ -301,7 +302,7 @@ def test_daily_intake_correction_changes_tolerance_without_changing_plan(researc
         ] == plans
 
 
-def test_stale_ollama_text_is_hidden_but_current_python_conclusions_remain(research):
+def test_stale_ollama_text_remains_labelled_with_current_python_conclusions(research):
     client, path, pids, _ = research
     with connect(path) as c:
         ident = jobs.enqueue(c, path, actor(c), pids["C"])
@@ -315,8 +316,7 @@ def test_stale_ollama_text_is_hidden_but_current_python_conclusions_remain(resea
         )
     current = client.get(f"/patients/{pids['C']}/ai-analysis?aviandr_id={ident}")
     assert (
-        "data-aviandr-stale" in current.text
-        and "data-aviandr-result" not in current.text
+        "data-aviandr-stale" in current.text and "data-aviandr-result" in current.text
     )
     assert "Новое синтетическое описание жалоб" in current.text
     assert current.text.count("data-conclusion") == 4

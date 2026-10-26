@@ -113,6 +113,9 @@ def create_app(db_path=None):
     from .services.clinical_forms import local_datetime
 
     templates.env.filters["local_datetime"] = local_datetime
+    from .services.ai_display import readable_text
+
+    templates.env.filters["ai_readable_text"] = readable_text
     templates.env.globals["asset_url"] = asset_url
 
     def account(request):

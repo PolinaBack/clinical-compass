@@ -15,7 +15,7 @@
         <h4>На чём основан вывод</h4>
         <ul class="aviandr-basis" data-basis>
             {% for basis in d.narrative.basis %}
-            <li><span>{{ basis.text }}</span><a href="#av-evidence-{{ basis.id }}" class="aviandr-fact-link" aria-label="{{ basis.origin }} · {{ basis.id }}">Исходные данные ↗</a></li>
+            <li><span>{{ basis.text }}</span></li>
             {% endfor %}
         </ul>
         </section><section>
@@ -27,8 +27,4 @@
         <p class="aviandr-unknown">{{ d.narrative.unknowns[0] }}</p>
         </section></div>
     </div>
-    <details class="aviandr-direction-details" id="av-details-{{ d.key }}">
-        <summary>Подробнее<span class="visually-hidden">: {{ d.title }}</span></summary>
-        {% include 'aviandr_direction_details.html' %}
-    </details>
 </article>

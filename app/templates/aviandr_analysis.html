@@ -18,7 +18,7 @@
         </form>
     </header>
     {% if request.query_params.get('av_saved') or request.query_params.get('av_rule_saved') %}<p class="aviandr-feedback" role="status">Запись сохранена. Проверяемый расчёт обновлён.</p>{% endif %}
-    {% if av_stale %}<p class="aviandr-attention" role="status" data-aviandr-stale>Карта, источники или версия расчёта изменились после текстового объяснения №{{ av_selected.id }}. Карточки ниже рассчитаны заново; прежний текст Ollama устарел и не показан как актуальный.</p>{% endif %}
+    {% if av_stale %}<p class="caption" role="status" data-aviandr-stale>Карточки обновлены. Объяснение №{{ av_selected.id }} относится к прежнему снимку карты.</p>{% endif %}
     <nav aria-label="Статусы четырёх направлений, без общего процента"><ol class="aviandr-status-chart">
         {% for d in av_report.directions %}<li data-level="{{ d.level }}"><a href="#av-{{ d.key }}"><span>{{ loop.index }} · {{ d.title }}</span><strong>{{ {'unknown':'Нужны сведения','attention':'Требует уточнения','critical':'Выявлен критический фактор','favorable':'Есть подтверждённое основание'}[d.level] }}</strong></a></li>{% endfor %}
     </ol></nav>
@@ -26,13 +26,10 @@
     <div class="aviandr-insights-layout">
     {% include 'aviandr_trends.html' %}
     <div class="aviandr-insights-side">
-    <section class="aviandr-panel" id="av-questions"><p class="aviandr-mode">По конкретным пробелам карты</p><h3>Вопросы врачу</h3><p class="caption">Сформированы по исходным данным, доступны без Ollama.</p><ol>{% for gap in av_report.gaps %}<li><strong>{{ gap.question }}</strong><p class="caption">{{ gap.reason }} {% for ref in gap.evidence_ids %}<a href="#av-evidence-{{ ref }}">{{ ref }}</a> {% endfor %}</p></li>{% endfor %}</ol></section>
+    <section class="aviandr-panel" id="av-questions"><p class="aviandr-mode">По конкретным пробелам карты</p><h3>Вопросы врачу</h3><p class="caption">Сформированы по исходным данным, доступны без Ollama.</p><ol>{% for gap in av_report.gaps %}<li><strong>{{ gap.question }}</strong><p class="caption">{{ gap.reason }}</p></li>{% endfor %}</ol></section>
     {% include 'aviandr_explanation.html' %}
     </div></div>
     <p class="aviandr-attention">Недостаток данных не означает отсутствие риска. Решение о назначении, отмене или изменении терапии принимает врач по полной клинической картине.</p>
-    <section class="aviandr-panel" id="av-limitations"><h3>Источники и границы оценки</h3><p>Факты пациента и медицинские свойства имеют разные основания. Регистрационные метаданные сами по себе не подтверждают показания или безопасность.</p><ul>{% for limitation in av_report.limitations %}<li>{{ limitation }}</li>{% endfor %}</ul><p class="caption">Версия расчёта: {{ av_report.version }} · выводов: {{ av_report.narrative_version }}. Исследовательский модуль не прошёл клиническую валидацию.</p></section>
-    {% include 'aviandr_registration.html' %}
-    {% include 'aviandr_records.html' %}
     </div>
     {% include 'aviandr_tools.html' %}
 </section>

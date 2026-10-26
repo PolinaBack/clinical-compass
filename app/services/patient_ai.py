@@ -17,6 +17,7 @@ from app.experimental_ai.free_text import MODES
 
 MESSAGES = {
     **ERRORS,
+    "unsafe_response": "В прежнем запуске текст не был сохранён. Запустите анализ заново.",
     "no_data": "В карте пока нет сведений для анализа. Сохраните профиль, дневник, заметку или ответы анкеты.",
     "permission_changed": "Доступ врача или участие пациента изменились. Обработка остановлена.",
     "card_changed": "Данные карты изменились после запуска. Создайте новый анализ по актуальной версии.",
@@ -187,15 +188,14 @@ def process_one(path=None, provider=None):
         with connect(path) as c:
             c.execute("BEGIN IMMEDIATE")
             scope(c, row["actor_id"], row["patient_id"], row["actor_auth_version"])
-            if (
-                digest(
-                    collect(
-                        c, row["actor_id"], row["patient_id"], row["actor_auth_version"]
-                    )
+            finished_hash = digest(
+                collect(
+                    c, row["actor_id"], row["patient_id"], row["actor_auth_version"]
                 )
-                != row["snapshot_hash"]
-            ):
-                raise ExperimentError("card_changed")
+            )
+            meta["input_changed_during_generation"] = (
+                finished_hash != row["snapshot_hash"]
+            )
             c.execute(
                 "UPDATE patient_ai_runs SET status='completed',stage='completed',result=?,provenance=?,finished_at=?,heartbeat_at=? WHERE id=? AND status='running'",
                 (

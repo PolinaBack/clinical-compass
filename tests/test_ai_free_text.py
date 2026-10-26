@@ -106,7 +106,8 @@ def test_free_text_bypasses_output_checks_but_preserves_privacy_and_calculations
     assert calls[-1].url.host == "127.0.0.1"
     html = client.get(f"/patients/{pids['C']}/ai-analysis").text
     assert str(escape(text)) in html
-    assert "Непроверенный ответ модели" in html and "Свободный ответ модели" in html
+    assert "Непроверенный ответ модели" in html
+    assert ("Краткая сводка" if kind == "general" else "Свободный ответ модели") in html
     assert "<script>window.__aiInjected=1</script>" not in html
     assert html.count('class="aviandr-direction"') == 4
     with connect(path) as c:

@@ -1,0 +1,1 @@
+PASS: completed response replaces its result area automatically; another job is never inserted; failed page fetch keeps manual refresh available.

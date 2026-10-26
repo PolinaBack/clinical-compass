@@ -418,6 +418,17 @@ def test_provider_failure_keeps_calculated_report_and_no_fake_text(
     jobs.process_one(path, provider([], failure=failure))
     with connect(path) as c:
         row = c.execute("SELECT * FROM aviandr_runs WHERE id=?", (ident,)).fetchone()
+        if failure == "unsafe":
+            result = jobs.decoded(c, path, row)
+            assert row["status"] == "completed" and not row["error_code"]
+            assert result["result"]["output_format"] == "free_text"
+            assert "назначить 20 мг" in result["result"]["text"]
+            assert result["provenance"]["output_validation"] == "not_checked"
+            assert (
+                "data-aviandr-result"
+                in client.get(f"/patients/{pids['C']}/ai-analysis").text
+            )
+            return
         assert (
             row["status"] == "error"
             and row["error_code"] == code
@@ -426,7 +437,7 @@ def test_provider_failure_keeps_calculated_report_and_no_fake_text(
     page = client.get(f"/patients/{pids['C']}/ai-analysis")
     assert page.status_code == 200 and "data-aviandr-analysis" in page.text
     assert "data-aviandr-result" not in page.text
-    assert "Текстовый ИИ недоступен или ответ отклонён" in page.text
+    assert "Объяснение не получено" in page.text
 
 
 @pytest.mark.parametrize(

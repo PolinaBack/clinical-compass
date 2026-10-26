@@ -1,5 +1,5 @@
 <div class="ai-unverified" data-unverified-ai>
-    <p class="notice" role="status"><strong>Непроверенный ответ модели</strong><br>Текст показан без автоматической проверки содержания и ссылок. Он может содержать ошибки и не является подтверждённым заключением или назначением.</p>
+    <p class="caption" role="status"><strong>Непроверенный ответ модели · проверяет врач</strong></p>
     {% if unverified_result.incomplete %}<p class="experiment-error">Получена только часть ответа: генерация не завершилась. Ниже показан весь полученный текст.</p>{% endif %}
-    <div class="ai-unverified-text" data-model-text>{{ unverified_result.text }}</div>
+    <div class="ai-unverified-text" data-model-text>{{ unverified_result.text|ai_readable_text }}</div>
 </div>

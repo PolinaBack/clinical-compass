@@ -160,7 +160,7 @@ def test_pending_answers_are_visible_without_becoming_a_completed_score(research
     assert "PHQ-4 — 1/4 ответов" not in done["html"]
 
 
-def test_refresh_hides_stale_model_result_after_card_change(research):
+def test_refresh_keeps_stale_model_result_with_snapshot_label(research):
     client, path, pids, _ = research
     pid = pids["C"]
     with connect(path) as c:
@@ -175,8 +175,7 @@ def test_refresh_hides_stale_model_result_after_card_change(research):
         )
     after = current(client, pid, checksum=before["checksum"], aviandr_id=ident)
     assert (
-        "data-aviandr-stale" in after["html"]
-        and "data-aviandr-result" not in after["html"]
+        "data-aviandr-stale" in after["html"] and "data-aviandr-result" in after["html"]
     )
     assert after["html"].count("data-conclusion") == 4
 

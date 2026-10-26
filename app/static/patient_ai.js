@@ -43,6 +43,21 @@
             panel.querySelectorAll('[data-job-pending]').forEach(item => item.hidden = true);
             const failure = panel.querySelector('[data-job-failure]');
             if (failure) failure.hidden = job.status !== 'error';
+            const area = panel.closest('[data-ai-result-area]');
+            if (area && panel.dataset.resultUrl) {
+              try {
+                const resultPage = await fetch(panel.dataset.resultUrl, {cache: 'no-store', credentials: 'same-origin'});
+                if (!resultPage.ok) throw Error();
+                const holder = document.createElement('template');
+                holder.innerHTML = await resultPage.text();
+                const fresh = [...holder.content.querySelectorAll('[data-patient-ai]')]
+                  .find(item => item.dataset.statusUrl === panel.dataset.statusUrl);
+                const replacement = fresh?.closest('[data-ai-result-area]');
+                if (!replacement || !area.isConnected) throw Error();
+                area.replaceWith(replacement);
+                pollJobs(replacement);
+              } catch (_) { /* Manual result refresh remains available. */ }
+            }
             return;
           }
         } catch {
@@ -78,10 +93,6 @@
         const key = detailsKey(node);
         if (opened.has(key)) node.open = opened.get(key);
       });
-      // Preserve the doctor's response format when only card facts refresh.
-      const responseMode = current.querySelector('select[name="response_mode"]');
-      const freshMode = fresh.querySelector('select[name="response_mode"]');
-      if (responseMode && freshMode) freshMode.value = responseMode.value;
       const active = document.activeElement;
       const focus = current.contains(active) ? {
         tag: active.tagName, text: active.textContent.trim(), href: active.getAttribute('href'), id: active.id
