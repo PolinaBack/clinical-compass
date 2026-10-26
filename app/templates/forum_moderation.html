@@ -9,10 +9,11 @@
     {% for question in questions %}
         <section class="card">
             <span class="badge">{{ {'pending':'Ожидает ответа','published':'Опубликован','hidden':'Скрыт'}[question.status] }}</span>
-            <p class="text">{{ question.body }}</p>
-            <form action="/doctor/faq/{{ question.id }}" method="post">
+            <p class="text">{{ question.body }}</p>{% set forum_files=question.files %}{% include 'forum_files.html' %}{% set forum_files=question.answer_files %}{% include 'forum_files.html' %}
+            <form action="/doctor/faq/{{ question.id }}" method="post" enctype="multipart/form-data">
                 <input name="csrf" type="hidden" value="{{ csrf }}">
-                <label>
+                {% include 'forum_file_picker.html' %}
+<label>
                     Проверенный общий ответ<textarea name="reply" maxlength="3000">{{ question.reply }}</textarea>
                 </label>
                 <div class="button-row">

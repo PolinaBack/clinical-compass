@@ -4,15 +4,16 @@
     <p class="caption">
         Имя и вход не нужны. Не указывайте ФИО, контакты и личную медицинскую историю: опубликованные вопросы и ответы доступны всем. Для срочной помощи используйте отдельную кнопку помощи.
     </p>
-    <form action="/faq/questions" method="post">
+    <form action="/faq/questions" method="post" enctype="multipart/form-data">
         <input name="csrf" type="hidden" value="{{ csrf }}">
         <input name="form_id" type="hidden" value="{{ form_id }}">
-        <label>
+        {% include 'forum_file_picker.html' %}
+<label>
             Ваш вопрос<textarea name="body" maxlength="2000" required></textarea>
         </label>
         <label class="check">
             <input name="public_consent" type="checkbox" value="true" required>
-            Понимаю, что вопрос и ответ будут опубликованы после проверки.
+            Понимаю, что вопрос, ответ и приложенные файлы будут опубликованы после проверки.
         </label>
         <button>Задать анонимный вопрос</button>
     </form>

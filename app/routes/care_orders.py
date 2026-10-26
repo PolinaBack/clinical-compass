@@ -84,6 +84,24 @@ def register_care_orders(app, db, account, access, csrf_check, render, patient_c
             status_code=303,
         )
 
+    @app.post("/patients/{pid}/assignments/preferences/request")
+    async def assign_preferences(request: Request, pid: int):
+        access(request, pid)
+        user = account(request)
+        form = await request.form(max_files=0, max_fields=3)
+        csrf_check(request, str(form.get("csrf", "")))
+        from app.services import medication_preferences
+
+        with db() as c:
+            c.execute("BEGIN IMMEDIATE")
+            medication_preferences.assign(
+                c, user, pid, str(form.get("client_token", ""))
+            )
+        return RedirectResponse(
+            f"/patients/{pid}/assignments?preferences_requested=1#medicines",
+            status_code=303,
+        )
+
     @app.post("/patients/{pid}/assignments/orders")
     async def create(request: Request, pid: int):
         access(request, pid)

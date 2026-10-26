@@ -200,7 +200,9 @@ def test_preview_bound_to_exact_text_account_and_confirmation_not_patient_links(
     )
     assert (
         client.post(
-            "/doctor/forum/preview", data=data, files={"file": ("case.txt", b"private")}
+            "/doctor/forum/preview",
+            data=data,
+            files={"file": ("case.exe", b"unsupported")},
         ).status_code
         == 422
     )
@@ -405,7 +407,9 @@ def test_filter_pagination_task_entry_and_public_forum_unchanged(client):
         == 11
     )
     assert "Ничего не найдено" in client.get("/doctor/forum?q=%25").text
-    assert client.get("/doctor/forum?q=СОН").text.count('class="card forum-topic"') == 20
+    assert (
+        client.get("/doctor/forum?q=СОН").text.count('class="card forum-topic"') == 20
+    )
     tasks = client.get("/doctor/tasks").text
     assert tasks.index('id="clinician-forum"') < tasks.index('id="faq-forum"')
     assert 'href="/doctor/forum"' not in client.get("/doctor/calendar").text

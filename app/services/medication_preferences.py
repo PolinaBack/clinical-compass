@@ -1,6 +1,7 @@
 """Patient-authored tolerability preferences, independent from private intake data."""
 
 import json
+import secrets
 from fastapi import HTTPException
 from app.adverse_catalog import CATALOG, ELIGIBLE, OPTIONS
 from app.services import clinical_attachments as files, care_orders
@@ -39,6 +40,37 @@ def patient_scope(c, user, pid):
         raise HTTPException(403, "Пожелания заполняет только сам пациент")
 
 
+def assignment(c, pid):
+    row = c.execute(
+        "SELECT * FROM medication_preference_requests WHERE patient_id=? ORDER BY id DESC LIMIT 1",
+        (pid,),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def assign(c, user, pid, token=None):
+    care_orders.scope(c, user, pid, doctor=True)
+    token = token or secrets.token_urlsafe(24)
+    if not isinstance(token, str) or not 20 <= len(token) <= 100:
+        raise HTTPException(422, "Обновите форму назначения анкеты")
+    previous = c.execute(
+        "SELECT * FROM medication_preference_requests WHERE client_token=?", (token,)
+    ).fetchone()
+    if previous:
+        if previous["patient_id"] != pid or previous["requested_by"] != user["id"]:
+            raise HTTPException(409, "Эта форма уже использована")
+        return previous["id"]
+    current = assignment(c, pid)
+    if current and not current["answered_at"]:
+        return current["id"]
+    ident = c.execute(
+        "INSERT INTO medication_preference_requests(patient_id,requested_by,client_token,created_at) VALUES(?,?,?,?)",
+        (pid, user["id"], token, now()),
+    ).lastrowid
+    audit(c, user["id"], "medication_preferences_assigned", pid, ident)
+    return ident
+
+
 def patient_context(c, path, user, pid):
     patient_scope(c, user, pid)
     row = c.execute(
@@ -66,6 +98,7 @@ def patient_context(c, path, user, pid):
             comment=current_sent.get("comment", ""),
         )
     return dict(
+        preference_assignment=assignment(c, pid),
         medication_preferences=value,
         preference_options=sorted(
             ELIGIBLE.values(), key=lambda v: (v["label"].casefold(), v["code"])
@@ -77,6 +110,11 @@ def patient_context(c, path, user, pid):
 
 def save(c, path, user, pid, form):
     patient_scope(c, user, pid)
+    requested = assignment(c, pid)
+    if not requested:
+        raise HTTPException(
+            403, "Анкета пожеланий станет доступна после назначения специалистом"
+        )
     intent = care_orders.field(form, "intent", 10)
     if intent not in ("draft", "send"):
         raise HTTPException(422, "Выберите сохранение черновика или отправку пожеланий")
@@ -147,4 +185,9 @@ def save(c, path, user, pid, form):
         pid,
         revision + 1,
     )
+    if status == "sent" and not requested["answered_at"]:
+        c.execute(
+            "UPDATE medication_preference_requests SET answered_at=?,answer_revision=? WHERE id=? AND answered_at IS NULL",
+            (now(), revision + 1, requested["id"]),
+        )
     return revision + 1

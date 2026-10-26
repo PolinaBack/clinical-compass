@@ -1,6 +1,6 @@
 {% macro fields(definitions,answers,prefix,editable=true,prefs={}) %}
 {% for extra_group in [false,true] %}
-{% set group=namespace(items=[]) %}{% for field in definitions if (field.extra|default(false))==extra_group and not ((field.weight and prefs.hide_weight) or (field.nutrition and prefs.hide_nutrition)) %}{% set group.items=group.items+[field] %}{% endfor %}
+{% set group=namespace(items=[]) %}{% for field in definitions if field.key not in ['avoid_reactions','primary_reaction'] and (field.extra|default(false))==extra_group and not ((field.weight and prefs.hide_weight) or (field.nutrition and prefs.hide_nutrition)) %}{% set group.items=group.items+[field] %}{% endfor %}
 {% if group.items %}{% if extra_group %}<details class="intake-extra"><summary>Дополнительные вопросы · можно заполнить позже</summary>{% endif %}
 <div class="intake-fields-grid">{% for field in group.items %}{% set answer=answers.get(field.key,{'status':'unanswered','value':none}) %}{% set value=answer.value %}{% set field_id=prefix ~ '-' ~ field.key %}
 {% if not ((field.weight and prefs.hide_weight) or (field.nutrition and prefs.hide_nutrition)) %}
@@ -27,7 +27,7 @@
 </div>
 <details class="intake-answer-options" {% if answer.status not in ['unanswered','answered'] %}open{% endif %}><summary data-intake-state-label>{{ intake_states[answer.status] if answer.status not in ['unanswered','answered'] else 'Другие варианты' }}</summary><label class="intake-state">Статус ответа · {{ field.label }}<select name="s_{{ field.key }}" aria-label="Статус ответа · {{ field.label }}" data-intake-state>{% for key,label in intake_states.items() %}<option value="{{ key }}" {% if answer.status==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label></details></div>
 {% else %}<p class="meeting-preserve">{{ field.option_labels.get(answer.value,intake_display(answer)) if field.option_labels and answer.status=='answered' else intake_display(answer) }}</p>{% endif %}
-</fieldset>{% endif %}{% endfor %}
+{% if field.key=='birth_date' %}{% include 'intake_birth_age.html' %}{% endif %}</fieldset>{% endif %}{% endfor %}
 </div>{% if extra_group %}</details>{% endif %}{% endif %}{% endfor %}
 {% endmacro %}
 {% macro review(target) %}

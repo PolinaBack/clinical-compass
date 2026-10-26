@@ -90,9 +90,7 @@ def check_questionnaire_panels(patient, doctor, url, ids):
     # Unified support opens the sole uploader and records a real local note.
     patient.goto(url + "/patients/1/profile/about/exams")
     expect(patient.locator(".intake-empty-panel,.intake-attachments")).to_have_count(0)
-    assert patient.locator(".intake-support").evaluate(
-        "n=>Boolean(n.compareDocumentPosition(document.querySelector('.intake-links-panel'))&Node.DOCUMENT_POSITION_FOLLOWING)"
-    )
+    expect(patient.locator(".intake-links-panel")).to_have_count(0)
     patient.get_by_role("link", name="Голосовая заметка", exact=True).click()
     upload = patient.locator(".intake-support [data-local-recording]")
     upload.locator("[data-record-start]").click()

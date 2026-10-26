@@ -88,18 +88,17 @@ def test_all_questionnaires_keep_independent_audio_form_and_native_answer_saving
         ).fetchone()
 
 
-def test_intake_support_is_single_upload_surface_before_related_cards(client):
+def test_intake_support_is_single_upload_surface_without_related_cards(client):
     login(client, "patient1")
     for category in ("personal", "mental", "medicines", "exams"):
         page = client.get("/patients/1/profile/about/" + category)
         assert page.status_code == 200
         Structure().feed(page.text)
         assert page.text.count("data-local-recording") == 1
-        assert (
-            page.text.index("Нужно что-то добавить?")
-            < page.text.index("data-local-recording")
-            < page.text.index("Связанные сведения")
+        assert page.text.index("Нужно что-то добавить?") < page.text.index(
+            "data-local-recording"
         )
+        assert "<h2>Связанные сведения</h2>" not in page.text
         assert "Документы и голосовые заметки</h2>" not in page.text
         assert "Если сейчас нечего добавить" not in page.text
         assert "Пропустить раздел</button>" not in page.text

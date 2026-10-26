@@ -43,7 +43,7 @@ def backup(source, destination):
                     (table,),
                 ).fetchone()
                 and dst.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone()
-                for table in ("aviandr_observations", "aviandr_runs")
+                for table in ("aviandr_observations", "aviandr_runs", "forum_attachments")
             )
             if (
                 research_data

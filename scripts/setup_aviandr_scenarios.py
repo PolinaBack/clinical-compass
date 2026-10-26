@@ -386,6 +386,7 @@ def seed(c, path, *, reuse_initial=False):
                         (aid, str(item), value, now()),
                     )
         choices = ["S014", "S055"] if letter == "E" else ["S072"]
+        medication_preferences.assign(c, clinician, pid)
         medication_preferences.save(
             c,
             path,

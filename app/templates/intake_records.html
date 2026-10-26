@@ -15,14 +15,3 @@
 {% endmacro %}
 
 {% macro count(n) %}{{ n }} {% if n%10==1 and n%100!=11 %}запись{% elif n%10 in [2,3,4] and n%100 not in [12,13,14] %}записи{% else %}записей{% endif %}{% endmacro %}
-
-{% macro related_cards(linked_ids=none) %}
-<section class="card intake-links-panel"><h2>Связанные сведения</h2><p class="intake-panel-hint">{{ 'Карточки, связанные с этой записью.' if linked_ids is not none else 'Лекарства, посещения и обследования из вашей анкеты.' }}</p>
-<div class="intake-linked-actions">
-{% for kind,label in [('medication','Лекарства'),('visit','Посещения'),('exam','Обследования')] %}
-{% set matching=namespace(items=[]) %}{% for e in intake_data.entities if e.kind==kind and (linked_ids is none or e.id in linked_ids) %}{% set matching.items=matching.items+[e] %}{% endfor %}
-<a href="{% if linked_ids is not none and matching.items %}#intake-linked-{{ kind }}{% else %}/patients/{{ patient.id }}/profile/about/{{ entity_category[kind] }}{% if intake_readonly and intake_submission %}?submission_id={{ intake_submission.id }}{% endif %}#intake-section-records{% endif %}" {% if linked_ids is not none and matching.items %}data-intake-reveal{% endif %}><span>{{ label }}</span><strong>{{ count(matching.items|length) }} <span aria-hidden="true">→</span></strong></a>
-{% endfor %}</div>
-{% if linked_ids is not none %}{% for kind in ['medication','visit','exam','condition','symptom','reaction','family'] %}{% set matching=intake_data.entities|selectattr('kind','equalto',kind)|selectattr('id','in',linked_ids)|list %}{% if matching %}<div id="intake-linked-{{ kind }}" class="intake-linked-group"><h3>{{ entity_labels[kind] }}</h3>{% for e in matching %}{{ record(e) }}{% endfor %}</div>{% endif %}{% endfor %}{% endif %}
-</section>
-{% endmacro %}

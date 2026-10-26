@@ -1,0 +1,1 @@
+{% if forum_files %}<ul class="forum-files">{% for file in forum_files %}<li><a href="/forum/files/{{ file.id }}">{{ file.filename }}</a> <small>· {{ (file.byte_size / 1024)|round(1) }} КБ{% if file.scan_status!='clean' %} · без антивирусной проверки{% endif %}</small></li>{% endfor %}</ul>{% endif %}

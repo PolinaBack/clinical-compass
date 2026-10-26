@@ -1,4 +1,5 @@
-<div class="med-pref" id="medication-preferences">
+{% if preference_assignment %}<div class="med-pref" id="medication-preferences">
+<p class="caption">По просьбе специалиста · назначено {{ preference_assignment.created_at|local_datetime }}</p>
 <h4>Каких возможных нежелательных эффектов вы бы хотели избежать?</h4>
 <p>Можно заранее рассказать специалисту, что важно для вас при обсуждении лечения.</p>
 {% if request.query_params.get('preferences_sent') %}<p class="med-pref-feedback" role="status">Ответы отправлены специалисту.</p>{% elif request.query_params.get('preferences_draft') %}<p class="med-pref-feedback" role="status">Черновик сохранён только для вас. Можно вернуться позже.</p>{% endif %}
@@ -25,3 +26,5 @@
 {% if preference_sent.get('comment') %}<p class="med-pref-comment">{{ preference_sent.comment }}</p>{% endif %}
 {% if preference_sent.selected or preference_sent.get('comment') %}<p class="care-muted">Показаны отправленные специалисту пожелания.</p>{% endif %}
 {% endif %}</div>
+
+{% endif %}

@@ -1,10 +1,12 @@
 """Private educational schemes; no publish, sign, order, or patient endpoint."""
 
 from urllib.parse import urlencode
+import secrets
 from fastapi import HTTPException, Request
 from fastapi.responses import RedirectResponse
 from app.services import drug_library as library, medicine_drafts as drafts
 from app.services import adverse_reactions
+from app.services import medication_preferences
 
 
 def draft_context(c, path, user, patient_id, *, version=None, add=()):
@@ -53,6 +55,8 @@ def draft_context(c, path, user, patient_id, *, version=None, add=()):
     from app.services.medicine_reactions import doctor_context
 
     return dict(
+        preference_assignment=medication_preferences.assignment(c, patient_id),
+        preference_request_token=secrets.token_urlsafe(24),
         selected_patient=patient,
         draft=current,
         selected=selected,

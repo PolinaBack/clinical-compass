@@ -14,6 +14,17 @@ from scripts.backup import backup
 def form(
     client, *, revision=0, effects=("S014",), primary="S014", intent="send", **extra
 ):
+    # Existing scenarios exercise an explicitly assigned questionnaire.
+    from app.services.medication_preferences import assign
+
+    with connect(client.app.state.db_path) as c:
+        if not c.execute(
+            "SELECT 1 FROM medication_preference_requests WHERE patient_id=1"
+        ).fetchone():
+            doctor = c.execute(
+                "SELECT * FROM accounts WHERE role='doctor' AND doctor_id=1 ORDER BY id LIMIT 1"
+            ).fetchone()
+            assign(c, doctor, 1)
     return dict(
         csrf=token(client),
         revision=revision,

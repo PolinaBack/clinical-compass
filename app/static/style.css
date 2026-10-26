@@ -1766,3 +1766,4 @@ li {
 .camera-recorder video,.recording-list video { width:100%; max-width:640px; border-radius:16px; background:#241d30; }.camera-recorder video[hidden] { display:none; }.camera-status { margin:20px 0; font-weight:600; }.camera-recorder.is-recording .camera-status { color:#9b234b; }.video-offer h2 { font-size:25px; }.video-offer form { margin:0; }.recording-list article + article { margin-top:24px; }
 
 .video-offer form[hidden] { display:none; }
+.forum-file-picker{position:relative;display:inline-flex;align-items:center;min-height:44px;cursor:pointer;overflow:hidden}.forum-file-input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;margin:0}.forum-file-picker:focus-within{outline:3px solid #2d7365;outline-offset:3px}.forum-files{overflow-wrap:anywhere;padding-left:20px}.forum-files li{margin:8px 0}.forum-files small{color:#586575}

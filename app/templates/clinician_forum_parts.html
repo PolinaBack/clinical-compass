@@ -2,7 +2,7 @@
 <aside class="forum-privacy" aria-label="Правила обезличивания">
     <strong>Обсуждаем ситуацию, сохраняя приватность человека</strong>
     <p>Не указывайте имена, инициалы, контакты, адреса, номера документов и карт, точные даты, место работы или другие узнаваемые подробности. Вместо точного возраста используйте диапазон, вместо даты — примерный период.</p>
-    <p class="caption">Проверка находит распространённые персональные данные, но не все косвенные признаки. Перед публикацией перечитайте текст: можно ли узнать человека по сочетанию деталей?</p>
+    <p class="caption">Обезличьте также имена файлов и их содержимое. Проверка текста находит распространённые персональные данные, но не все косвенные признаки. Перед публикацией перечитайте текст: можно ли узнать человека по сочетанию деталей?</p>
 </aside>
 {% endmacro %}
 
@@ -13,9 +13,12 @@
 {% endmacro %}
 
 {% macro composer(form, csrf, kinds) %}
-<form method="post" action="/doctor/forum/preview" class="forum-compose">
+<form method="post" action="/doctor/forum/preview" class="forum-compose" enctype="multipart/form-data">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     {{ fields(form) }}
+<input type="hidden" name="attachments" value="{{ form.get('attachment_ids',[])|tojson|forceescape }}">
+{% set forum_files=form.get('attachment_files',[]) %}{% include 'forum_files.html' %}
+{% include 'forum_file_picker.html' %}
     {% if form.operation in ['comment','edit_comment'] %}
     <input type="hidden" name="kind" value="{{ form.kind }}">
     <label for="forum-body">{{ 'Изменить ответ' if form.operation == 'edit_comment' else 'Ваш ответ коллегам' }}</label>
@@ -28,9 +31,9 @@
     <input id="forum-title" name="title" value="{{ form.title }}" minlength="5" maxlength="140" required placeholder="Например: как обсудить трудности с засыпанием?">
     <label for="forum-body">Описание и вопрос к коллегам</label>
     <textarea id="forum-body" name="body" rows="9" maxlength="6000" required aria-describedby="forum-body-help">{{ form.body }}</textarea>
-    <p class="caption" id="forum-body-help">До 6000 символов. Для случая: возрастной диапазон, жалобы, краткое течение, что уже обсуждали и какой вопрос хотите задать. Только текст, без файлов и ссылки на карту.</p>
+    <p class="caption" id="forum-body-help">До 6000 символов. Для случая: возрастной диапазон, жалобы, краткое течение и вопрос коллегам. Можно приложить обезличенный файл, без привязки к карте пациента.</p>
     {% endif %}
-    <label class="forum-check"><input type="checkbox" name="deidentified" value="true" required><span>Я убрал(а) сведения, по которым можно узнать пациента или другого человека, и проверил(а) косвенные признаки.</span></label>
+    <label class="forum-check"><input type="checkbox" name="deidentified" value="true" required><span>Я убрал(а) сведения, по которым можно узнать пациента или другого человека, из текста и файлов и проверил(а) косвенные признаки.</span></label>
     <div class="forum-actions"><button class="button" type="submit">Предпросмотр публикации</button><a href="/doctor/forum">Вернуться на форум</a></div>
 </form>
 {% endmacro %}

@@ -216,6 +216,7 @@ def seed(c, path, *, doctor_id=1):
             note="Учебная сверка: Авиандр и эсциталопрам текущие; Спитомин завершён до окна. Других средств в сценарии нет. Это не рекомендация сочетания: проверка зависит от источников.",
         )
     _observations(c, pid, doctor, begin)
+    medication_preferences.assign(c, doctor, pid)
     medication_preferences.save(
         c,
         path,

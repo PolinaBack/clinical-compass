@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from 'intake_fields.html' import fields,review with context %}
-{% from 'intake_records.html' import related_cards with context %}
+
 {% block content %}{% set section='about' %}{% if user=='doctor' %}{% include 'specialist_nav.html' %}{% endif %}{% include 'profile_nav.html' %}
 <div class="intake-page intake-section-page" data-intake-page>
 <p class="intake-breadcrumb"><a href="/patients/{{ patient.id }}/profile/about">{{ 'Разделы анамнеза' if user=='doctor' else 'Разделы моей анкеты' }}</a> → {{ category.title }}</p>
@@ -22,7 +22,7 @@
 </form>
 {% else %}
 <p>Версия {% if intake_submission %}{{ intake_submission.id }} от {{ intake_submission.created_at|local_datetime }}{% else %}ещё не отправлена{% endif %}. Сведения пациента отделены от проверки специалиста.</p>
-<div class="intake-readonly-grid">{% for field in category.fields %}{% set a=intake_data.answers.get(category.key,{}).get(field.key,{}) %}{% if intake_visible(field,intake_data.answers.get(category.key,{}),intake_preferences) %}<article class="intake-answer"><h2>{{ field.label }}</h2><p>{{ intake_display_field(field,a) }}</p>{% if a %}{{ review('answer:' ~ category.key ~ '.' ~ field.key) }}{% endif %}</article>{% endif %}{% endfor %}</div>
+<div class="intake-readonly-grid">{% for field in category.fields if field.key not in ['avoid_reactions','primary_reaction'] %}{% set a=intake_data.answers.get(category.key,{}).get(field.key,{}) %}{% if intake_visible(field,intake_data.answers.get(category.key,{}),intake_preferences) %}<article class="intake-answer"><h2>{{ field.label }}</h2><p>{{ intake_display_field(field,a) }}</p>{% if field.key=='birth_date' %}{% include 'intake_birth_age.html' %}{% endif %}{% if a %}{{ review('answer:' ~ category.key ~ '.' ~ field.key) }}{% endif %}</article>{% endif %}{% endfor %}</div>
 {% endif %}
 {% if category.key=='measurements' %}
 <section class="card intake-calculations"><h2>Индекс массы тела</h2><p>ИМТ: <strong data-intake-bmi>{{ intake_calculations.bmi if intake_calculations.bmi is not none else 'не рассчитывается' }}</strong>. <span data-intake-bmi-inputs>{{ intake_calculations.bmi_inputs }}</span> <span data-intake-bmi-note>{{ intake_calculations.bmi_note }}</span></p></section>
@@ -31,6 +31,6 @@
 {% if category.key=='family' %}<p><a href="/patients/{{ patient.id }}/profile/family">Открыть существующее семейное дерево</a>. Сведения о родственниках не становятся диагнозами пациента.</p>{% endif %}
 {% set entity=none %}
 {% include 'intake_support.html' %}
-{{ related_cards() }}
+
 {% include 'intake_footer.html' %}
 </div>{% endblock %}

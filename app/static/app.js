@@ -100,3 +100,4 @@ function revealHistoryAnchor() {
 }
 window.addEventListener('hashchange', revealHistoryAnchor);
 window.addEventListener('DOMContentLoaded', revealHistoryAnchor);
+document.addEventListener('change',event=>{if(!event.target.matches('.forum-file-input'))return;let note=event.target.closest('label').nextElementSibling;if(!note?.hasAttribute('data-selected-forum-files')){note=document.createElement('p');note.setAttribute('data-selected-forum-files','');note.setAttribute('role','status');event.target.closest('label').after(note);}note.textContent=[...event.target.files].map(file=>file.name).join(', ');});

@@ -7,6 +7,7 @@ from fastapi import Form, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 
 from app.services import clinician_forum as forum
+from app.services import forum_attachments as attachments
 from app.storage import audit, now
 
 
@@ -18,6 +19,19 @@ def register_clinician_forum(app, db, account, csrf_check, render):
         return actor
 
     def page(request, template, **context):
+        if context.get("form"):
+            form = dict(context["form"])
+            actor = doctor(request)
+            kind = "comment" if "comment" in form["operation"] else "topic"
+            with db() as c:
+                form["attachment_files"] = attachments.selected(
+                    c,
+                    form.get("attachment_ids", []),
+                    actor,
+                    kind,
+                    form["target_id"] if form["operation"].startswith("edit") else None,
+                )
+            context["form"] = form
         response = render(request, template, kinds=forum.KINDS, **context)
         response.headers.update(
             {
@@ -38,12 +52,13 @@ def register_clinician_forum(app, db, account, csrf_check, render):
     async def check_fields(request, allowed):
         form = await request.form()
         if any(k not in allowed for k in form) or any(
-            len(form.getlist(k)) != 1 for k in form
+            len(form.getlist(k)) != 1 for k in form if k != "file"
         ):
             raise HTTPException(
                 422,
-                "Форум принимает только поля формы; файлы и привязки к пациенту недоступны.",
+                "Форум принимает только поля формы и вложения; привязки к пациенту недоступны.",
             )
+        return form
 
     @app.get("/doctor/forum")
     def index(
@@ -120,6 +135,7 @@ def register_clinician_forum(app, db, account, csrf_check, render):
         actor = doctor(request)
         with db() as c:
             item = forum.topic(c, tid, actor)
+            item["files"] = attachments.listing(c, "topic", tid)
             comments = [
                 dict(r)
                 for r in c.execute(
@@ -127,6 +143,8 @@ def register_clinician_forum(app, db, account, csrf_check, render):
                     (tid, actor["id"]),
                 )
             ]
+            for comment in comments:
+                comment["files"] = attachments.listing(c, "comment", comment["id"])
         return page(
             request,
             "clinician_forum_thread.html",
@@ -150,6 +168,9 @@ def register_clinician_forum(app, db, account, csrf_check, render):
         operation = "edit_comment" if "/comments/" in request.url.path else "edit_topic"
         with db() as c:
             item = forum.target(c, operation, tid, actor)
+            attached = attachments.listing(
+                c, "comment" if operation == "edit_comment" else "topic", tid
+            )
         return page(
             request,
             "clinician_forum_form.html",
@@ -160,6 +181,7 @@ def register_clinician_forum(app, db, account, csrf_check, render):
                 kind=item.get("kind", "question"),
                 title=item.get("title", ""),
                 body=item["body"],
+                attachment_ids=[f["id"] for f in attached],
             ),
             error=None,
         )
@@ -186,10 +208,40 @@ def register_clinician_forum(app, db, account, csrf_check, render):
             "title",
             "body",
             "deidentified",
+            "attachments",
         }
-        await check_fields(
-            request, allowed | ({"preview_token"} if publishing else set())
+        raw_form = await check_fields(
+            request, allowed | ({"preview_token"} if publishing else {"file"})
         )
+        values = attachments.ids(raw_form.get("attachments", "[]"))
+        file_kind = "comment" if "comment" in operation else "topic"
+        file_target = target_id if operation.startswith("edit") else None
+        with db() as c:
+            forum.target(c, operation, target_id, actor)
+            if publishing and not operation.startswith("edit"):
+                table = (
+                    "clinician_comments"
+                    if file_kind == "comment"
+                    else "clinician_topics"
+                )
+                published = c.execute(
+                    f"SELECT id FROM {table} WHERE submission_id=? AND author_id=?",
+                    (raw_form.get("preview_token", ""), actor["id"]),
+                ).fetchone()
+                if published:
+                    file_target = published["id"]
+            attachments.selected(c, values, actor, file_kind, file_target)
+        if not publishing:
+            if not deidentified:
+                raise HTTPException(422, "Подтвердите обезличивание текста и вложений")
+            prepared = await attachments.read_uploads(raw_form)
+            if len(values) + len(prepared) > attachments.MAX_FILES:
+                raise HTTPException(422, "Можно прикрепить до пяти файлов")
+            with db() as c:
+                values += attachments.save(
+                    c, app.state.db_path, file_kind, prepared, actor["id"]
+                )
+            request.state.forum_attachment_ids = values
         title, body = forum.validate_content(
             kind,
             title,
@@ -206,6 +258,8 @@ def register_clinician_forum(app, db, account, csrf_check, render):
             body=body,
             deidentified=True,
         )
+        if values:
+            payload["attachment_ids"] = values
         return actor, payload
 
     @app.post("/doctor/forum/preview")
@@ -243,6 +297,7 @@ def register_clinician_forum(app, db, account, csrf_check, render):
         except HTTPException as exc:
             if exc.status_code != 422:
                 raise
+            form["attachment_ids"] = getattr(request.state, "forum_attachment_ids", [])
             response = page(
                 request, "clinician_forum_form.html", form=form, error=exc.detail
             )
@@ -368,6 +423,13 @@ def register_clinician_forum(app, db, account, csrf_check, render):
                     ),
                 ).lastrowid
                 tid = oid
+            attachments.bind(
+                c,
+                payload.get("attachment_ids", []),
+                actor,
+                "comment" if comment else "topic",
+                oid,
+            )
             audit(c, actor["id"], f"clinician_forum_{operation}", object_id=oid)
         return redirect(tid)
 

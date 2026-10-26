@@ -1,5 +1,5 @@
 {% extends 'base.html' %}{% from 'intake_fields.html' import fields,review with context %}
-{% from 'intake_records.html' import related_cards with context %}
+
 {% block content %}{% set section='about' %}{% if user=='doctor' %}{% include 'specialist_nav.html' %}{% endif %}{% include 'profile_nav.html' %}{% set category=namespace(key=entity_category[entity_kind],title=entity_labels[entity_kind]) %}
 <div class="intake-page intake-entity-page" data-intake-page><p><a href="/patients/{{ patient.id }}/profile/about/{{ category.key }}">{{ category.title }} · к разделу</a></p><p class="eyebrow intake-page-eyebrow">ПЕРВИЧНАЯ АНКЕТА ПАЦИЕНТА</p><h1>{{ entity_labels[entity_kind] }}{% if entity %} #{{ entity.id }}{% endif %}</h1>{% set entity_percent=((100*entity_progress.done/entity_progress.total)|int) if entity_progress.total else 0 %}<progress class="intake-progress" data-section-progress value="{{ entity_percent }}" max="100" aria-label="Заполнение карточки">{{ entity_percent }}%</progress><p data-section-progress-label>{{ entity_percent }}% заполнено</p><p>Сведения со слов пациента. Они не создают диагноз или действующее назначение. Врач проверяет источник отдельно.</p>
 {% include 'intake_category_banner.html' %}
@@ -11,6 +11,6 @@
 {% if entity_kind in ['condition','symptom','family'] %}{% include 'intake_memory.html' %}{% endif %}
 {% if entity_kind=='family' %}<p><a href="/patients/{{ patient.id }}/profile/family">Открыть связанное семейное дерево</a>. Запись сохраняется как семейный анамнез, а не диагноз пациента.</p>{% endif %}
 {% include 'intake_support.html' %}
-{{ related_cards(related) }}
+
 {% if not intake_readonly and consent %}<section class="card intake-add-panel"><h2>Добавить связанные сведения</h2><p class="intake-panel-hint">Можно добавить лекарства, посещения и обследования, затем выбрать связь в карточке. Название препарата не используется для угадывания диагноза.</p><div class="intake-add-actions">{% for kind in ['medication','visit','exam'] %}<a class="button secondary" href="/patients/{{ patient.id }}/intake/entities/new/{{ kind }}{% if entity %}?related={{ entity.id }}{% endif %}"><span aria-hidden="true">＋</span> {{ entity_labels[kind] }}</a>{% endfor %}</div></section>{% endif %}
 {% if not intake_readonly and consent %}<div class="intake-footer-actions"><button type="submit" form="intake-entity-form">Сохранить карточку</button></div>{% endif %}</div>{% endblock %}

@@ -1,0 +1,11 @@
+{
+  "migration": "019",
+  "copy_migration_integrity": "ok",
+  "original_rows_preserved": true,
+  "original_tables": 88,
+  "original_rows": 1319,
+  "working_database_byte_identical": true,
+  "existing_patients_and_passwords_unchanged": true,
+  "requirement_rows_unchanged": 806,
+  "browser_tested": false
+}

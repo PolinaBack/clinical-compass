@@ -6,11 +6,11 @@
     </div>
     <section class="card">
         <span class="badge">Анонимный вопрос</span>
-        <p class="text">{{ question.body }}</p>
+        <p class="text">{{ question.body }}</p>{% if question.status=='published' %}{% set forum_files=question.files %}{% include 'forum_files.html' %}{% elif question.files %}<p>Прикреплено файлов: {{ question.files|length }}. Они станут доступны после проверки и публикации.</p>{% endif %}
         {% if question.status == 'published' %}
             <div class="forum-answer">
                 <h2>Ответ команды</h2>
-                <p class="text">{{ question.reply }}</p>
+                <p class="text">{{ question.reply }}</p>{% set forum_files=question.answer_files %}{% include 'forum_files.html' %}
                 <small>{{ question.replied_at }} (UTC)</small>
             </div>
         {% else %}

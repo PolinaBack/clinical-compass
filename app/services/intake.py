@@ -435,7 +435,8 @@ def question_progress(fields, answers):
     shown = [
         f
         for f in fields
-        if f["key"] not in ("comment", "discuss") and visible(f, answers)
+        if f["key"] not in ("comment", "discuss", "avoid_reactions", "primary_reaction")
+        and visible(f, answers)
     ]
     return dict(
         done=sum(answers.get(f["key"], {}).get("status") == "answered" for f in shown),
@@ -450,7 +451,8 @@ def categories_with_progress(data, prefs):
         applicable = [
             field
             for field in category["fields"]
-            if field["key"] not in ("comment", "discuss")
+            if field["key"]
+            not in ("comment", "discuss", "avoid_reactions", "primary_reaction")
             and visible(field, answers, prefs)
         ]
         done = sum(
@@ -476,7 +478,9 @@ def categories_with_progress(data, prefs):
             shown = [
                 f
                 for f in ef
-                if f["key"] not in ("comment", "discuss") and visible(f, entity["data"])
+                if f["key"]
+                not in ("comment", "discuss", "avoid_reactions", "primary_reaction")
+                and visible(f, entity["data"])
             ]
             done += sum(
                 entity["data"].get(f["key"], {}).get("status") == "answered"
@@ -603,6 +607,8 @@ def overview(data, prefs):
         answers = data.get("answers", {}).get(category["key"], {})
         values = []
         for field in category["fields"]:
+            if field["key"] in {"avoid_reactions", "primary_reaction"}:
+                continue
             a = answers.get(field["key"], {})
             if not visible(field, answers, prefs) or a.get("status") in (
                 None,

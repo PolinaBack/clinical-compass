@@ -1,5 +1,24 @@
 /* Local drafts and local audio only: no SpeechRecognition or external AI calls. */
 (() => {
+  document.querySelectorAll('[data-intake-field="birth_date"]').forEach(box=>{
+    const input=box.querySelector('[name="a_birth_date"]'),out=box.querySelector('[data-intake-age] strong');
+    if(!input||!out)return;
+    function updateAge(){
+      const status=box.querySelector('[name="s_birth_date"]')?.value;
+      const parts=input.value.split('-').map(Number);
+      const stamp=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+      const [year,month,day]=stamp.split('-').map(Number);
+      input.max=stamp;
+      if(!input.value||status&&status!=='answered'){out.textContent='укажите дату рождения';return;}
+      if(parts.length!==3||!parts.every(Number.isFinite)||input.value>stamp){out.textContent='проверьте дату рождения';return;}
+      const age=year-parts[0]-((month<parts[1]||month===parts[1]&&day<parts[2])?1:0);
+      const n=age%100,last=age%10;
+      out.textContent=`${age} ${n>=11&&n<=14?'лет':last===1?'год':last>=2&&last<=4?'года':'лет'}`;
+    }
+    box.addEventListener('input',()=>queueMicrotask(updateAge));
+    box.addEventListener('change',()=>queueMicrotask(updateAge));
+    updateAge();
+  });
   document.documentElement.classList.add('intake-enhanced');
   document.querySelectorAll('[data-intake-autosave],[data-intake-entity]').forEach(form => {
     let dirty=false, busy=false, paused=false, conflict=false, timer, edit=0, queuedSubmitter=null;
@@ -38,7 +57,7 @@
         if(data.progress&&edit===savedEdit){const root=form.closest('[data-intake-page]'),bar=root?.querySelector('[data-section-progress]'),label=root?.querySelector('[data-section-progress-label]');const percent=data.progress.total?Math.floor(100*data.progress.done/data.progress.total):0;if(bar){bar.max=100;bar.value=percent;bar.textContent=`${percent}%`;}if(label)label.textContent=`${percent}% заполнено`;}
         if(data.sections&&edit===savedEdit){const select=document.querySelector('[data-intake-jump-select]');if(select){const selected=select.value;select.replaceChildren(...data.sections.map(item=>{const option=document.createElement('option');option.value=item.key;option.textContent=item.title;return option;}));if(data.sections.some(item=>item.key===selected))select.value=selected;}}
         form.closest('[data-intake-page]')?.querySelectorAll('input[name="revision"]').forEach(e=>e.value=data.revision);
-        if(data.calculations&&edit===savedEdit){const root=form.closest('[data-intake-page]');[['age',data.calculations.age??'нужна дата рождения'],['bmi',data.calculations.bmi??'не рассчитывается'],['bmi-inputs',data.calculations.bmi_inputs],['bmi-note',data.calculations.bmi_note]].forEach(([key,value])=>{const e=root?.querySelector('[data-intake-'+key+']');if(e)e.textContent=value;});}
+        if(data.calculations&&edit===savedEdit){const root=form.closest('[data-intake-page]');[['age',data.calculations.age??'нужна дата рождения'],['bmi',data.calculations.bmi??'не рассчитывается'],['bmi-inputs',data.calculations.bmi_inputs],['bmi-note',data.calculations.bmi_note]].forEach(([key,value])=>{const e=root?.querySelector('[data-intake-'+key+']');const target=key==='age'?(e?.querySelector('strong')||e):e;if(target)target.textContent=value;});}
         if(data.entity_id){
           const hidden=(name,value)=>{let e=form.querySelector(`[name="${name}"]`);if(!e){e=document.createElement('input');e.type='hidden';e.name=name;form.append(e);}e.value=value;};
           hidden('entity_id',data.entity_id);hidden('entity_version',data.entity_version);

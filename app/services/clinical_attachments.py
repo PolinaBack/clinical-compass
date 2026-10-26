@@ -49,7 +49,7 @@ def cipher(db_path, c):
                 "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)
             ).fetchone()
             and c.execute(f"SELECT 1 FROM {table} LIMIT 1").fetchone()
-            for table in ("aviandr_observations", "aviandr_runs")
+            for table in ("aviandr_observations", "aviandr_runs", "forum_attachments")
         )
         patient_ai = c.execute(
             "SELECT 1 FROM sqlite_master WHERE type='table' AND name='patient_ai_runs'"
