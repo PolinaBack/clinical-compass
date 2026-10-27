@@ -195,6 +195,10 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
                         extract_requests.document_state(
                             c, app.state.db_path, user, pid, eid, True
                         )
+                if intent not in ("publish", "withdraw"):
+                    extract_requests.document_saved(
+                        c, app.state.db_path, user, pid, eid
+                    )
         except HTTPException as error:
             if error.status_code not in (409, 422):
                 raise
@@ -293,6 +297,7 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
                 version = service.confirm_print(
                     c, app.state.db_path, user, pid, eid, form
                 )
+                extract_requests.document_saved(c, app.state.db_path, user, pid, eid)
         except HTTPException as exc:
             if exc.status_code not in (409, 422):
                 raise

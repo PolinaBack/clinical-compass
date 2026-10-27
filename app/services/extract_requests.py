@@ -61,6 +61,19 @@ DOCUMENT_FIELDS = ("kind", "purpose", "purpose_other", "due", "due_date")
 MAX_DOCUMENTS = 50
 
 
+def awaiting_reply_count(c, doctor_id):
+    """Notify about patient input awaiting attention, not all unfinished documents."""
+    return c.execute(
+        """SELECT count(*) FROM extract_requests r
+        JOIN patients p ON p.id=r.patient_id
+        WHERE p.doctor_id=? AND r.status NOT IN ('ready','declined')
+        AND COALESCE((SELECT e.actor_role FROM extract_request_events e
+                      WHERE e.request_id=r.id ORDER BY e.id DESC LIMIT 1),
+                     'patient')='patient'""",
+        (doctor_id,),
+    ).fetchone()[0]
+
+
 def token(value):
     if (
         not isinstance(value, str)
@@ -442,6 +455,28 @@ def make_draft(c, path, user, pid, rid, form):
         secrets.token_urlsafe(24),
     )
     return eid
+
+
+def document_saved(c, path, user, pid, eid):
+    item = c.execute(
+        "SELECT id,status FROM extract_requests WHERE patient_id=? AND document_id=?",
+        (pid, eid),
+    ).fetchone()
+    if item:
+        event(
+            c,
+            path,
+            user,
+            pid,
+            item["id"],
+            (
+                item["status"]
+                if item["status"] in ("ready", "declined")
+                else "in_progress"
+            ),
+            "Специалист сохранил данные документа.",
+            secrets.token_urlsafe(24),
+        )
 
 
 def document_state(c, path, user, pid, eid, published):

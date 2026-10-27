@@ -383,10 +383,11 @@ def create_app(db_path=None):
             from .services.patient_activity import patients_with_activity
 
             patients = patients_with_activity(c, account(request)["doctor_id"])
-            pending_extract_requests = c.execute(
-                "SELECT count(*) FROM extract_requests r JOIN patients p ON p.id=r.patient_id WHERE p.doctor_id=? AND r.status NOT IN ('ready','declined')",
-                (account(request)["doctor_id"],),
-            ).fetchone()[0]
+            from .services.extract_requests import awaiting_reply_count
+
+            pending_extract_requests = awaiting_reply_count(
+                c, account(request)["doctor_id"]
+            )
         response = render(
             request,
             "doctor.html",
