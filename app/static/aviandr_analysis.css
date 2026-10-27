@@ -43,6 +43,18 @@
 .aviandr-direction[data-level=attention] .aviandr-status { background: #fff0d7; color: #795012; }
 .aviandr-direction[data-level=critical] .aviandr-status { background: #fbe2e5; color: #8b2938; }
 .aviandr-direction[data-level=favorable] .aviandr-status { background: #e1f1e7; color: #286442; }
+.aviandr-direction[data-level=attention] { --av-accent:#946207; --av-tint:#fff5dc; --av-icon-bg:#ffe9b5; border-color:#e1bf69; }
+.aviandr-direction[data-level=critical] { --av-accent:#a43142; --av-tint:#fff0f1; --av-icon-bg:#f9d8dd; border-color:#df9ca6; }
+.aviandr-direction[data-level=favorable] { --av-accent:#287247; --av-tint:#edf9f0; --av-icon-bg:#d5eddd; border-color:#92c7a3; }
+.aviandr-review { margin:12px 18px 18px; border-top:1px solid var(--av-line); padding-top:12px; font-size:12px; }
+.aviandr-review summary { cursor:pointer; font-weight:700; min-height:36px; }
+.aviandr-review label { display:block; margin:12px 0; }.aviandr-review label.check { display:flex; align-items:flex-start; gap:9px; }
+.aviandr-review label.check input { flex:none; width:18px; height:18px; margin-top:2px; }
+.aviandr-review select,.aviandr-review textarea { width:100%; max-width:100%; min-width:0; font-size:12px; }
+.aviandr-review button { max-width:100%; white-space:normal; font-size:12px; padding:10px 14px; }
+.aviandr-review-current { background:#e4f3e9; color:#265f3c; padding:10px; border-radius:9px; }
+.aviandr-review-summary { margin:12px 18px; font-size:12px; }
+.aviandr-review-stale { background:#fff1d5; color:#7a4c12; padding:12px; border-radius:9px; }
 .aviandr-card-body { padding: 0 18px 4px; }
 .aviandr-conclusion { font-size: 14px; line-height: 1.65; margin: 12px 0 0; }
 .aviandr-card-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }

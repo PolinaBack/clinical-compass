@@ -91,8 +91,8 @@ def test_refresh_returns_new_facts_even_when_medical_status_stays_unknown(
     after = current(client, pid, checksum=before["checksum"])
     assert after["changed"] and after["checksum"] != before["checksum"]
     assert expected in after["html"]
-    assert "Недостаточно проверенных данных" in after["html"]
-    assert "действующего проверенного правила показаний нет" in after["html"]
+    assert "Нужно подтвердить конкретное показание" in after["html"]
+    assert "Сопоставление с локальной библиотекой лекарств" in after["html"]
 
 
 def test_private_intake_draft_is_not_published_until_explicit_submit(research):

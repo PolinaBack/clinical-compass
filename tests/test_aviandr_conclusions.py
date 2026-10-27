@@ -114,13 +114,18 @@ def test_offline_page_displays_all_four_conclusions_without_calling_model(
     assert "data-aviandr-result" not in value.text
 
 
-def test_no_instruction_means_limited_assessment_not_a_positive_drug_claim(research):
+def test_library_assessment_is_separate_from_verified_sources_and_not_a_safety_claim(
+    research,
+):
     for letter in "CDE":
         value = report(research, letter)
         assert value["rules_count"] == 0 and not value["sources"]
-        assert value["directions"][0]["status"] == analysis.INDICATIONS["unknown"]
+        assert value["library_basis"].startswith("Локальная библиотека")
+        assert value["directions"][0]["level"] == (
+            "favorable" if letter == "E" else "attention"
+        )
         text = " ".join(conclusion(value, d["key"]) for d in value["directions"])
-        assert "действующего проверенного правила показаний нет" in text
+        assert "зарегистрированные показания" in text.casefold()
         assert not re.search(
             r"(?:препарат|авиандр)\s+(?:безопасен|показан|эффективен|лечит|подходит)",
             text,
@@ -150,7 +155,8 @@ def test_two_current_drugs_without_verified_pairs_do_not_invent_interactions(res
     )
     message = conclusion(value, "interactions")
     assert "Спитомин" in message and "Эсциталопрам" in message
-    assert "не подставляются" in message
+    assert "В библиотеке отмечено" in message
+    assert value["directions"][2]["level"] == "critical"
 
 
 def test_verified_rule_remains_separate_and_withdrawal_changes_current_conclusion(
@@ -175,7 +181,7 @@ def test_verified_rule_remains_separate_and_withdrawal_changes_current_conclusio
     before = report(research)
     direction = before["directions"][1]
     assert direction["level"] == "critical" and direction["narrative"]["sources"]
-    assert "Подтверждённое противопоказание" in conclusion(before, "contraindications")
+    assert "ТЕСТОВЫЙ ФАКТОР" in conclusion(before, "contraindications")
     with connect(path) as c:
         c.execute(
             "INSERT INTO drug_source_events(import_id,action,actor_id,note,created_at) VALUES(?,'withdraw',?,'TEST withdrawal','2026-10-25T00:00:00+00:00')",
@@ -184,7 +190,8 @@ def test_verified_rule_remains_separate_and_withdrawal_changes_current_conclusio
     after = report(research)
     assert not after["directions"][1]["narrative"]["sources"]
     assert before["checksum"] != after["checksum"]
-    assert "Без проверенных правил" in conclusion(after, "contraindications")
+    assert after["directions"][1]["level"] == "attention"
+    assert "не предоставил достаточно" in conclusion(after, "contraindications")
 
 
 @pytest.mark.parametrize(

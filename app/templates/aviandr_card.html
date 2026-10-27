@@ -23,8 +23,9 @@
         <ol class="aviandr-card-questions" data-card-questions>
             {% for question in d.narrative.questions[:2] %}<li>{{ question.question }}</li>{% endfor %}
         </ol>
-        <h4>Что пока неизвестно</h4>
+        <h4>Ограничения оценки</h4>
         <p class="aviandr-unknown">{{ d.narrative.unknowns[0] }}</p>
         </section></div>
     </div>
+    {% include 'aviandr_review.html' %}
 </article>

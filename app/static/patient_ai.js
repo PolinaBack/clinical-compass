@@ -71,6 +71,8 @@
   }
   pollJobs(document);
 
+  document.addEventListener('input', event => {const form=event.target.closest('[data-av-review-form]');if(form)form.dataset.dirty='true';});
+  document.addEventListener('change', event => {const form=event.target.closest('[data-av-review-form]');if(form)form.dataset.dirty='true';});
   document.querySelectorAll('[data-aviandr-analysis][data-av-refresh-url]').forEach(block => {
     const status = block.querySelector('[data-av-live-status]');
     status.hidden = false;
@@ -85,6 +87,7 @@
       const fresh = freshBlock?.querySelector('[data-av-live]');
       const current = block.querySelector('[data-av-live]');
       if (!fresh || !current || freshBlock.dataset.avChecksum !== checksum) throw Error();
+      if (current.querySelector('[data-av-review-form][data-dirty=true]') || document.activeElement?.closest('[data-av-review-form]')) return false;
       const selection = window.getSelection();
       if (selection?.toString() && current.contains(selection.anchorNode)) return false;
       const detailsKey = node => node.id || node.querySelector('summary')?.textContent.trim();
@@ -103,7 +106,7 @@
       const anchorTop = anchor?.getBoundingClientRect().top;
       const below = current.getBoundingClientRect().bottom < 0;
       const oldHeight = current.getBoundingClientRect().height;
-      // The editable clinician forms are deliberately outside data-av-live.
+      // Generic clinician forms remain outside; edited card confirmations pause replacement above.
       current.replaceWith(fresh);
       block.dataset.avChecksum = checksum;
       block.dataset.avSelected = freshBlock.dataset.avSelected;
@@ -148,7 +151,7 @@
           if (applyUpdate(result.html, result.checksum)) {
             announce('Карточки обновлены по новым сохранённым данным.');
           } else {
-            announce('Есть новые данные. Обновим карточки после завершения выделения текста.');
+            announce('Есть новые данные. Завершите работу с формой или выделенным текстом; перед подтверждением изменения карты будут проверены.');
           }
         } else if (status.textContent.includes('Не удалось')) {
           announce('Связь восстановлена. Карточки соответствуют сохранённым данным.');

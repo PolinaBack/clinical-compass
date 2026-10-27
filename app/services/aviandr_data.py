@@ -147,7 +147,8 @@ def add_observation(
 def observations(c, path, pid):
     latest = {}
     for row in c.execute(
-        "SELECT * FROM aviandr_observations WHERE patient_id=? ORDER BY id DESC", (pid,)
+        "SELECT o.*,coalesce(d.name,a.username) author_name FROM aviandr_observations o JOIN accounts a ON a.id=o.actor_id LEFT JOIN doctors d ON d.id=a.doctor_id WHERE o.patient_id=? ORDER BY o.id DESC",
+        (pid,),
     ):
         value = medicines.unpack(c, path, row["payload"])
         identity = (
@@ -159,6 +160,7 @@ def observations(c, path, pid):
             identity,
             dict(
                 id=row["id"],
+                author_name=row["author_name"],
                 kind=row["kind"],
                 confirmed=bool(row["confirmed"]),
                 source=row["source_note"],
@@ -174,6 +176,8 @@ def collect(c, path, user, pid):
     obs = observations(c, path, pid)
     facts = []
     for item in obs:
+        if item["kind"] == "direction_review":
+            continue
         facts.append(
             dict(
                 id=f"O{item['id']}",
@@ -520,6 +524,19 @@ def collect(c, path, user, pid):
         "SELECT * FROM patient_profiles WHERE patient_id=?", (pid,)
     ).fetchone()
     return dict(
+        patient_id=pid,
+        demographics=(
+            {
+                key: submission["data"]
+                .get("answers", {})
+                .get("personal", {})
+                .get(key, {})
+                for key in ("birth_date", "sex")
+            }
+            if submission
+            else {}
+        ),
+        direction_reviews=[o for o in obs if o["kind"] == "direction_review"],
         facts=facts,
         intake_submission=(
             dict(

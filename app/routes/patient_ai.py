@@ -108,6 +108,8 @@ def register_patient_ai(app, db, account, csrf_check, render):
             messages=service.MESSAGES,
             sources=catalog(),
             **av_context,
+            av_review_error=getattr(request.state, "aviandr_review_error", ""),
+            av_review_form=getattr(request.state, "aviandr_review_form", {}),
             charts={
                 key: plot_segments(data["observations"], key, maximum)
                 for key, maximum in [
@@ -245,6 +247,30 @@ def register_patient_ai(app, db, account, csrf_check, render):
             error_message=aviandr_jobs.MESSAGES.get(value["error_code"], ""),
         )
         return JSONResponse(value, headers={"Cache-Control": "no-store"})
+
+    @app.post("/patients/{pid}/ai-analysis/aviandr/review")
+    async def aviandr_review(request: Request, pid: int):
+        form = await request.form(max_files=0, max_fields=12)
+        csrf_check(request, str(form.get("csrf", "")))
+        from app.services import aviandr_reviews
+
+        try:
+            with db() as c:
+                c.execute("BEGIN IMMEDIATE")
+                user = authorized(request, c, pid)
+                aviandr_reviews.save(c, path, user, pid, form)
+        except HTTPException as error:
+            if error.status_code not in (409, 422):
+                raise
+            request.state.aviandr_review_error = str(error.detail)
+            request.state.aviandr_review_form = dict(form)
+            response = page(request, pid)
+            response.status_code = error.status_code
+            return response
+        return RedirectResponse(
+            f"/patients/{pid}/ai-analysis?av_saved=1#av-{form['direction']}",
+            status_code=303,
+        )
 
     @app.post("/patients/{pid}/ai-analysis/aviandr/facts")
     async def aviandr_fact(request: Request, pid: int):

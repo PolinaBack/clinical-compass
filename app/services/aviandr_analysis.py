@@ -7,12 +7,12 @@ from app.experimental_ai.scenarios import digest
 from app.experimental_ai.analysis import series_stats, plot_segments
 from app.services import aviandr_data, aviandr_sources, aviandr_narratives, drug_library
 
-VERSION = "aviandr-applicability-v2"
+VERSION = "aviandr-applicability-v3"
 INDICATIONS = {
-    "match": "Соответствие подтверждённым сведениям обнаружено",
-    "no_match": "Соответствие не установлено",
-    "clarify": "Требуется уточнение врача",
-    "unknown": "Недостаточно проверенных данных",
+    "match": "Зарегистрированное показание подтверждено",
+    "no_match": "Показания не совпадают — пропустить",
+    "clarify": "Нужно подтвердить конкретное показание",
+    "unknown": "Нужно подтвердить конкретное показание",
 }
 INTERACTIONS = {
     "contraindicated": "Обнаружено подтверждённое противопоказанное сочетание",
@@ -713,5 +713,8 @@ def build(c, path, user, pid):
         ],
     )
     aviandr_narratives.attach(result, pid)
+    from app.services import aviandr_applicability
+
+    aviandr_applicability.apply(c, result, results)
     result["checksum"] = digest(result)
     return result

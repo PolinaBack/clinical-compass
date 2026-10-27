@@ -1,0 +1,18 @@
+{
+  "browser": "Chromium",
+  "initial_four_yellow": true,
+  "four_real_clinician_confirmations": true,
+  "four_green_after_confirmation": true,
+  "known_contraindication_turns_red": true,
+  "stale_form_returns_409_and_preserves_text": true,
+  "widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "horizontal_overflow": [],
+  "javascript_errors": [],
+  "axe_violations": [],
+  "synthetic_database": true
+}

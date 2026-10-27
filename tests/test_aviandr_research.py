@@ -280,7 +280,7 @@ def test_rules_require_active_source_correct_section_and_doctor_confirmation(res
             note="Техническая запись со слов для проверки состояния.",
         )
     r = report(research)
-    assert r["directions"][1]["level"] == "attention"
+    assert r["directions"][1]["level"] == "critical"
     with connect(path) as c:
         data.add_observation(
             c,
@@ -299,7 +299,7 @@ def test_rules_require_active_source_correct_section_and_doctor_confirmation(res
             "INSERT INTO drug_source_events(import_id,action,actor_id,note,created_at) VALUES(?,'withdraw',?,'TEST withdrawal',?)",
             (iid, user["id"], now()),
         )
-    assert report(research)["directions"][1]["level"] == "unknown"
+    assert report(research)["directions"][1]["level"] == "attention"
 
 
 def test_screening_never_confirms_indication_without_a_documented_diagnosis(research):
@@ -673,7 +673,7 @@ def test_submitted_allergy_is_provisional_until_that_version_is_reviewed(researc
                 now(),
             ),
         ).lastrowid
-    assert report(research)["directions"][1]["level"] == "attention"
+    assert report(research)["directions"][1]["level"] == "critical"
     with connect(path) as c:
         c.execute(
             "INSERT INTO intake_reviews(submission_id,target,status,note,actor_id,created_at) VALUES(?,?,'confirmed','TEST ONLY',?,?)",
@@ -743,7 +743,7 @@ def test_reference_registration_alone_never_creates_clinical_rules(research):
     assert result["registration"]["manufacturer"] is None
     assert result["registration"]["official_document_url"] is None
     assert result["rules_count"] == 0 and not result["sources"]
-    assert result["directions"][0]["level"] == "unknown"
+    assert result["directions"][0]["level"] == "attention"
 
 
 def test_observation_retry_cannot_silently_change_confirmation_or_date(research):
