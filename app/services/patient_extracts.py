@@ -10,7 +10,7 @@ from app.services.clinical_forms import today
 from app.services.extract_sources import collect
 from app.storage import audit, now
 
-TITLES = (
+LEGACY_TITLES = (
     "Медицинское заключение",
     "Выписка из медицинской карты",
     "Справка",
@@ -18,6 +18,24 @@ TITLES = (
     "Копия медицинской документации",
     "Ответ на запрос рецепта",
 )
+DOCUMENT_TYPES = (
+    (
+        "Выписка из медицинской документации",
+        "Для передачи информации другому врачу",
+        "▤",
+    ),
+    ("Медицинское заключение", "Итог приёма, оценка и выводы специалиста", "☷"),
+    ("Направление на обследование", "Анализы, исследования или консультация", "⌕"),
+    ("План лечения", "Лекарства, контроль и следующие шаги", "+"),
+    ("Памятка пациенту", "Рекомендации понятным языком", "♡"),
+    ("Медицинская справка (проект)", "Черновик для установленного порядка выдачи", "▣"),
+    (
+        "Проект рецептурного назначения",
+        "Для дальнейшего оформления врачом; не рецепт",
+        "℞",
+    ),
+)
+TITLES = tuple(dict.fromkeys((*LEGACY_TITLES, *(t[0] for t in DOCUMENT_TYPES))))
 DIAGNOSES = {
     "working": "Рабочая формулировка",
     "preliminary": "Предварительный диагноз",
@@ -118,8 +136,11 @@ def listing(c, path, user, pid):
     return result
 
 
-def create(c, path, user, pid, token):
+def create(c, path, user, pid, token, title=None):
     intake.check_scope(c, user, pid, doctor=True)
+    title = title or TITLES[0]
+    if title not in TITLES:
+        raise HTTPException(422, "Выберите вид документа")
     if (
         not isinstance(token, str)
         or not 16 <= len(token) <= 100
@@ -139,7 +160,7 @@ def create(c, path, user, pid, token):
         "SELECT name FROM doctors WHERE id=?", (user["doctor_id"],)
     ).fetchone()
     data = dict(
-        title=TITLES[0],
+        title=title,
         organization="",
         specialist=doctor["name"] if doctor else "",
         recipient="Другому специалисту",

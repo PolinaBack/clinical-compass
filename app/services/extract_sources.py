@@ -6,8 +6,9 @@ import json
 
 from app.intake_catalog import CATEGORIES, ENTITY_FIELDS, ENTITY_LABELS
 from app.services import intake, diary, care_orders, medicine_reactions, meetings
-from app.services.clinical_forms import display_field, visible, today
-from app.scales import SCALES, score, OPTIONS
+from app.services.clinical_forms import today
+from app.services import extract_narratives as prose
+from app.scales import SCALES, score, HCL_CONTEXT
 from app.storage import now
 
 
@@ -15,16 +16,6 @@ def fingerprint(value):
     return sha256(
         json.dumps(value, ensure_ascii=False, sort_keys=True).encode()
     ).hexdigest()
-
-
-def fields_text(fields, answers, preferences=None):
-    return [
-        f"{f['label']}: {display_field(f, answers[f['key']])}"
-        for f in fields
-        if f["key"] in answers
-        and answers[f["key"]].get("status") not in (None, "unanswered")
-        and visible(f, answers, preferences or {})
-    ]
 
 
 def collect(c, path, user, pid):
@@ -66,30 +57,39 @@ def collect(c, path, user, pid):
             if key == "personal"
             else {"height", "weight"} if key == "measurements" else set()
         )
-        lines = fields_text(
+        lines = prose.fields_text(
+            key,
             [f for f in category["fields"] if f["key"] not in identity_keys],
             category_answers,
             prefs,
         )
         for entity in data.get("entities", []):
             if entity["kind"] in category.get("kinds", []):
-                values = fields_text(
-                    entity_fields.get(entity["kind"], []), entity["data"]
+                values = prose.fields_text(
+                    entity["kind"],
+                    entity_fields.get(entity["kind"], []),
+                    entity["data"],
+                    entity=True,
                 )
                 if values:
                     lines.append(
                         entity_labels.get(entity["kind"], entity["kind"])
-                        + "\n"
-                        + "; ".join(values)
+                        + ". "
+                        + " ".join(values)
                     )
         for item in data.get("attachments", []):
             if item.get("category") == key:
                 lines.append(
-                    "Документ: "
+                    "Пациент приложил документ «"
                     + item["filename"]
-                    + "; дата: "
+                    + "»; указанная дата исследования — "
                     + (item.get("study_date") or "не указана")
-                    + ("; " + item["comment"] if item.get("comment") else "")
+                    + (
+                        ". Описание пациента: «" + item["comment"] + "»"
+                        if item.get("comment")
+                        else ""
+                    )
+                    + "."
                 )
         source = (
             ("Первичный анамнез, отправлен " + submission["created_at"])
@@ -100,7 +100,7 @@ def collect(c, path, user, pid):
             "intake-" + key,
             "Анамнез",
             category["title"],
-            "\n".join(lines),
+            " ".join(lines),
             source,
             True,
             len(lines),
@@ -129,7 +129,13 @@ def collect(c, path, user, pid):
                     "profile-" + key,
                     "Дополнительные сведения",
                     title,
-                    profile[key],
+                    prose.sentence(
+                        "В разделе «"
+                        + title
+                        + "» пациент сообщает: «"
+                        + profile[key]
+                        + "»"
+                    ),
                     "Сохранённый профиль пациента",
                     False,
                 )
@@ -145,16 +151,24 @@ def collect(c, path, user, pid):
             )
         ]
         family.append(
-            row["relation"]
-            + (": " + row["name"] if row["name"] else "")
-            + (" — " + "; ".join(details) if details else "")
+            prose.sentence(
+                "В семейном анамнезе указан родственник «"
+                + row["relation"]
+                + (" — " + row["name"] if row["name"] else "")
+                + "»"
+                + (
+                    ". Со слов пациента, у родственника отмечены: " + "; ".join(details)
+                    if details
+                    else "; сведений о заболеваниях не представлено"
+                )
+            )
         )
     if family:
         add(
             "family-tree",
             "Дополнительные сведения",
             "Семейная родословная",
-            "\n".join(family),
+            " ".join(family),
             "Сохранённое семейное дерево",
             True,
             len(family),
@@ -174,15 +188,22 @@ def collect(c, path, user, pid):
             )
         }
         lines = [
-            "Статус: "
-            + ("Завершена" if row["status"] == "completed" else "Не завершена"),
-            "Период: " + row["period_start"] + " — " + row["period_end"],
+            (
+                "Анкета завершена."
+                if row["status"] == "completed"
+                else "Анкета не завершена."
+            ),
+            "Ответы относятся к периоду с "
+            + row["period_start"]
+            + " по "
+            + row["period_end"]
+            + ".",
         ]
         try:
             result = score(row["scale"], raw)
             if row["status"] == "completed" and result.get("total") is not None:
                 lines.append(
-                    "Результат: "
+                    "Получен результат "
                     + str(result["total"])
                     + " баллов. Результат опросника не является диагнозом."
                 )
@@ -192,25 +213,11 @@ def collect(c, path, user, pid):
             answer = raw.get(str(index), {})
             if not answer:
                 continue
-            state = answer["state"]
-            value = answer.get("value")
-            if state == "answered" and value is not None:
-                label = (
-                    ("Да" if value else "Нет")
-                    if row["scale"] in ("hcl33", "safety6")
-                    else dict(OPTIONS).get(value, str(value))
-                )
-            else:
-                label = "Ответ не завершён / пропущен (" + state + ")"
-            lines.append(
-                f"{index}. {question}: {label}"
-                + (
-                    "; комментарий: " + answer["comment"]
-                    if answer.get("comment")
-                    else ""
-                )
-                + ("; обсудить со специалистом" if answer.get("discuss") else "")
-            )
+            lines.append(prose.assessment_item(row["scale"], index, question, answer))
+        if row["scale"] == "hcl33":
+            for key, label, choices in HCL_CONTEXT:
+                if "ctx_" + key in raw:
+                    lines.append(prose.hcl_context(key, raw["ctx_" + key], choices))
         default = row["status"] == "completed" and row["scale"] not in latest
         if row["status"] == "completed":
             latest.add(row["scale"])
@@ -218,7 +225,7 @@ def collect(c, path, user, pid):
             "assessment-" + str(row["id"]),
             "Анкеты и тесты",
             definition["name"],
-            "\n".join(lines),
+            " ".join(lines),
             "Анкета от " + (row["completed_at"] or row["period_end"]),
             default,
         )
@@ -226,28 +233,40 @@ def collect(c, path, user, pid):
     for row in c.execute(
         "SELECT * FROM diary WHERE patient_id=? ORDER BY day DESC,id DESC", (pid,)
     ):
-        text = f"Самочувствие: {row['wellbeing']}/10; сон: {row['sleep']} ч" + (
-            f"; качество сна: {row['sleep_quality']}/10"
-            if row["sleep_quality"] is not None
-            else ""
+        text = (
+            f"В дневнике пациент оценивает самочувствие в {row['wellbeing']} из 10 и указывает продолжительность сна {row['sleep']} ч"
+            + (
+                f". Качество сна пациент оценивает в {row['sleep_quality']} из 10"
+                if row["sleep_quality"] is not None
+                else ""
+            )
         )
-        text += "; лечение: " + {
-            "none": "Не применимо",
-            "taken": "Выполнено",
-            "missed": "Сообщён пропуск",
-        }.get(row["adherence"], row["adherence"])
+        text = (
+            prose.sentence(text)
+            + " "
+            + {
+                "none": "Отметка выполнения лечения указана как неприменимая.",
+                "taken": "Пациент сообщает о выполнении лечения.",
+                "missed": "Пациент сообщает о пропуске лечения.",
+            }.get(row["adherence"], "Выполнение лечения требует уточнения.")
+        )
         if row["note"]:
-            text += "\nЗаметка: " + row["note"]
+            text += " " + prose.sentence("Пациент поясняет: «" + row["note"] + "»")
         for item in extras["diary_metric_history"].get(row["id"], []):
             text += (
-                "\n"
-                + item["title"]
-                + ": "
+                "\nПациент указал значение показателя «"
+                + item["title"].rstrip(" ?")
+                + "» — "
                 + item["display"]
                 + (" " + item["unit"] if item["unit"] else "")
                 + ("; " + item["comment"] if item["comment"] else "")
                 + ("; " + item["effect_note"] if item.get("effect_note") else "")
-                + ("; обсудить со специалистом" if item["discuss"] else "")
+                + (
+                    "; пациент хочет обсудить это со специалистом"
+                    if item["discuss"]
+                    else ""
+                )
+                + "."
             )
         add(
             "diary-" + str(row["id"]),
@@ -269,8 +288,28 @@ def collect(c, path, user, pid):
         for item in plan["items"]:
             name = item.get("reference", {}).get("name") or item["code"]
             lines.append(
-                name
-                + ": "
+                "Врач указал в отправленной схеме препарат «"
+                + name
+                + "»"
+                + (
+                    ". Указания по приёму: "
+                    if any(
+                        item.get(k)
+                        for k in (
+                            "dose",
+                            "frequency",
+                            "frequency_other",
+                            "food",
+                            "food_other",
+                            "route",
+                            "route_other",
+                            "start",
+                            "duration",
+                            "comment",
+                        )
+                    )
+                    else "."
+                )
                 + "; ".join(
                     str(item.get(k, ""))
                     for k in (
@@ -292,23 +331,23 @@ def collect(c, path, user, pid):
             "plan-" + str(row["id"]),
             "Назначения и обследования",
             "Отправленная лекарственная схема",
-            "\n".join(lines),
+            "\n".join(prose.sentence(line) for line in lines),
             "Отправлена "
             + row["created_at"]
             + ". Фактический приём требует уточнения.",
             True,
         )
     for order in care_orders.listing(c, path, user, pid):
-        text = "\n".join(
-            f"{label}: {order[key]}"
-            for key, label in [
-                ("name", "Назначение"),
-                ("due_label", "Срок"),
-                ("status_label", "Статус"),
-                ("purpose", "Цель"),
-                ("preparation", "Подготовка"),
-                ("comment", "Комментарий"),
-            ]
+        text = " ".join(
+            prose.sentence(template.format(v=order[key]))
+            for key, template in {
+                "name": "Врач оформил назначение «{v}»",
+                "due_label": "Указанный срок выполнения — {v}",
+                "status_label": "Текущий статус назначения — {v}",
+                "purpose": "Врач указал цель назначения: {v}",
+                "preparation": "Врач указал подготовку: {v}",
+                "comment": "Врач поясняет: «{v}»",
+            }.items()
             if order.get(key)
         )
         add(
@@ -319,46 +358,21 @@ def collect(c, path, user, pid):
             order["created_at"],
             order["status"] != "cancelled",
         )
-    fact_labels = {
-        "key": "Сведение",
-        "state": "Состояние",
-        "value": "Значение",
-        "drug_code": "Препарат",
-        "therapy_state": "Статус приёма",
-        "inn": "МНН",
-        "start": "Начало приёма",
-        "identity_confirmed": "Название и МНН проверены",
-    }
     for row in c.execute(
         "SELECT o.* FROM aviandr_observations o JOIN accounts a ON a.id=o.actor_id WHERE o.patient_id=? AND a.role='doctor' ORDER BY o.id DESC",
         (pid,),
     ):
         value = medicine_reactions.unpack(c, path, row["payload"])
-        lines = [
-            fact_labels.get(key, key)
-            + ": "
-            + (
-                "Да"
-                if item is True
-                else (
-                    "Нет"
-                    if item is False
-                    else (
-                        json.dumps(item, ensure_ascii=False)
-                        if isinstance(item, (dict, list))
-                        else str(item)
-                    )
-                )
-            )
-            for key, item in value.items()
-            if item not in (None, "")
-        ]
-        lines.append("Основание: " + row["source_note"])
+        text = prose.doctor_fact(row["kind"], value, bool(row["confirmed"]))
         add(
             "fact-" + str(row["id"]),
             "Врачебные сведения",
-            row["fact_key"] or row["kind"],
-            "\n".join(lines),
+            (
+                "Оценка врача в анализе Авиандра"
+                if row["kind"] == "direction_review"
+                else "Уточнённое сведение врача"
+            ),
+            text,
             ("Проверено врачом" if row["confirmed"] else "Требует уточнения")
             + " · "
             + row["observed_on"],
@@ -394,6 +408,7 @@ def collect(c, path, user, pid):
                 False,
             )
     packet = dict(
+        narrative_version=prose.VERSION,
         identity=identity,
         sections=sections,
         intake_count=len(categories),

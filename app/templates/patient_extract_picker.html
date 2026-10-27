@@ -1,0 +1,12 @@
+<section class="card extract-document-picker">
+  <div class="section-heading"><h2>Какой документ оформить?</h2><span class="badge">Документов: {{ documents|length }}</span></div>
+  <p class="caption">Можно создать несколько документов для одного пациента. Каждый сохранится отдельно.</p>
+  <form method="post" action="/patients/{{ patient.id }}/profile/extracts/new">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="client_token" value="{{ create_token }}">
+    <fieldset><legend class="visually-hidden">Вид нового документа</legend><div class="extract-document-types">
+      {% for title,description,icon in document_types %}<label><input type="radio" name="title" value="{{ title }}" {% if title==(document_data.title if document_data is defined and document_data.title in document_types|map(attribute=0)|list else 'Медицинское заключение') %}checked{% endif %}><span aria-hidden="true" class="extract-type-icon">{{ icon }}</span><strong>{{ title }}</strong><small>{{ description }}</small></label>{% endfor %}
+    </div></fieldset>
+    <button>+ Создать выбранный документ</button>{% if document is defined %}<span class="caption"> Ниже открыт документ «{{ document_data.title }}».</span>{% endif %}
+  </form>
+  {% if documents %}<h3>Документы пациента</h3><nav class="extract-document-tabs" aria-label="Документы пациента">{% for doc in documents %}<a href="/patients/{{ patient.id }}/profile/extracts/{{ doc.id }}{{ '/edit' if doc.author_id==account_id else '' }}" {% if document is defined and doc.id==document.id %}aria-current="page"{% endif %}><span>{{ doc.data.title }}</span><small>{{ 'Опубликована версия ' ~ doc.published_revision if doc.published_revision else 'Черновик' }}</small></a>{% endfor %}</nav>{% endif %}
+</section>

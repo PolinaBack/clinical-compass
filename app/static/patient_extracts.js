@@ -33,6 +33,33 @@
   const form = document.querySelector('[data-extract-editor]');
   if (!form) return;
   const review = form.elements.reviewed;
+  const diagnosis = form.querySelector('[data-diagnosis-picker]');
+  const entries = [...diagnosis.querySelectorAll('[data-diagnosis-code]')];
+  const normalize = value => value.trim().toLocaleLowerCase('ru').replaceAll('ё','е');
+  function filterDiagnoses() {
+    const group = diagnosis.querySelector('[data-diagnosis-group]').value;
+    const terms = normalize(diagnosis.querySelector('[data-diagnosis-query]').value).split(/[\s,;]+/);
+    entries.forEach(entry => entry.hidden = Boolean(group && entry.dataset.diagnosisGroupKey !== group || !terms.every(term => normalize(entry.dataset.diagnosisText).includes(term))));
+    diagnosis.querySelector('[data-diagnosis-count]').textContent = 'Найдено: ' + entries.filter(entry => !entry.hidden).length;
+  }
+  function selectedDiagnosis() {
+    const code = form.elements.diagnosis_code.value.trim(), text = form.elements.diagnosis.value.trim();
+    diagnosis.querySelector('[data-selected-diagnosis]').textContent = [code,text].filter(Boolean).join(' · ') || 'Формулировка не выбрана';
+    entries.forEach(entry => entry.setAttribute('aria-pressed', String(entry.dataset.diagnosisCode === code && entry.dataset.diagnosisName === text)));
+  }
+  diagnosis.querySelector('[data-diagnosis-group]').addEventListener('change', filterDiagnoses);
+  diagnosis.querySelector('[data-diagnosis-query]').addEventListener('input', filterDiagnoses);
+  diagnosis.querySelector('[data-diagnosis-query]').addEventListener('keydown', event => {if(event.key==='Enter'){event.preventDefault();filterDiagnoses();}});
+  diagnosis.addEventListener('click', event => {
+    const option = event.target.closest('[data-diagnosis-code]'), clear = event.target.closest('[data-clear-diagnosis]'), search = event.target.closest('[data-diagnosis-search]');
+    if (search) {event.preventDefault();filterDiagnoses();return;}
+    if (!option && !clear) return;
+    event.preventDefault();
+    form.elements.diagnosis_code.value = option?.dataset.diagnosisCode || '';
+    form.elements.diagnosis.value = option?.dataset.diagnosisName || '';
+    form.elements.diagnosis_status.value = 'working';
+    form.elements.diagnosis.dispatchEvent(new Event('input', {bubbles:true}));
+  });
   function badges() {
     form.querySelectorAll('[data-review-badge]').forEach(badge => {
       badge.dataset.reviewed = String(review.checked);
@@ -49,10 +76,10 @@
   }
   form.querySelector('[data-confirm-extract]').addEventListener('click', () => {review.checked = true; badges();});
   function changed(event) {
-    if (event.target !== review && event.target.matches('input,select,textarea')) review.checked = false;
-    identity(); badges();
+    if (event.target !== review && event.target.matches('input,select,textarea') && !event.target.matches('[data-diagnosis-query],[data-diagnosis-group]')) review.checked = false;
+    identity(); badges(); selectedDiagnosis();
   }
   form.addEventListener('input', changed);
   form.addEventListener('change', changed);
-  badges(); identity();
+  badges(); identity(); selectedDiagnosis(); filterDiagnoses();
 })();

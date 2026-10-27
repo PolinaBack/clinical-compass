@@ -1,0 +1,13 @@
+<div class="extract-diagnosis" data-diagnosis-picker>
+  <div class="section-heading"><h3>Диагноз / клиническая формулировка</h3><button class="secondary" name="intent" value="diagnosis_clear" data-clear-diagnosis>Удалить</button></div>
+  <p class="extract-selected-diagnosis" data-selected-diagnosis aria-live="polite">{{ document_data.diagnosis_code }}{% if document_data.diagnosis_code and document_data.diagnosis %} · {% endif %}{{ document_data.diagnosis or ('Формулировка не выбрана' if not document_data.diagnosis_code else '') }}</p>
+  <details {% if diagnosis_query or diagnosis_group %}open{% endif %} class="extract-diagnosis-library"><summary>Библиотека диагностических формулировок <small>выбор только врачом</small></summary>
+    <div class="grid two"><label>Раздел<select name="diagnosis_group" data-diagnosis-group><option value="">Все разделы</option>{% for key,title in diagnosis_groups.items() %}<option value="{{ key }}" {% if key==diagnosis_group %}selected{% endif %}>{{ title }}</option>{% endfor %}</select></label><label>Код или название<input type="search" name="diagnosis_query" value="{{ diagnosis_query }}" placeholder="F41, тревога, ОКР" data-diagnosis-query></label></div>
+    <button class="secondary" name="intent" value="diagnosis_search" data-diagnosis-search>Найти формулировку</button>
+    <p class="caption" data-diagnosis-count aria-live="polite">Найдено: {{ diagnosis_matching|length }}</p>
+    <div class="extract-diagnosis-results">{% for entry in diagnosis_entries %}<button type="submit" name="intent" value="diagnosis:{{ entry.code }}" class="extract-diagnosis-option" data-diagnosis-code="{{ entry.code }}" data-diagnosis-name="{{ entry.name }}" data-diagnosis-group-key="{{ entry.group }}" data-diagnosis-text="{{ entry.search_text }}" aria-pressed="{{ 'true' if document_data.diagnosis_code==entry.code else 'false' }}" {% if entry.code not in diagnosis_matching %}hidden{% endif %}><small>{{ entry.group_label }}</small><span><strong>{{ entry.code }}</strong> {{ entry.name }}</span></button>{% endfor %}</div>
+    <p class="caption">Учебный справочник МКБ-10. Формулировки требуют проверки и адаптации врачом. Можно ввести свою формулировку ниже.</p>
+  </details>
+  <div class="grid two"><label>Код диагноза · если используется<input name="diagnosis_code" value="{{ document_data.diagnosis_code }}"></label><label>Статус диагноза<select name="diagnosis_status">{% for key,label in diagnosis_states.items() %}<option value="{{ key }}" {% if key==document_data.diagnosis_status %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label></div>
+  <label>Диагностическая формулировка<textarea name="diagnosis" rows="3">{{ document_data.diagnosis }}</textarea></label>
+</div>

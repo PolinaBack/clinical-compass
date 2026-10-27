@@ -5,6 +5,7 @@ from fastapi import HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from app.services import patient_extracts as service
 from app.services import extract_requests
+from app.services import diagnosis_library
 from app.routes.extract_requests import shelf_context
 from app.services.clinical_forms import today
 from app.storage import audit
@@ -31,6 +32,11 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
                 "SELECT id FROM extract_requests WHERE patient_id=? AND document_id=?",
                 (pid, doc["id"]),
             ).fetchone()
+            documents = service.listing(c, app.state.db_path, account(request), pid)
+        filters = getattr(request.state, "extract_diagnosis_filter", {})
+        group = filters.get("group", request.query_params.get("diagnosis_group", ""))
+        query = filters.get("query", request.query_params.get("diagnosis_query", ""))
+        matching = {entry["code"] for entry in diagnosis_library.search(group, query)}
         try:
             calculations = service.calculations(data)
         except (ValueError, TypeError, ArithmeticError, HTTPException):
@@ -48,7 +54,18 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
             document=doc,
             document_data=data,
             calculations=calculations,
-            document_titles=service.TITLES,
+            document_titles=tuple(
+                dict.fromkeys((*(t[0] for t in service.DOCUMENT_TYPES), data["title"]))
+            ),
+            document_types=service.DOCUMENT_TYPES,
+            documents=documents,
+            account_id=account(request)["id"],
+            create_token=secrets.token_urlsafe(24),
+            diagnosis_groups=diagnosis_library.GROUPS,
+            diagnosis_entries=diagnosis_library.search(),
+            diagnosis_matching=matching,
+            diagnosis_group=group,
+            diagnosis_query=query,
             diagnosis_states=service.DIAGNOSES,
             document_error=error,
             conflict=conflict,
@@ -110,6 +127,7 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
             documents=documents,
             account_id=user["id"],
             create_token=secrets.token_urlsafe(24),
+            document_types=service.DOCUMENT_TYPES,
             **requests_context,
         )
         response.headers["Cache-Control"] = "no-store"
@@ -128,6 +146,7 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
                 account(request),
                 pid,
                 str(form.get("client_token", "")),
+                title=str(form.get("title", "")) or None,
             )
         return RedirectResponse(root(pid) + f"/{ident}/edit", status_code=303)
 
@@ -148,6 +167,10 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
             max_files=0, max_fields=20000, max_part_size=float("inf")
         )
         csrf_check(request, str(form.get("csrf", "")))
+        request.state.extract_diagnosis_filter = dict(
+            group=str(form.get("diagnosis_group", "")),
+            query=str(form.get("diagnosis_query", "")),
+        )
         try:
             with db() as c:
                 c.execute("BEGIN IMMEDIATE")
@@ -165,10 +188,42 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
                     "publish",
                     "print",
                     "withdraw",
-                ):
+                    "diagnosis_search",
+                    "diagnosis_clear",
+                ) and not intent.startswith("diagnosis:"):
                     raise HTTPException(422, "Выберите действие с документом")
-                if intent == "preview":
+                if intent in (
+                    "preview",
+                    "diagnosis_search",
+                    "diagnosis_clear",
+                ) or intent.startswith("diagnosis:"):
                     data = service.validate(service.candidate(doc["data"], form))
+                    if intent.startswith("diagnosis:"):
+                        entry = next(
+                            (
+                                d
+                                for d in diagnosis_library.search()
+                                if d["code"] == intent.partition(":")[2]
+                            ),
+                            None,
+                        )
+                        if not entry:
+                            raise HTTPException(
+                                422, "Формулировка не найдена в справочнике"
+                            )
+                        data.update(
+                            diagnosis_code=entry["code"],
+                            diagnosis=entry["name"],
+                            diagnosis_status="working",
+                            reviewed=False,
+                        )
+                    elif intent == "diagnosis_clear":
+                        data.update(
+                            diagnosis_code="",
+                            diagnosis="",
+                            diagnosis_status="working",
+                            reviewed=False,
+                        )
                     return editor(request, pid, doc, data)
                 if intent == "refresh":
                     service.refresh(c, app.state.db_path, user, pid, eid, form)

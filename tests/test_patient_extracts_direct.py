@@ -177,9 +177,10 @@ def test_sources_include_submitted_intake_scores_and_all_sections_without_privat
         s for s in doc["data"]["source"]["sections"] if s["group"] == "Анкеты и тесты"
     ]
     assert len(tests) == 2
-    assert any("Результат: 0 баллов" in s["text"] for s in tests)
+    assert any("Получен результат 0 баллов" in s["text"] for s in tests)
     assert any(
-        "Не завершена" in s["text"] and "Результат:" not in s["text"] for s in tests
+        "Анкета не завершена" in s["text"] and "Получен результат" not in s["text"]
+        for s in tests
     )
     assert doc["data"]["diagnosis"] == "" and doc["data"]["diagnosis_code"] == ""
 

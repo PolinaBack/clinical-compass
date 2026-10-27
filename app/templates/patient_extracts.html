@@ -5,7 +5,8 @@
 {% if user=='doctor' %}{% include 'specialist_nav.html' %}{% endif %}
 {% if request.query_params.get('sent_count') %}<p class="extract-success" role="status">Заказ отправлен специалисту. Документов: {{ request.query_params.get('sent_count') }}.</p>{% endif %}
 <section class="card"><h2>{{ patient.name }}</h2><p>{{ 'Оформляйте документ из сведений карты, исправляйте данные для этой выписки и проверяйте их перед печатью. Пациент видит только опубликованные версии.' if user=='doctor' else 'Здесь появляются готовые документы после публикации специалистом.' }}</p>
-{% if user=='doctor' %}<form method="post" action="/patients/{{ patient.id }}/profile/extracts/new"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="client_token" value="{{ create_token }}"><button>+ Оформить справку или выписку</button></form>{% endif %}</section>
+{% if user=='doctor' %}<p>Выберите вид документа ниже, чтобы начать оформление справки или выписки.</p>{% endif %}</section>
+{% if user=='doctor' %}{% include 'patient_extract_picker.html' %}{% endif %}
 {% if user!='doctor' %}{% include 'extract_request_form.html' %}{% endif %}
 <section class="card" id="document-requests"><h2>{{ 'Запросы пациента' if user=='doctor' else 'Мои запросы' }}</h2><div class="grid two">{% for item in document_requests %}<article class="extract-request-summary"><h3>{{ request_kinds[item.data.kind] }}</h3><p><span class="badge">{{ request_states[item.status] }}</span> · {{ item.created_at|local_datetime }}</p><p>{{ request_purposes[item.data.purpose] }}{% if item.data.purpose_other %}: {{ item.data.purpose_other }}{% endif %}</p><p>{{ request_due[item.data.due] }}{% if item.data.due=='date' %}: {{ item.data.due_date|extract_date }}{% endif %}</p>{% if item.data.get('batch_total',1)>1 %}<p class="caption">Документ {{ item.data.batch_position }} из {{ item.data.batch_total }} в заказе</p>{% endif %}<a class="button secondary" href="/patients/{{ patient.id }}/profile/extracts/requests/{{ item.id }}">Открыть запрос</a></article>{% else %}<p>Запросов пока нет.</p>{% endfor %}</div></section>
 <h2>Готовые выписки{% if user=='doctor' %} и черновики{% endif %}</h2>
@@ -13,5 +14,5 @@
 {% for doc in documents %}<article class="card"><h2>{{ doc.data.title }}</h2><p>{{ doc.data.date }} · {{ doc.data.specialist or 'Специалист не указан' }}</p><p class="badge">{{ 'Опубликована версия ' ~ doc.published_revision if doc.published_revision else 'Черновик · только врачу' }}</p>
 {% if user=='doctor' and doc.author_id!=none %}<a class="button secondary" href="/patients/{{ patient.id }}/profile/extracts/{{ doc.id }}">Открыть документ</a>{% else %}<a class="button secondary" href="/patients/{{ patient.id }}/profile/extracts/{{ doc.id }}">Посмотреть выписку</a>{% endif %}
 {% if user=='doctor' and doc.author_id==account_id|default(doc.author_id) %}<p><a href="/patients/{{ patient.id }}/profile/extracts/{{ doc.id }}/edit">Продолжить оформление</a></p>{% endif %}</article>
-{% else %}<section class="card"><p>{{ 'Документов пока нет. Нажмите «Оформить справку или выписку».' if user=='doctor' else 'Готовых выписок пока нет.' }}</p></section>{% endfor %}</div>
+{% else %}<section class="card"><p>{{ 'Документов пока нет. Выберите вид и нажмите «Создать выбранный документ».' if user=='doctor' else 'Готовых выписок пока нет.' }}</p></section>{% endfor %}</div>
 {% endblock %}
