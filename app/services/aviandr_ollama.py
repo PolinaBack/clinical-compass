@@ -65,6 +65,7 @@ def input_data(report):
                         decision=d["review"]["decision"],
                         note=clinical_text(d["review"]["record"]["note"], 250),
                         day=d["review"]["record"]["day"],
+                        adult_confirmed=d["review"].get("adult_confirmed", False),
                     )
                     if d.get("review", {}).get("current")
                     else None

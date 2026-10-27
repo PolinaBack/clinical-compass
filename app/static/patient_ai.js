@@ -71,8 +71,16 @@
   }
   pollJobs(document);
 
-  document.addEventListener('input', event => {const form=event.target.closest('[data-av-review-form]');if(form)form.dataset.dirty='true';});
-  document.addEventListener('change', event => {const form=event.target.closest('[data-av-review-form]');if(form)form.dataset.dirty='true';});
+  function markReviewDirty(event) {
+    const form = event.target.closest('[data-av-review-form]');
+    if (!form) return;
+    form.dataset.dirty = 'true';
+    if (['decision','adult_confirmed','unknown_reviewed','covid_relation','mild_moderate'].includes(event.target.name)) {
+      form.querySelector('[name=review_ack]').checked = false;
+    }
+  }
+  document.addEventListener('input', markReviewDirty);
+  document.addEventListener('change', markReviewDirty);
   document.querySelectorAll('[data-aviandr-analysis][data-av-refresh-url]').forEach(block => {
     const status = block.querySelector('[data-av-live-status]');
     status.hidden = false;
@@ -159,16 +167,31 @@
       const fresh = freshBlock?.querySelector('[data-av-live]');
       const current = block.querySelector('[data-av-live]');
       if (!fresh || !current || freshBlock.dataset.avChecksum !== checksum) throw Error();
-      if (current.querySelector('[data-av-review-form][data-dirty=true]') || document.activeElement?.closest('[data-av-review-form]')) return false;
+      const active = document.activeElement;
+      const drafts = [...current.querySelectorAll('[data-av-review-form]')]
+        .filter(form => form.dataset.dirty === 'true' || form.contains(active));
       const selection = window.getSelection();
-      if (selection?.toString() && current.contains(selection.anchorNode)) return false;
+      if (drafts.some(form => form.dataset.saving === 'true') || (selection?.toString() && current.contains(selection.anchorNode))) {
+        // Preserve a selected passage, but never hide a newly discovered risk.
+        fresh.querySelectorAll('[data-direction]').forEach(card => {
+          const shown = current.querySelector(`[data-direction="${card.dataset.direction}"]`);
+          if (shown) {
+            shown.dataset.level = card.dataset.level;
+            const label = shown.querySelector('.aviandr-status');
+            if (label && !label.contains(selection?.anchorNode)) label.textContent = card.querySelector('.aviandr-status').textContent;
+          }
+        });
+        const nav = current.querySelector('.aviandr-status-chart');
+        const freshNav = fresh.querySelector('.aviandr-status-chart');
+        if (nav && freshNav) nav.replaceWith(freshNav);
+        return false;
+      }
       const detailsKey = node => node.id || node.querySelector('summary')?.textContent.trim();
       const opened = new Map([...current.querySelectorAll('details')].map(node => [detailsKey(node), node.open]));
       fresh.querySelectorAll('details').forEach(node => {
         const key = detailsKey(node);
         if (opened.has(key)) node.open = opened.get(key);
       });
-      const active = document.activeElement;
       const focus = current.contains(active) ? {
         tag: active.tagName, text: active.textContent.trim(), href: active.getAttribute('href'), id: active.id
       } : null;
@@ -178,11 +201,33 @@
       const anchorTop = anchor?.getBoundingClientRect().top;
       const below = current.getBoundingClientRect().bottom < 0;
       const oldHeight = current.getBoundingClientRect().height;
-      // Generic clinician forms remain outside; edited card confirmations pause replacement above.
+      const caret = active && typeof active.selectionStart === 'number'
+        ? [active.selectionStart, active.selectionEnd, active.selectionDirection] : null;
+      drafts.forEach(form => {
+        const key = form.closest('[data-direction]').dataset.direction;
+        const replacement = fresh.querySelector(`[data-direction="${key}"] [data-av-review-form]`);
+        if (!replacement) throw Error();
+        // Keep values, acknowledgement and the original snapshot. The server
+        // must reject a confirmation submitted against changed relevant data.
+        replacement.replaceWith(form);
+        let notice = form.querySelector('[data-av-form-changed]');
+        if (!notice) {
+          notice = document.createElement('p');
+          notice.dataset.avFormChanged = '';
+          notice.className = 'aviandr-review-stale';
+          notice.setAttribute('role', 'status');
+          form.prepend(notice);
+        }
+        notice.textContent = 'Карточка обновлена по новым сведениям. Ваш текст сохранён; перед подтверждением проверьте изменения.';
+      });
+      // Generic clinician forms remain outside; in-card drafts move intact.
       current.replaceWith(fresh);
       block.dataset.avChecksum = checksum;
       block.dataset.avSelected = freshBlock.dataset.avSelected;
-      if (focus) {
+      if (drafts.some(form => form.contains(active)) && active.isConnected) {
+        active.focus({preventScroll: true});
+        if (caret && active.setSelectionRange) active.setSelectionRange(...caret);
+      } else if (focus) {
         const match = [...fresh.querySelectorAll('a,button,summary,select')].find(node =>
           focus.id ? node.id === focus.id : node.tagName === focus.tag &&
             node.getAttribute('href') === focus.href && node.textContent.trim() === focus.text
@@ -225,7 +270,7 @@
           if (applyUpdate(result.html, result.checksum)) {
             announce('Карточки обновлены по новым сохранённым данным.');
           } else {
-            announce('Есть новые данные. Завершите работу с формой или выделенным текстом; перед подтверждением изменения карты будут проверены.');
+            announce('Цвета и статусы обновлены. Содержание обновится после завершения сохранения или снятия выделения текста.');
           }
         } else if (status.textContent.includes('Не удалось')) {
           announce('Связь восстановлена. Карточки соответствуют сохранённым данным.');

@@ -36,11 +36,25 @@ def save(c, path, user, pid, form):
             409,
             "Сведения карты или библиотеки изменились. Обновите анализ и проверьте текущие данные перед подтверждением",
         )
+    adult_confirmed = (
+        form.get("adult_confirmed") == "yes"
+        and decision != "revoke"
+        and key in {"indications", "contraindications"}
+    )
+    if (
+        adult_confirmed
+        and not policy.age_missing(report["data"]["facts"])
+        and policy.age_state(report["data"]["facts"]) != "adult"
+    ):
+        raise HTTPException(
+            422,
+            "В карте указан возраст до 18 лет либо противоречивые значения. Исправьте исходные сведения; отметка 18+ их не отменяет.",
+        )
     if key == "indications" and decision in policy.REGISTERED:
-        if policy.age_state(report["data"]["facts"]) != "adult":
+        if policy.age_state(report["data"]["facts"]) != "adult" and not adult_confirmed:
             raise HTTPException(
                 422,
-                "Для этого показания нужна непротиворечивая запись возраста от 18 лет. Сверьте дату рождения или уточнённый возраст врача",
+                "Для этого показания нужен возраст от 18 лет без противоречий. Подтвердите возрастное ограничение в этой форме или сверьте дату рождения/возраст в карте",
             )
         if decision == "postcovid" and (
             form.get("covid_relation") != "yes" or form.get("mild_moderate") != "yes"
@@ -73,6 +87,7 @@ def save(c, path, user, pid, form):
             unknown_reviewed=form.get("unknown_reviewed") == "yes",
             covid_relation=form.get("covid_relation") == "yes",
             mild_moderate=form.get("mild_moderate") == "yes",
+            adult_confirmed=adult_confirmed,
         ),
         note=note,
     )

@@ -100,6 +100,7 @@ def inputs(c, report, rules):
             facts=selected({"age", "factor", "diagnosis", "allergy"}),
             reported=submitted({"health", "reproductive", "condition", "reaction"}),
             profile=data["profile"].get("health", ""),
+            composition=sections.get("composition", ""),
             library=sections.get("contraindications", ""),
             rules=[
                 r for r in rules if r["rule"]["kind"] in {"contraindication", "caution"}
@@ -141,6 +142,7 @@ def review_state(data, key, material):
         stale=bool(review and review["confirmed"] and not current),
         record=review,
         decision=review["value"].get("decision") if current else None,
+        adult_confirmed=bool(current and review["value"].get("adult_confirmed")),
     )
 
 
@@ -155,9 +157,22 @@ def age_state(facts):
     return "minor" if any(v < 18 for v in values) else "adult" if values else "unknown"
 
 
+def age_missing(facts):
+    return not any(
+        f["kind"] == "age" and isinstance(f["value"].get("value"), (int, float))
+        for f in facts
+    )
+
+
+def reviewed_age(material, review):
+    if age_missing(material["facts"]) and review.get("adult_confirmed"):
+        return "adult"
+    return age_state(material["facts"])
+
+
 def indication(material, review):
     facts = [f for f in material["facts"] if f["kind"] == "diagnosis" and positive(f)]
-    age = age_state(material["facts"])
+    age = reviewed_age(material, review)
     gad = [
         f
         for f in facts
@@ -231,8 +246,52 @@ def indication(material, review):
     )
 
 
+def hypersensitivity(fact, composition):
+    """Unspecified sensitivity is a risk to clarify, not a proven drug allergy."""
+    if not positive(fact):
+        return None
+    text = normalized(fact["key"])
+    if re.search(
+        r"\b(?:нет|без|отрицает|отрицается|не выявлен[аоы]?|не отмечен[аоы]?)\b", text
+    ):
+        return None
+    sensitive = bool(
+        re.search(
+            r"гиперчувствител\w*|повышенн\w*\s+чувствител\w*|hypersensitiv\w*", text
+        )
+    )
+    allergy = fact["kind"] == "allergy" or bool(re.search(r"аллерги\w*", text))
+    if not sensitive and not allergy:
+        return None
+    drug = re.search(r"\b(?:авиандр\w*|aviandr|маритупирдин\w*|maritupirdine)\b", text)
+    components = (
+        "лактоз",
+        "касторов",
+        "крахмал",
+        "гипромеллоз",
+        "диоксид титан",
+        "макрогол",
+    )
+    component = any(
+        term in normalized(composition) and term in text for term in components
+    )
+    if drug or component:
+        return "direct"
+    unspecified = re.fullmatch(
+        r"(?:гиперчувствительность|повышенная чувствительность|hypersensitivity)[.!\s]*",
+        text,
+    )
+    unknown_target = re.search(
+        r"не уточнен\w*|неизвестн\w*|не указан\w*|к компонентам препарата", text
+    )
+    if sensitive and (unspecified or unknown_target):
+        return "unspecified"
+    return None
+
+
 def contraindication(material, review):
     hits = []
+    sensitivity_unknown = []
     if age_state(material["facts"]) == "minor":
         hits.append("возраст до 18 лет")
     aliases = {
@@ -292,6 +351,17 @@ def contraindication(material, review):
             if not positive(fact):
                 continue
             key = normalized(fact["key"])
+            sensitivity = (
+                hypersensitivity(fact, material.get("composition", ""))
+                if "гиперчувствител" in library_text
+                else None
+            )
+            if sensitivity == "direct":
+                hits.append(
+                    "гиперчувствительность к Авиандру или указанному в библиотеке компоненту"
+                )
+            elif sensitivity == "unspecified":
+                sensitivity_unknown.append(str(fact["key"]))
             if fact["kind"] in {"factor", "diagnosis"}:
                 for label, terms in aliases.items():
                     if not any(term in library_text for term in reference_terms[label]):
@@ -323,6 +393,13 @@ def contraindication(material, review):
             + ".",
             "Основание: сведения карты и перечень противопоказаний библиотеки; врач проверяет применимость к конкретной форме препарата.",
         )
+    if sensitivity_unknown:
+        return (
+            "critical",
+            "Гиперчувствительность — уточните вещество",
+            "В карте указана гиперчувствительность без уточнения вещества. Это возможное совпадение с противопоказанием Авиандра, которое нужно проверить до решения о препарате.",
+            "Уточните, относится ли реакция к Авиандру, его действующему веществу или компонентам. Общая запись не устанавливает аллергию на этот препарат; подтверждение полноты анамнеза не снимает этот флаг.",
+        )
     cautions = [
         r
         for r in material["rules"]
@@ -341,7 +418,7 @@ def contraindication(material, review):
     ]
     if (
         review["current"]
-        and age_state(material["facts"]) == "adult"
+        and reviewed_age(material, review) == "adult"
         and material["library"]
         and not cautions
         and not pregnancy_uncertain
@@ -361,6 +438,34 @@ def contraindication(material, review):
             + ", ".join(unresolved)
             + ".",
             "Уточните наличие или отсутствие этих факторов в «Добавить уточнённое сведение врача», затем подтвердите обновлённые сведения.",
+        )
+    if review["current"]:
+        blockers = []
+        if reviewed_age(material, review) != "adult":
+            blockers.append(
+                "Возраст не указан: подтвердите в этой карточке, что пациенту 18 лет или больше."
+                if age_missing(material["facts"])
+                else "Записи возраста противоречат друг другу: уточните возраст в карте."
+            )
+        if not material["library"]:
+            blockers.append(
+                "В библиотеке отсутствует перечень противопоказаний: восстановите сведения инструкции."
+            )
+        if cautions:
+            blockers.append(
+                "Остались факторы осторожности или противоречия: "
+                + "; ".join(r["rule"]["label"] for r in cautions)
+                + "."
+            )
+        if pregnancy_uncertain:
+            blockers.append(
+                "В карте отмечена возможная беременность: уточните эти сведения."
+            )
+        return (
+            "attention",
+            "Анамнез подтверждён — остались уточнения",
+            "Врач подтвердил полноту анамнеза заболеваний и аллергий. Совпадений с противопоказаниями не обнаружено, но оценка ещё не завершена.",
+            " ".join(blockers),
         )
     return (
         "attention",
@@ -511,7 +616,7 @@ CALCULATORS = dict(
 )
 
 
-def current_description(key, material):
+def current_description(key, material, review=None):
     if key in {"indications", "contraindications"}:
         ages = [
             str(f["value"]["value"]) for f in material["facts"] if f["kind"] == "age"
@@ -519,13 +624,32 @@ def current_description(key, material):
         diagnoses = [
             f["key"] for f in material["facts"] if f["kind"] != "age" and positive(f)
         ]
+        if (
+            not diagnoses
+            and key == "indications"
+            and review
+            and review["current"]
+            and review["decision"] in REGISTERED
+        ):
+            diagnoses = ["Врач подтвердил показание: " + REGISTERED[review["decision"]]]
         return (
             "Возраст: "
-            + (", ".join(ages) or "не указан")
+            + (
+                ", ".join(ages)
+                or (
+                    "18+ подтверждено врачом; точный возраст не указан"
+                    if review and review.get("adult_confirmed")
+                    else "не указан"
+                )
+            )
             + "; записанные заболевания/факторы: "
             + (
                 ", ".join(dict.fromkeys(diagnoses))[:500]
-                or "полный перечень не предоставлен"
+                or (
+                    "перечень заболеваний и аллергий проверен врачом"
+                    if key == "contraindications" and review and review["current"]
+                    else "полный перечень не предоставлен"
+                )
             )
             + "."
         )
@@ -594,14 +718,14 @@ def apply(c, report, rules, path):
                 ),
             ]
         elif key == "contraindications":
-            context = [
-                old_conclusion[0],
-                (
-                    old_conclusion[1]
-                    if not review["current"]
-                    else current_description(key, material[key])
-                ),
-            ]
+            context = (
+                [current_description(key, material[key], review)]
+                if review["current"]
+                else [
+                    old_conclusion[0],
+                    old_conclusion[1],
+                ]
+            )
         elif key == "interactions":
             context = [
                 old_conclusion[0],
@@ -619,6 +743,8 @@ def apply(c, report, rules, path):
             **review,
             snapshot=digest(review_material),
             options=OPTIONS[key],
+            age_missing=key in {"indications", "contraindications"}
+            and age_missing(material[key]["facts"]),
             unknown_drugs=[
                 p["drug"]["name"]
                 for p in material[key].get("pairs", [])
@@ -626,7 +752,7 @@ def apply(c, report, rules, path):
             ],
         )
         texts = [
-            current_description(key, material[key]),
+            current_description(key, material[key], review),
             (
                 "Текущие сведения проверены врачом."
                 + (
@@ -672,11 +798,30 @@ def apply(c, report, rules, path):
             reason=summary,
             evidence_ids=[b["id"] for b in basis],
         )
-        if not (review["current"] and level == "favorable") and old_questions:
+        confirmed_gap = (
+            review["current"] and key == "contraindications" and level == "attention"
+        )
+        if confirmed_gap:
+            gap.update(
+                question=(
+                    "Подтверждено ли, что пациенту 18 лет или больше?"
+                    if age_missing(material[key]["facts"])
+                    and not review["adult_confirmed"]
+                    else "Какие из оставшихся уточнений нужно проверить?"
+                ),
+                reason=detail,
+            )
+        if (
+            not confirmed_gap
+            and not (review["current"] and level == "favorable")
+            and old_questions
+        ):
             gap = old_questions[0]
         gaps.append(gap)
         direction["narrative"]["questions"] = (
-            [gap] if review["current"] and level == "favorable" else old_questions
+            [gap]
+            if confirmed_gap or (review["current"] and level == "favorable")
+            else old_questions
         )
     report["gaps"] = gaps
     report["all_gaps"] = gaps + report["all_gaps"]
