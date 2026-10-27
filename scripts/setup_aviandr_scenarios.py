@@ -22,7 +22,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 from starlette.datastructures import FormData
 from app.main import create_app
-from app.storage import connect, default_path, now
+from app.storage import connect, default_path, now, audit
 from app.security import hash_password
 from app.services.clinical_forms import today
 from app.services.clinical_attachments import key_path
@@ -32,6 +32,9 @@ from app.services import (
     medicine_reactions,
     medication_preferences,
     intake,
+    drug_library,
+    adverse_reactions,
+    medicine_reference,
 )
 from app.scales import SCALES, VERSION as SCALE_VERSION
 from app.intake_catalog import VERSION as INTAKE_VERSION, BY_KEY
@@ -39,6 +42,51 @@ from scripts.backup import backup
 
 VERSION = "aviandr-three-synthetic-scenarios-v1"
 WINDOWS = os.name == "nt"
+
+
+def _seed_historical_scheme(c, path, clinician, pid, form):
+    """Import this script's fictional past treatment, never grant library permission.
+
+    Interactive saves and sends must still use their registration/instruction gate.
+    This is local scenario provisioning only, with explicitly unverified snapshots.
+    """
+    medicine_drafts.patient(c, clinician, pid)
+    drugs = {
+        code: medicine_reference.enrich(d)
+        for code, d in drug_library.current(c, "drug").items()
+        if not d.get("archived")
+    }
+    items = medicine_drafts.parse(form, drugs)
+    tolerability = adverse_reactions.preference_snapshot(c, pid, path)
+    registry = adverse_reactions.records(c)
+    for item in items:
+        item["preference_matches"] = adverse_reactions.matches(
+            registry, item["code"], tolerability
+        )
+    stamp = now()
+    payload = medicine_reactions.pack(
+        c, path, dict(items=items, tolerability=tolerability, historical_synthetic=True)
+    )
+    ident = c.execute(
+        "INSERT INTO medicine_drafts(patient_id,author_id,revision,payload,created_at,updated_at) VALUES(?,?,1,?,?,?)",
+        (pid, clinician["id"], payload, stamp, stamp),
+    ).lastrowid
+    c.execute(
+        "INSERT INTO medicine_draft_versions VALUES(?,1,?,?)", (ident, payload, stamp)
+    )
+    shared = medicine_reactions.pack(
+        c,
+        path,
+        dict(
+            items=[medicine_reactions.public_item(i) for i in items],
+            historical_synthetic=True,
+        ),
+    )
+    c.execute(
+        "INSERT INTO medicine_plan_shares(patient_id,draft_id,draft_revision,author_id,payload,created_at) VALUES(?,?,1,?,?,?)",
+        (pid, ident, clinician["id"], shared, stamp),
+    )
+    audit(c, clinician["id"], "synthetic_historical_medicine_seeded", pid, ident)
 
 
 def reset_failure(message, backup_path):
@@ -418,15 +466,12 @@ def seed(c, path, *, reuse_initial=False):
                     ("D01.start", (begin + timedelta(days=14)).isoformat()),
                 ]
             )
-            medicine_drafts.save(c, path, clinician, pid, form)
+            _seed_historical_scheme(c, path, clinician, pid, form)
             draft = medicine_drafts.read(c, path, clinician, pid)
             draft["id"] = c.execute(
                 "SELECT id FROM medicine_drafts WHERE patient_id=? AND author_id=?",
                 (pid, clinician["id"]),
             ).fetchone()[0]
-            medicine_reactions.share(
-                c, path, clinician, pid, FormData(dict(revision=str(draft["revision"])))
-            )
             for day in range(14, 30):
                 aviandr_data.add_observation(
                     c,

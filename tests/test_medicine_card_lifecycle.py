@@ -122,7 +122,7 @@ def test_remove_hides_catalogue_entry_without_erasing_prescriptions_or_history(c
             "/patients/1/assignments/medicines",
             data=scheme(client, revision=1, codes=(code, "D02")),
         ).status_code
-        == 200
+        == 422
     )
     assert saved(client)["items"][0]["reference"] == original_reference
     login(client, "patient1")

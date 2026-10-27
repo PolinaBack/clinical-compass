@@ -149,6 +149,9 @@ def share(c, path, user, pid, form):
     ).fetchone()
     if old:
         return old["id"]
+    from app.services.medicine_verification import require_current_items
+
+    require_current_items(c, current["items"])
     payload = pack(c, path, dict(items=[public_item(i) for i in current["items"]]))
     ident = c.execute(
         "INSERT INTO medicine_plan_shares(patient_id,draft_id,draft_revision,author_id,payload,created_at) VALUES(?,?,?,?,?,?)",

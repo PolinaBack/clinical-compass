@@ -117,6 +117,7 @@ def test_invalid_tolerability_does_not_save(client, codes, primary):
         )
 
 
+@pytest.mark.usefixtures("verified_test_medicines")
 def test_only_sent_preferences_match_this_patients_draft_and_history(client):
     login(client, "patient1")
     assert preferences(client, ["S014", "S055", "S072"], "S014").status_code == 303

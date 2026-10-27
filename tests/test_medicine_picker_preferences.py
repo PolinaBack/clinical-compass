@@ -12,6 +12,7 @@ from tests.test_medication_preferences import post as send_preferences
 from tests.test_medicine_workspace import scheme, saved
 
 
+@pytest.mark.usefixtures("verified_test_medicines")
 def test_picker_checks_before_addition_and_links_to_card_for_selected_patient(client):
     login(client, "patient1")
     assert (
@@ -67,6 +68,7 @@ def test_no_preferences_or_private_drafts_never_look_like_no_side_effects(client
     assert 'data-picker-effect="S014"' not in page.text
 
 
+@pytest.mark.usefixtures("verified_test_medicines")
 def test_latest_sent_intake_or_preferences_refresh_candidates_but_not_history(client):
     login(client, "patient1")
     assert intake_preferences(client, ["S014"], "S014", submit=True).status_code == 303
@@ -116,6 +118,7 @@ def test_empty_or_other_drug_registry_does_not_claim_absence(client):
     assert service.matches(rows, "D01", dict(selected=["S131"], primary="S131")) == []
 
 
+@pytest.mark.usefixtures("verified_test_medicines")
 def test_card_return_and_prescribing_stay_with_second_patient(client):
     login(client, "doctor")
     page = client.get("/patients/2/assignments")

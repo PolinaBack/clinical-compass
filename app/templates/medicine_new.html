@@ -14,5 +14,6 @@
 <details class="medicine-new-section"><summary>Полученный текст / дополнительные сведения</summary><label><span class="sr-only">Полученный текст / дополнительные сведения</span><textarea name="source_text" rows="10">
 {{ values.get('source_text','') }}</textarea></label></details>
 <p class="medicine-notice">Сведения из ссылки и ручные записи требуют проверки специалистом. Сохранение карточки не назначает препарат и не добавляет проверенные правила для ИИ.</p>
-<div class="medicine-actions"><button>Сохранить карточку</button><a class="button medicine-secondary" href="/medicines">Вернуться к препаратам</a></div></form></section>
+<p>Карточка будет добавлена со статусом «Не проверен». Просмотр и источник доступны сразу; назначение — после подтверждения регистрации в РФ и проверки инструкции.</p>
+<div class="medicine-actions"><button>Добавить в библиотеку</button><a class="button medicine-secondary" href="/medicines">Вернуться к препаратам</a></div></form></section>
 {% endblock %}

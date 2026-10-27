@@ -642,15 +642,17 @@ def sources(c, code=None, include_inactive=False):
 
 def search(c, q="", group="", status="", *, include_archived=False):
     from app.services.medicine_reference import enrich
+    from app.services import medicine_verification as verification
 
     drugs = current(c, "drug")
     verified = {s["meta"]["drug_code"] for s in sources(c)}
+    reviews = current(c, verification.KIND)
     words = normalize(q).split()
     result = []
     for code, d in drugs.items():
         if d.get("archived") and not include_archived:
             continue
-        d = enrich(d)
+        d = verification.decorate(enrich(d), reviews)
         hay = normalize(
             " ".join(
                 str(d.get(k, ""))
@@ -673,8 +675,10 @@ def search(c, q="", group="", status="", *, include_archived=False):
         if (
             status == "verified"
             and not d["verified"]
+            or status == "ready"
+            and not d["can_prescribe"]
             or status == "unverified"
-            and d["verified"]
+            and d["can_prescribe"]
         ):
             continue
         result.append(d)

@@ -1,0 +1,21 @@
+{
+  "browser": "Chromium",
+  "add_link_available": true,
+  "partial_storage_allowed": true,
+  "unverified_assignment_disabled": true,
+  "direct_assignment_422": true,
+  "source_available": true,
+  "manual_registration_and_six_sections": true,
+  "verified_draft_and_share": true,
+  "revocation_blocks_new_use_and_preserves_history": true,
+  "widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "horizontal_overflow": [],
+  "javascript_errors": [],
+  "axe_violations": [],
+  "synthetic_database": true
+}

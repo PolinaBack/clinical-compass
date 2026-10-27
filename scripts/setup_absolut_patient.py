@@ -25,6 +25,7 @@ from app.services import (
 from app.services.clinical_forms import today, visible
 from scripts import absolut_scenario as scenario
 from scripts.backup import backup
+from scripts.setup_aviandr_scenarios import _seed_historical_scheme
 
 
 def answer_form(fields, values, revision):
@@ -236,7 +237,7 @@ def seed(c, path, *, doctor_id=1):
             ]
         ),
     )
-    medicine_drafts.save(
+    _seed_historical_scheme(
         c,
         path,
         doctor,
@@ -255,9 +256,6 @@ def seed(c, path, *, doctor_id=1):
     draft = c.execute(
         "SELECT id,revision FROM medicine_drafts WHERE patient_id=?", (pid,)
     ).fetchone()
-    medicine_reactions.share(
-        c, path, doctor, pid, FormData(dict(revision=str(draft["revision"])))
-    )
     for i in range(10, 30):
         aviandr_data.add_observation(
             c,

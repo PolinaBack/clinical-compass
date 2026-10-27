@@ -21,6 +21,15 @@ from tests.helpers import login, token, TEST_HASH
 
 
 def scheme(client, pid=1, revision=0, codes=("D01",), **extra):
+    # These legacy scheme tests start with explicitly verified synthetic medicines.
+    # Blocking of unverified medicines has its own tests without this helper.
+    from tests.medicine_verification_helpers import verify
+
+    with connect(client.app.state.db_path) as c:
+        user = c.execute("SELECT * FROM accounts WHERE username='doctor'").fetchone()
+        if user:
+            for code in codes:
+                verify(c, user, code)
     result = dict(
         csrf=token(client, "/medicines/prescriptions"),
         patient_id=str(pid),
@@ -209,7 +218,7 @@ def test_drafts_are_encrypted_versioned_per_patient_and_do_not_change_orders(
     assert (
         item["times"] == "08:15, 20:15"
         and item["reference"]["registration"]
-        and item["reference"]["status"] == "editorial_unverified"
+        and item["reference"]["status"] == "rf_instruction_verified"
     )
     assert saved(client, 2)["items"] == []
     assert (

@@ -359,6 +359,9 @@ def test_pair_needs_confirmed_identification_and_verified_specific_rule(research
 def test_unsaved_or_saved_private_draft_is_not_current_therapy(research):
     client, path, pids, _ = research
     with connect(path) as c:
+        from tests.medicine_verification_helpers import verify
+
+        verify(c, actor(c), "D02")
         medicine_drafts.save(
             c,
             path,

@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse
 from app.services import drug_library as library, medicine_drafts as drafts
 from app.services import adverse_reactions
 from app.services import medication_preferences
+from app.services import medicine_verification as verification
 
 
 def draft_context(c, path, user, patient_id, *, version=None, add=()):
@@ -58,6 +59,7 @@ def draft_context(c, path, user, patient_id, *, version=None, add=()):
         if code not in active_codes:
             raise HTTPException(422, "Препарат отсутствует в справочнике")
         if version is None:
+            verification.require({d["code"]: d for d in drugs}, [code])
             selected.setdefault(code, dict(code=code))
     from app.services.medicine_reactions import doctor_context
 
@@ -76,6 +78,24 @@ def draft_context(c, path, user, patient_id, *, version=None, add=()):
         tolerability_choices=adverse_reactions.preference_choices(tolerability),
         tolerability_matches=matches,
         tolerability_checks=checks,
+        prescribing_blocked=[
+            d["name"] for d in drugs if d["code"] in selected and not d["can_prescribe"]
+        ],
+        prescribing_share_ready=bool(current["items"])
+        and all(
+            next(
+                (
+                    d
+                    for d in drugs
+                    if d["code"] == item["code"]
+                    and d["can_prescribe"]
+                    and item.get("reference", {}).get("verification_import")
+                    == d["prescribing"]["review"]["_import"]
+                ),
+                None,
+            )
+            for item in current["items"]
+        ),
         **doctor_context(c, path, user, patient_id, current),
     )
 

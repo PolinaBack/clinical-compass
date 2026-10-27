@@ -54,6 +54,7 @@ def versions(client):
         ]
 
 
+@pytest.mark.usefixtures("verified_test_medicines")
 def test_medicine_editor_is_in_assignments_with_original_draft_and_history(client):
     login(client, "doctor")
     old = client.get(
@@ -87,6 +88,7 @@ def test_medicine_editor_is_in_assignments_with_original_draft_and_history(clien
     assert client.get("/patients/2/assignments").context["draft"]["items"] == []
 
 
+@pytest.mark.usefixtures("verified_test_medicines")
 def test_private_preference_draft_then_explicit_send_does_not_send_intake(client):
     login(client, "patient1")
     legacy_preferences(client, ["S115"], "S115", submit=False)

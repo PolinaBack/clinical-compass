@@ -94,7 +94,7 @@ def test_manual_card_is_a_real_shared_catalogue_entry_and_keeps_old_rows(client)
         client.get(f"/medicines/combinations?drug=D01&drug={code}").status_code == 200
     )
     page = client.get("/patients/1/assignments?add=" + code)
-    assert page.status_code == 200 and data["name"] in page.text
+    assert page.status_code == 422 and "не проверен" in page.text
 
 
 def test_same_name_and_missing_metadata_do_not_block_another_card(client):

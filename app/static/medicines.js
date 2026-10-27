@@ -55,7 +55,7 @@
       const group = catalogue.elements.group.value, statusValue = catalogue.elements.status.value;
       let count = 0;
       for (const card of cards) {
-        card.hidden = !words.every(w => normalized(card.dataset.search).includes(w)) || (group && card.dataset.group !== group) || (statusValue === 'verified' && card.dataset.verified !== '1') || (statusValue === 'unverified' && card.dataset.verified !== '0');
+        card.hidden = !words.every(w => normalized(card.dataset.search).includes(w)) || (group && card.dataset.group !== group) || (statusValue === 'verified' && card.dataset.verified !== '1') || (statusValue === 'ready' && card.dataset.prescribable !== '1') || (statusValue === 'unverified' && card.dataset.prescribable !== '0');
         if (!card.hidden) count++;
       }
       document.querySelector('[data-catalog-count]').textContent = `Найдено: ${count}. Сверка относится к отдельным сведениям и конкретной форме.`;
@@ -87,6 +87,8 @@
     const items = [...draft.querySelectorAll('[data-draft-item]')];
     const update = () => {
       draft.querySelector('[data-draft-empty]').hidden = items.some(i => !i.hidden);
+      const blocked = items.some(item => !item.hidden && item.dataset.prescribable !== '1');
+      draft.querySelectorAll('button[name=intent]').forEach(button => button.disabled = blocked);
       for (const item of items) {
         item.querySelectorAll('[data-other-select]').forEach(select => {
           const label = item.querySelector(`[data-other-field="${select.dataset.otherSelect}"]`);
@@ -99,6 +101,7 @@
     };
     document.querySelectorAll('[data-pick-draft]').forEach(button => button.addEventListener('click', () => {
       const item = items.find(i => i.dataset.draftItem === button.dataset.pickDraft);
+      if (button.disabled || item.dataset.prescribable !== '1') return;
       item.hidden = false; item.querySelector('fieldset').disabled = false;
       item.querySelector('[name=drug]').checked = true;
       button.disabled = true; button.textContent = 'Добавлено'; dirty = true; update();
@@ -108,8 +111,9 @@
       const item = button.closest('[data-draft-item]');
       item.hidden = true; item.querySelector('fieldset').disabled = true; item.querySelector('[name=drug]').checked = false;
       const add = document.querySelector(`[data-pick-draft="${button.dataset.removeDraft}"]`);
-      add.disabled = false; add.textContent = '+ Добавить'; dirty = true; update();
-      document.querySelector('#draft-picker').open = true; add.focus();
+      if (add) {add.disabled = item.dataset.prescribable !== '1'; add.textContent = add.disabled ? 'Не проверен' : '+ Добавить';}
+      dirty = true; update();
+      document.querySelector('#draft-picker').open = true; if(add&&!add.disabled)add.focus();
     }));
     draft.addEventListener('input', event => { if (event.target.form === draft) dirty = true; });
     draft.addEventListener('change', event => { if (event.target.form === draft) { dirty = true; update(); } });
@@ -124,4 +128,7 @@
     window.addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
     update();
   }
+  document.querySelectorAll('[data-medicine-verification]').forEach(form => form.addEventListener('invalid', event => {
+    for(let node=event.target.parentElement;node&&node!==form.parentElement;node=node.parentElement)if(node.tagName==='DETAILS')node.open=true;
+  }, true));
 })();

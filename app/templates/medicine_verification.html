@@ -1,0 +1,29 @@
+<section class="card medicine-verification" id="medicine-verification">
+  <h2>Проверка для назначения</h2>
+  <p class="medicine-verification-badge" data-prescribing-state="{{ 'ready' if drug.can_prescribe else 'unverified' }}" role="status">{{ drug.prescribing.label }}</p>
+  <p>{{ drug.prescribing.reason }}</p>
+  {% if request.query_params.get('verification_saved') %}<p role="status">Результат проверки сохранён.</p>{% endif %}
+  {% if verification_error %}<p class="medicine-verification-error" role="alert">{{ verification_error }}</p>{% endif %}
+  {% set review=drug.prescribing.review %}
+  {% if review %}<p class="caption">Решение специалиста № {{ review.actor_id }} · {{ review.checked_on }}{% if review.valid_until %} · повторная сверка до {{ review.valid_until }}{% endif %}. {{ review.note }}</p>
+    {% if review.identity %}<details><summary>Реквизиты и сведения, проверенные врачом</summary><dl>{% for key,label in verification_identity.items() %}<dt>{{ label }}</dt><dd>{{ review.identity[key] }}</dd>{% endfor %}</dl><p><a href="{{ review.registration_url }}" target="_blank" rel="noopener noreferrer">Регистрация в ГРЛС</a> · <a href="{{ review.instruction_url }}" target="_blank" rel="noopener noreferrer">Проверенная инструкция</a> · {{ review.instruction_version }}</p>{% for key,label in verification_sections.items() %}<h3>{{ label }}</h3><p class="medicine-preserve">{{ review.sections[key].text }}</p><p class="caption">{{ review.sections[key].locator }}</p>{% endfor %}</details>{% endif %}
+  {% endif %}
+  {% if not drug.archived %}<details {% if verification_error %}open{% endif %}><summary>{{ 'Повторно проверить регистрацию и инструкцию' if review else 'Подтвердить регистрацию в РФ и проверить инструкцию' }}</summary>
+    <p>Сверьте именно этот препарат и конкретную лекарственную форму. Сохранение по ссылке не подтверждает регистрацию. Проверка записывается как решение врача.</p>
+    <form method="post" action="/medicines/{{ drug.code|lower }}/verification" data-medicine-verification>
+      <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="signature" value="{{ drug.prescribing.signature }}"><input type="hidden" name="client_token" value="{{ verification_token }}"><input type="hidden" name="return_to" value="{{ card_return }}">
+      <div class="medicine-verification-grid">{% for key,label in verification_identity.items() %}<label>{{ label }}<input name="{{ key }}" value="{{ verification_form.get(key,'') }}" required></label>{% endfor %}</div>
+      <label>Ссылка на конкретную запись ГРЛС<input type="url" name="registration_url" value="{{ verification_form.registration_url }}" placeholder="https://grls.rosminzdrav.ru/…" required></label>
+      <label class="check"><input type="checkbox" name="registration_confirmed" value="yes" required>Я подтвердил(а) действующую регистрацию этого препарата и формы в РФ</label>
+      <label>Ссылка на проверенную инструкцию<input type="url" name="instruction_url" value="{{ verification_form.instruction_url }}" required></label>
+      <label>Редакция / дата инструкции<input name="instruction_version" value="{{ verification_form.instruction_version }}" required></label>
+      <p class="caption">Заполните сверенные сведения и укажите страницу или раздел. Если инструкция прямо сообщает об отсутствии сведений, передайте именно эту формулировку. В особых указаниях учтите ограничения по возрасту, беременности и лактации.</p>
+      {% for key,label in verification_sections.items() %}<details><summary>{{ label }}</summary><label>Сверенный текст · {{ label }}<textarea name="text_{{ key }}" rows="5" required>{{ verification_form.get('text_' ~ key,'') }}</textarea></label><label>Страница / раздел · {{ label }}<input name="locator_{{ key }}" value="{{ verification_form.get('locator_' ~ key,'') }}" required></label><label class="check"><input type="checkbox" name="checked_{{ key }}" value="yes" required>{{ label }} — сверено по инструкции</label></details>{% endfor %}
+      <label class="check"><input type="checkbox" name="instruction_checked" value="yes" required>Я проверил(а) необходимые сведения по действующей инструкции выбранной формы</label>
+      <label>Повторно проверить до<input type="date" name="valid_until" min="{{ verification_today }}" value="{{ verification_form.valid_until }}" required></label>
+      <label>Основание / замечания<textarea name="note" rows="3" minlength="10" maxlength="3000" required>{{ verification_form.get('note','') }}</textarea></label>
+      <button name="action" value="verify">Подтвердить проверку для назначения</button>
+    </form>
+  </details>
+  {% if review and review.action=='verify' %}<details><summary>Отозвать подтверждение</summary><form method="post" action="/medicines/{{ drug.code|lower }}/verification"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="signature" value="{{ drug.prescribing.signature }}"><input type="hidden" name="client_token" value="{{ verification_token }}"><input type="hidden" name="return_to" value="{{ card_return }}"><label>Причина отзыва<textarea name="note" minlength="10" maxlength="3000" required></textarea></label><button class="medicine-secondary" name="action" value="withdraw">Отозвать подтверждение</button></form></details>{% endif %}{% endif %}
+</section>

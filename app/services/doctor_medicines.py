@@ -105,15 +105,16 @@ def save(c, user, form):
         source_url=data["source_url"],
         source_text=data["source_text"],
         reference_override=reference,
+        verification_status="unverified",
     )
     ident = write(c, user, code, drug, content, "new")
     audit(c, user["id"], "doctor_medicine_added", object_id=ident)
     return code
 
 
-def write(c, user, code, drug, content, status):
-    payload = dict(entities=[["drug", code, drug]], sheets={})
-    change = dict(kind="drug", key=code, status=status, before=None, after=drug)
+def write(c, user, code, drug, content, status, *, kind="drug"):
+    payload = dict(entities=[[kind, code, drug]], sheets={})
+    change = dict(kind=kind, key=code, status=status, before=None, after=drug)
     base = c.execute(
         "SELECT coalesce(max(id),0) FROM drug_imports WHERE committed_at IS NOT NULL"
     ).fetchone()[0]
@@ -123,7 +124,11 @@ def write(c, user, code, drug, content, status):
     ident = c.execute(
         "INSERT INTO drug_imports(kind,filename,sha256,content,payload,report,actor_id,created_at) VALUES('library',?,?,?,?,?,?,?)",
         (
-            f"doctor-card-{code}.json",
+            (
+                f"doctor-card-{code}.json"
+                if kind == "drug"
+                else f"doctor-{kind}-{code}.json"
+            ),
             hashlib.sha256(content).hexdigest(),
             content,
             library.dump(payload),

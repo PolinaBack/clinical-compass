@@ -173,6 +173,16 @@ def snapshot(drug):
         catalogue_import=drug.get("_import"),
         status="editorial_unverified",
     )
+    if drug.get("can_prescribe"):
+        review = drug["prescribing"]["review"]
+        value.update(
+            status="rf_instruction_verified",
+            verification_import=review["_import"],
+            verification_signature=review["signature"],
+            verification_until=review["valid_until"],
+            registration_source=review["registration_url"],
+            instruction_source=review["instruction_url"],
+        )
     return value
 
 

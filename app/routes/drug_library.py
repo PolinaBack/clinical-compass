@@ -2,6 +2,7 @@
 
 import io
 import json
+import secrets
 from urllib.parse import urlencode, urlsplit, parse_qs
 from fastapi import Request, HTTPException
 from fastapi.responses import RedirectResponse, Response
@@ -9,6 +10,7 @@ import openpyxl
 from app.storage import audit, now
 from app.services import drug_library as lib
 from app.services import medicine_reference as editorial
+from app.services import medicine_verification as verification
 from app.services.navigation import local_destination
 
 
@@ -63,6 +65,8 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
                         "name": d["name"],
                         "inn": d["inn"],
                         "url": "/medicines/" + d["slug"],
+                        "can_prescribe": d["can_prescribe"],
+                        "verification_status": d["verification_status"],
                     }
                     for d in lib.search(c, q[:200])[:12]
                 ]
@@ -396,6 +400,7 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
             if not drug:
                 raise HTTPException(404, "Лекарство не найдено")
             drug = editorial.enrich(drug)
+            drug = verification.decorate(drug, lib.current(c, verification.KIND))
             refs = lib.sources(c, code, include_inactive=True)
             for source in refs:
                 source["events"] = [
@@ -439,7 +444,12 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
                 (code,),
             ).fetchall()
             return_target = medicine_return(
-                request, request.query_params.get("return_to")
+                request,
+                getattr(
+                    request.state,
+                    "medicine_card_return",
+                    request.query_params.get("return_to"),
+                ),
             )
             comparison = request.session.get("medicine_comparison", [])
             comparison_link = "/medicines/combinations"
@@ -477,6 +487,18 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
             request,
             "medicine_card.html",
             drug=drug,
+            verification_identity=verification.IDENTITY,
+            verification_sections=verification.SECTIONS,
+            verification_form=verification.defaults(drug)
+            | getattr(request.state, "medicine_verification_form", {}),
+            verification_error=getattr(
+                request.state, "medicine_verification_error", ""
+            ),
+            verification_token=getattr(
+                request.state, "medicine_verification_form", {}
+            ).get("client_token")
+            or secrets.token_urlsafe(24),
+            verification_today=verification.today().isoformat(),
             can_remove=bool(
                 drug.get("reference_override")
                 and drug.get("created_by") == account(request)["id"]
@@ -499,4 +521,35 @@ def register_drug_library(app, db, account, doctor_access, csrf_check, render):
                 else request.url.path
                 + ("?" + request.url.query if request.url.query else "")
             ),
+        )
+
+    @app.post("/medicines/{code}/verification")
+    async def verify_medicine(request: Request, code: str):
+        doctor_access(request)
+        form = await request.form(
+            max_files=0, max_fields=60, max_part_size=float("inf")
+        )
+        csrf_check(request, str(form.get("csrf", "")))
+        destination = medicine_return(request, form.get("return_to"))
+        request.state.medicine_card_return = destination
+        try:
+            with db() as c:
+                c.execute("BEGIN IMMEDIATE")
+                verification.save(c, account(request), code.upper(), form)
+        except HTTPException as error:
+            if error.status_code not in (409, 422):
+                raise
+            request.state.medicine_verification_error = str(error.detail)
+            request.state.medicine_verification_form = dict(form)
+            response = drug_card(request, code.lower())
+            response.status_code = error.status_code
+            return response
+        slug = "aviandr" if code.upper() == "D01" else code.lower()
+        return RedirectResponse(
+            "/medicines/"
+            + slug
+            + "?"
+            + urlencode(dict(return_to=destination, verification_saved="1"))
+            + "#medicine-verification",
+            status_code=303,
         )

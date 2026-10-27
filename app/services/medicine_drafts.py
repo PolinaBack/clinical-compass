@@ -171,6 +171,9 @@ def save(c, path, user, pid, form):
     for item in old["items"]:
         if item["code"] in archived:
             drugs[item["code"]] = archived[item["code"]]
+    from app.services.medicine_verification import require
+
+    require(drugs, form.getlist("drug"))
     items = parse(form, drugs)
     old_references = {item["code"]: item["reference"] for item in old["items"]}
     for item in items:
