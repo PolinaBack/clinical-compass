@@ -1,0 +1,2 @@
+{% if urgent_notices %}<section class="critical safety-urgent-banner" role="status"><strong>Нужно как можно скорее связаться с пациентом{% if urgent_notices|length>1 %} · сообщений: {{ urgent_notices|length }}{% endif %}</strong>
+<p>{% for message in urgent_notices[:3] %}{{ message.name }}{% if not loop.last %}; {% endif %}{% endfor %} · в ответах C-SSRS отмечены сведения, требующие срочного обсуждения.</p><a href="/doctor/messages">Открыть сообщения и результаты теста</a></section>{% endif %}

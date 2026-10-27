@@ -1,0 +1,11 @@
+.safety-message-link { display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px;border:1px solid #d4b8bc;border-radius:12px;text-decoration:none;color:#69212b;background:#fff1f2; }
+.safety-message-link b { background:#a31f37;color:white;border-radius:20px;min-width:24px;text-align:center;padding:2px 6px; }
+.safety-urgent-banner { margin:12px 0 20px;border:2px solid #a73b48; }
+.safety-urgent-message { margin:16px 0;padding:22px;border:2px solid #a73b48;scroll-margin-top:100px; }
+.safety-urgent-message,.safety-urgent-banner { background:#fde3e7;color:#632232; }.safety-urgent-message a,.safety-urgent-banner a { color:#7b1930; }
+.safety-urgent-message h2,.safety-immediate-help h2 { font-size:22px;margin-top:0; }
+.safety-urgent-message details { margin:16px 0; }.safety-urgent-message dt { margin-top:12px;font-weight:600; }.safety-urgent-message dd { margin:5px 0 12px; }
+.safety-urgent-message form { max-width:760px; }.safety-urgent-message textarea { width:100%;min-height:100px; }
+.safety-urgent-message button,.safety-immediate-help .button { max-width:100%;white-space:normal; }
+.safety-immediate-help[hidden] { display:none !important; }.safety-immediate-help { margin:18px 0; }
+@media(max-width:650px){.safety-message-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}.safety-message-link{padding:8px;}.safety-urgent-message{padding:16px;}}

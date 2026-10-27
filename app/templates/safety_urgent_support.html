@@ -1,0 +1,5 @@
+{% if user != 'doctor' %}<section class="critical safety-immediate-help" data-safety-support {% if not result.urgent %}hidden{% endif %} aria-live="polite">
+<h2>Помощь доступна сейчас</h2><p>Если вам нужна поддержка сейчас, обратитесь за помощью. Не ждите ответа в приложении.</p>
+<a class="button" href="/help-now">Экстренная помощь и телефоны поддержки</a>
+<p class="caption" data-safety-local-note hidden>Сохраните ответ, чтобы он стал доступен лечащему врачу.</p>
+</section>{% endif %}

@@ -1,0 +1,10 @@
+{% for message in urgent_notices %}<article class="critical safety-urgent-message" data-urgent-id="{{ message.id }}">
+<h2>Как можно скорее свяжитесь с пациентом</h2><h3>{{ message.name }}</h3>
+<p>Обсудите ответы C-SSRS и текущее состояние пациента. {{ message.reasons|join('; ') }}.</p>
+<p>Получено {{ message.created_at|local_datetime }} · {{ 'Тест завершён' if message.status=='completed' else 'Тест ещё не завершён' }}. Общий балл для этого опросника не рассчитывается.</p>
+<details open><summary>Результаты теста</summary><dl>{% for row in message.answers %}<dt>{{ row.label }}. {{ row.question }}</dt><dd>{{ row.answer }}</dd>{% endfor %}</dl></details>
+{% if message.changed_since_signal %}<details><summary>Ответы при появлении срочного сообщения</summary><p>После создания сообщения ответы были дополнены или изменены. Сохранено исходное основание сообщения.</p><dl>{% for row in message.original_answers %}<dt>{{ row.label }}. {{ row.question }}</dt><dd>{{ row.answer }}</dd>{% endfor %}</dl></details>{% endif %}
+<p><a href="/assessments/{{ message.assessment_id }}">Открыть анкету пациента</a> · <a href="/patients/{{ message.patient_id }}/workspace/safety">События и действия врача</a></p>
+{% if not message.acknowledged_at %}<form action="/events/{{ message.id }}/status?from=messages" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intent" value="acknowledge"><button>Подтвердить получение</button></form>
+{% else %}<p>Получение подтверждено {{ message.acknowledged_at|local_datetime }}.</p><form action="/events/{{ message.id }}/status?from=messages" method="post" data-safety-action-form><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="intent" value="action"><label>Контакт с пациентом и предпринятые действия<textarea name="action_text" maxlength="3000" required></textarea></label><button>Сохранить действия врача</button></form>{% endif %}
+</article>{% else %}<p class="caption" data-safety-no-messages>Срочных сообщений по C-SSRS нет.</p>{% endfor %}

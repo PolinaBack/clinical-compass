@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% block title %}Сообщения · Клинический компас{% endblock %}{% block content %}
+<h1>Сообщения</h1><p>Срочные сообщения закреплены сверху до записи действий врача. Подтверждение получения сохраняется отдельно.</p>
+<div data-safety-messages>{% include 'safety_urgent_messages.html' %}</div>
+<details class="card"><summary>Создать аккаунт для проверки</summary><p>Новый тестовый пациент будет закреплён за вами. Его анкеты, дневник и медицинские сведения будут пустыми.</p><form action="/doctor/messages/test-account" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Создать чистого тестового пациента</button></form></details>
+{% endblock %}

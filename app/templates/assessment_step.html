@@ -41,6 +41,7 @@
             </p>
         {% endif %}
         {% include 'video_offer.html' %}
+        {% if assessment.scale=='safety6' %}{% include 'safety_urgent_support.html' %}{% endif %}
         {% if assessment.scale == 'safety6' and result.positive_items %}
             <div class="notice">
                 <p>
@@ -52,7 +53,7 @@
         <form action="/assessments/{{ assessment.id }}/save"
               method="post"
               class="questionnaire"
-              id="assessment-form">
+              id="assessment-form" {% if assessment.scale=='safety6' %}data-safety-values='{{ safety_values|tojson }}' data-safety-step="{{ step }}"{% endif %}>
             <input type="hidden" name="csrf" value="{{ csrf }}">
             <input type="hidden" name="revision" value="{{ assessment.revision }}">
             <input type="hidden" name="request_id" value="{{ request_id }}">

@@ -31,6 +31,7 @@ from .safety import (
     safety_path,
     answered_value,
 )
+from .services import safety_alerts
 
 
 def overview(db, pid):
@@ -353,6 +354,11 @@ def register_workflows(
             audio=audio,
             request_id=secrets.token_urlsafe(24),
             consent=has_consent(a["patient_id"]),
+            safety_values=(
+                {str(i): answered_value(answers, i) for i in range(1, 8)}
+                if a["scale"] == "safety6"
+                else {}
+            ),
             **(video_data(db, aid) if a["scale"] in VIDEO_SCALES else {}),
         )
 
@@ -573,6 +579,15 @@ def register_workflows(
                     (a["patient_id"], aid, kind, now()),
                 )
             if a["scale"] == "safety6":
+                safety_alerts.record(
+                    c,
+                    app.state.db_path,
+                    a,
+                    old_safety,
+                    parsed,
+                    current["revision"] + 1,
+                    user["id"],
+                )
                 new_yes = [
                     key
                     for key in result["positive_items"]
@@ -843,6 +858,57 @@ def register_workflows(
             )
         return {"events": rows, "reserve_configured": False}
 
+    @app.get("/doctor/messages")
+    def safety_messages(request: Request):
+        if account(request)["role"] != "doctor":
+            raise HTTPException(403, "Сообщения доступны только лечащему врачу")
+        response = render(request, "doctor_messages.html")
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @app.get("/api/safety-messages")
+    def safety_messages_current(request: Request):
+        user = account(request)
+        if user["role"] != "doctor":
+            raise HTTPException(403, "Сообщения доступны только лечащему врачу")
+        with db() as c:
+            notices = safety_alerts.pending(c, app.state.db_path, user["doctor_id"])
+        from fastapi.responses import JSONResponse
+
+        banner = render(request, "safety_urgent_banner.html", urgent_notices=notices)
+        messages = render(
+            request, "safety_urgent_messages.html", urgent_notices=notices
+        )
+        from .experimental_ai.scenarios import digest
+
+        value = dict(
+            count=len(notices),
+            banner_html=banner.body.decode(),
+            messages_html=messages.body.decode(),
+            deliveries=[m["id"] for m in notices if not m["delivered_at"]],
+        )
+        value["checksum"] = digest([value["banner_html"], value["messages_html"]])
+        return JSONResponse(value, headers={"Cache-Control": "no-store"})
+
+    @app.post("/doctor/messages/test-account")
+    async def new_safety_test_account(request: Request):
+        user = account(request)
+        if user["role"] != "doctor":
+            raise HTTPException(403, "Тестовый аккаунт создаёт специалист")
+        form = await request.form(max_files=0, max_fields=1)
+        csrf_check(request, str(form.get("csrf", "")))
+        from scripts.create_safety_test_account import create_patient
+
+        credentials = create_patient(
+            app.state.db_path,
+            "safety-check-" + secrets.token_hex(4),
+            user["doctor_id"],
+            user["id"],
+        )
+        response = render(request, "safety_test_account.html", credentials=credentials)
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
     @app.post("/events/{eid}/status")
     def event_status(
         request: Request,
@@ -884,7 +950,12 @@ def register_workflows(
         if intent == "delivered":
             return {"status": "delivered"}
         return RedirectResponse(
-            f"/patients/{row['patient_id']}/workspace/safety", status_code=303
+            (
+                "/doctor/messages"
+                if request.query_params.get("from") == "messages"
+                else f"/patients/{row['patient_id']}/workspace/safety"
+            ),
+            status_code=303,
         )
 
     @app.post("/assessments/{aid}/audio")

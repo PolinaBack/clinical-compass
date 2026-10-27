@@ -199,16 +199,25 @@ def create_app(db_path=None):
                 request.session["last_html_page"] = location
         interface_prefs = dict(minimal=False, revision=0, cards=[])
         journey = None
+        urgent_notices = []
         if request.session.get("account_id"):
             with db() as c:
                 active = c.execute(
-                    "SELECT id,role,patient_id FROM accounts WHERE id=? AND active=1 AND auth_version=?",
+                    "SELECT id,role,patient_id,doctor_id FROM accounts WHERE id=? AND active=1 AND auth_version=?",
                     (
                         request.session["account_id"],
                         request.session.get("auth_version"),
                     ),
                 ).fetchone()
                 if active:
+                    if (
+                        active["role"] == "doctor"
+                        and request.url.path != "/"
+                        and not request.url.path.startswith("/login")
+                    ):
+                        from .services.safety_alerts import pending
+
+                        urgent_notices = pending(c, path, active["doctor_id"])
                     interface_prefs = read_interface(c, active["id"])
                     if (
                         active["role"] == "patient"
@@ -228,10 +237,11 @@ def create_app(db_path=None):
                 "current_page": request.url.path,
                 "interface_prefs": interface_prefs,
                 "patient_journey": journey,
+                "urgent_notices": urgent_notices,
                 **context,
             },
         )
-        if journey is not None:
+        if journey is not None or request.session.get("account_id"):
             response.headers["Cache-Control"] = "no-store"
         return response
 

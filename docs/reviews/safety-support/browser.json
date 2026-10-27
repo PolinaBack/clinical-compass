@@ -1,0 +1,20 @@
+{
+  "synthetic_only": true,
+  "clean_account_created_via_ui": true,
+  "immediate_unsaved_help": true,
+  "notice_after_partial_save": true,
+  "top_header_and_red_message": true,
+  "results_in_notice": true,
+  "acknowledgement_stays_pinned": true,
+  "unsaved_doctor_action_preserved": true,
+  "action_removes_pending_notice": true,
+  "phones": true,
+  "widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "js_errors": [],
+  "axe_violations": []
+}

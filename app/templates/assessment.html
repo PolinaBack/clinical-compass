@@ -16,6 +16,7 @@
             <p class="caption">Период: {{ assessment.period_start }} — {{ assessment.period_end }}</p>
         {% endif %}
     </div>
+    {% if assessment.scale=='safety6' %}{% include 'safety_urgent_support.html' %}{% endif %}
     {% if assessment.scale == 'safety6' and result.positive_items %}
         <div class="notice">
             <p>

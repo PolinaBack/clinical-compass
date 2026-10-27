@@ -2,7 +2,8 @@
 
 Question wording is copied from the user's pasted text. Branches and periods follow
 Plan.pdf pp.4,15 and SpecificationV2 pp.14-16. No risk score, risk category,
-prediction, treatment, admission decision or automatic clinical triage is produced.
+prediction, treatment or admission decision is produced. Explicit answers may
+trigger a separate request for prompt clinician contact, without a risk score.
 """
 
 from copy import deepcopy
@@ -87,4 +88,16 @@ def safety_result(answers):
         positive_items=[
             str(i) for i in safety_path(data) if answered_value(data, i) == 1
         ],
+        urgent=bool(safety_urgent_items(data)),
+        urgent_items=safety_urgent_items(data),
     )
+
+
+def safety_urgent_items(answers):
+    """Contact triggers from answers, never a sum or a diagnostic risk score."""
+    result = []
+    if answered_value(answers, 2) == 1:
+        result.extend(str(i) for i in (4, 5) if answered_value(answers, i) == 1)
+    if answered_value(answers, 6) == 1 and answered_value(answers, 7) == 1:
+        result.append("7")
+    return result
