@@ -26,10 +26,9 @@
     <div class="aviandr-directions">{% for d in av_report.directions %}{% set card_index=loop.index %}{% include 'aviandr_card.html' %}{% endfor %}</div>
     <div class="aviandr-insights-layout">
     {% include 'aviandr_trends.html' %}
-    <div class="aviandr-insights-side">
-    <section class="aviandr-panel" id="av-questions"><p class="aviandr-mode">По конкретным пробелам карты</p><h3>Вопросы врачу</h3><p class="caption">Сформированы по исходным данным, доступны без Ollama.</p><ol>{% for gap in av_report.gaps %}<li><strong>{{ gap.question }}</strong><p class="caption">{{ gap.reason }}</p></li>{% endfor %}</ol></section>
+    <section class="aviandr-panel aviandr-questions" id="av-questions"><p class="aviandr-mode">По конкретным пробелам карты</p><h3>Вопросы врачу</h3><p class="caption">Сформированы по исходным данным, доступны без Ollama.</p><ol>{% for gap in av_report.gaps %}<li><strong>{{ gap.question }}</strong><p class="caption">{{ gap.reason }}</p></li>{% endfor %}</ol></section>
+    </div>
     {% include 'aviandr_explanation.html' %}
-    </div></div>
     <p class="aviandr-attention">Недостаток данных не означает отсутствие риска. Решение о назначении, отмене или изменении терапии принимает врач по полной клинической картине.</p>
     </div>
     {% include 'aviandr_tools.html' %}

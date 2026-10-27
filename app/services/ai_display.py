@@ -1,6 +1,22 @@
 """Readable presentation only; original model responses stay unchanged in storage."""
 
 import json
+from markdown_it import MarkdownIt
+from markupsafe import Markup, escape
+
+
+def _image_text(tokens, index, options, env):
+    # Keep the model's caption without loading remote resources in the chart.
+    return str(escape(tokens[index].content))
+
+
+_markdown = MarkdownIt("commonmark", {"html": False}).enable(["table", "strikethrough"])
+_markdown.renderer.rules["image"] = _image_text
+_markdown.renderer.rules["table_open"] = lambda *args: (
+    '<div class="ai-markdown-table" tabindex="0" role="region" '
+    'aria-label="Таблица из ответа ИИ"><table>\n'
+)
+_markdown.renderer.rules["table_close"] = lambda *args: "</table></div>\n"
 
 LABELS = {
     "summary": "",
@@ -45,3 +61,15 @@ def readable_text(text):
             result.append((title + "\n" if title else "") + "\n".join(parts))
     readable = "\n\n".join(result)
     return readable if readable.strip() else pretty
+
+
+def formatted_text(text):
+    """Render model Markdown with escaped HTML; never modify the saved response."""
+    readable = readable_text(text)
+    try:
+        value = json.loads(readable)
+    except (TypeError, ValueError, RecursionError):
+        value = None
+    if isinstance(value, (dict, list)):
+        return Markup("<pre><code>") + escape(readable) + Markup("</code></pre>")
+    return Markup(_markdown.render(str(readable or "")))

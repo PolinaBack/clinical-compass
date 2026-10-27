@@ -1,0 +1,31 @@
+{
+  "synthetic_database": true,
+  "markdown_emphasis_lists_table": true,
+  "unsafe_html_inert": true,
+  "four_confirmations_without_note": true,
+  "immediate_yellow_to_green": true,
+  "full_width": [
+    {
+      "viewport": 320,
+      "explanation_width": 288,
+      "analysis_width": 288
+    },
+    {
+      "viewport": 390,
+      "explanation_width": 358,
+      "analysis_width": 358
+    },
+    {
+      "viewport": 768,
+      "explanation_width": 704,
+      "analysis_width": 704
+    },
+    {
+      "viewport": 1440,
+      "explanation_width": 1150,
+      "analysis_width": 1150
+    }
+  ],
+  "javascript_errors": [],
+  "axe_violations": []
+}

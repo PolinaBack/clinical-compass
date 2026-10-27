@@ -15,10 +15,10 @@
 {% if av_selected.result %}<div data-aviandr-result>
 <p class="aviandr-mode">{{ 'ТРАНСПОРТНАЯ ФИКСТУРА · НЕ НАСТОЯЩАЯ ГЕНЕРАЦИЯ' if av_selected.provenance.provider=='mock-http-test-only' else 'ОТВЕТ ЛОКАЛЬНОЙ МОДЕЛИ · ПРОВЕРЯЕТ ВРАЧ' }}</p>
 {% if av_selected.result.get('output_format')=='free_text' %}<h4>Свободный ответ модели</h4>{% set unverified_result=av_selected.result %}{% include 'ai_unverified_text.html' %}
-{% else %}<h4>Сводка</h4>{% for item in av_selected.result.summary %}<p>{{ item.text }}</p>{% endfor %}
-{% for item in av_selected.result.explanations %}<h4>{{ {'indications':'Показания','contraindications':'Противопоказания','interactions':'Сочетаемость','tolerability':'Переносимость'}.get(item.direction,'Объяснение') }}</h4><p>{{ item.text }}</p>{% endfor %}
-<h4>Уточняющие вопросы ИИ</h4><ol>{% for item in av_selected.result.questions %}<li>{{ item.text }}</li>{% endfor %}</ol>
-{% if av_selected.result.contradictions %}<h4>Противоречия и пробелы для проверки</h4>{% for item in av_selected.result.contradictions %}<p>{{ item.text }}</p>{% endfor %}{% endif %}
+{% else %}<h4>Сводка</h4>{% for item in av_selected.result.summary %}<div class="ai-markdown">{{ item.text|ai_markdown }}</div>{% endfor %}
+{% for item in av_selected.result.explanations %}<h4>{{ {'indications':'Показания','contraindications':'Противопоказания','interactions':'Сочетаемость','tolerability':'Переносимость'}.get(item.direction,'Объяснение') }}</h4><div class="ai-markdown">{{ item.text|ai_markdown }}</div>{% endfor %}
+<h4>Уточняющие вопросы ИИ</h4><ol>{% for item in av_selected.result.questions %}<li class="ai-markdown">{{ item.text|ai_markdown }}</li>{% endfor %}</ol>
+{% if av_selected.result.contradictions %}<h4>Противоречия и пробелы для проверки</h4>{% for item in av_selected.result.contradictions %}<div class="ai-markdown">{{ item.text|ai_markdown }}</div>{% endfor %}{% endif %}
 {% endif %}
 </div>{% endif %}</div>
 {% else %}<p>Объяснение ещё не запрашивалось.</p>{% endif %}

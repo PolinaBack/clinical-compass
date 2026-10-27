@@ -5,7 +5,6 @@ import re
 
 import httpx
 import pytest
-from markupsafe import escape
 
 from app.experimental_ai.free_text import unverified_text
 from app.experimental_ai.ollama import Ollama
@@ -16,6 +15,7 @@ from app.storage import connect
 from tests.helpers import token
 from tests.test_aviandr_research import research
 from tests.test_aviandr_conclusions import snapshot
+from tests.test_ai_formatting import visible_text
 
 
 def endpoint(pid, kind):
@@ -105,7 +105,7 @@ def test_free_text_bypasses_output_checks_but_preserves_privacy_and_calculations
     assert "обычным" in payload["messages"][0]["content"]
     assert calls[-1].url.host == "127.0.0.1"
     html = client.get(f"/patients/{pids['C']}/ai-analysis").text
-    assert str(escape(text)) in html
+    assert " ".join(text.split()) in visible_text(html)
     assert "Непроверенный ответ модели" in html
     assert ("Краткая сводка" if kind == "general" else "Свободный ответ модели") in html
     assert "<script>window.__aiInjected=1</script>" not in html

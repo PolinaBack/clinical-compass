@@ -146,7 +146,9 @@ def test_json_is_readable_without_evidence_codes_and_keeps_raw_transcript(resear
     if job["result"].get("output_format") == "free_text":
         assert job["result"]["text"] == raw
     page = research[0].get(f'/patients/{research[2]["C"]}/ai-analysis')
-    assert displayed in unescape(page.text)
+    from tests.test_ai_formatting import visible_text
+
+    assert " ".join(displayed.split()) in visible_text(page.text)
 
 
 def test_unknown_json_fields_are_kept_and_never_executed():

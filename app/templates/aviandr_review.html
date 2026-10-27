@@ -11,7 +11,7 @@
 <label>Результат проверки<select name="decision" required><option value="">Выберите результат</option>{% for value,label in d.review.options %}<option value="{{ value }}" {% if same_form and saved_form.get('decision')==value %}selected{% endif %}>{{ label }}</option>{% endfor %}{% if d.review.record and d.review.record.confirmed %}<option value="revoke">Отменить подтверждение</option>{% endif %}</select></label>
 {% if d.key=='indications' %}<label class="check"><input type="checkbox" name="covid_relation" value="yes"> Для постковидного показания: связь состояния с перенесённым COVID-19 проверена</label><label class="check"><input type="checkbox" name="mild_moderate" value="yes"> Для постковидного показания: лёгкая/средняя степень стрессовой реакции и нарушения адаптации подтверждена</label>{% endif %}
 {% if d.review.unknown_drugs %}<p>Неизвестные/непроверенные сочетания: {{ d.review.unknown_drugs|join(', ') }}.</p><label class="check"><input type="checkbox" name="unknown_reviewed" value="yes"> Я отдельно оценил(а) эти препараты и допустимость сочетаний. Автоматических данных недостаточно</label>{% endif %}
-<label>Основание проверки<textarea name="note" rows="3" maxlength="2000" placeholder="Что проверено, источник сведений, клиническое основание">{{ saved_form.get('note','') if same_form else '' }}</textarea></label>
+<label>Основание проверки (необязательно)<textarea name="note" rows="3" maxlength="2000" placeholder="При желании: что проверено, источник сведений">{{ saved_form.get('note','') if same_form else '' }}</textarea></label>
 <label class="check"><input type="checkbox" name="review_ack" value="yes"> Текущие сведения и выбранный результат проверены мной</label>
 <button>Сохранить подтверждение врача</button>
 </form></details>

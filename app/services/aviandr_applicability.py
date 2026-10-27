@@ -607,8 +607,12 @@ def apply(c, report, rules):
         texts = [
             current_description(key, material[key]),
             (
-                "Текущие сведения проверены врачом. Основание: "
-                + review["record"]["note"]
+                "Текущие сведения проверены врачом."
+                + (
+                    " Основание: " + review["record"]["note"]
+                    if review["record"]["note"]
+                    else ""
+                )
                 if review["current"]
                 else "Актуального подтверждения полноты сведений врачом нет; учитываются только отправленные пациентом данные и отдельные проверенные записи врача."
             ),

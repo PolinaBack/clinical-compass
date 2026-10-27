@@ -104,6 +104,51 @@ def test_empty_card_is_yellow_and_explains_incomplete_disease_history(store):
 
 
 @pytest.mark.parametrize(
+    "key,decision",
+    [
+        ("indications", "gad"),
+        ("contraindications", "complete"),
+        ("interactions", "confirmed"),
+        ("tolerability", "no_effects"),
+    ],
+)
+@pytest.mark.parametrize("note", [None, "", "Да"])
+def test_confirmation_needs_no_written_basis_and_immediately_recolours_page(
+    store, key, decision, note
+):
+    fact(store, "age", "age", value=30)
+    assert direction(store, key)["level"] == "attention"
+    fields = form(store, key, decision)
+    if note is None:
+        fields.pop("note")
+    else:
+        fields["note"] = note
+    saved = call(
+        store, "/patients/{pid}/ai-analysis/aviandr/review", "POST", pid=1, form=fields
+    )
+    assert saved.status_code == 303
+    assert saved.headers["location"].endswith("#av-" + key)
+    d = direction(store, key)
+    assert d["level"] == "favorable" and d["review"]["current"]
+    assert d["review"]["record"]["note"] == (note or "")
+    page = call(store, "/patients/{pid}/ai-analysis", pid=1)
+    assert f'id="av-{key}" data-level="favorable"' in page.body.decode()
+    if not note:
+        assert not any("Основание:" in row["text"] for row in d["narrative"]["basis"])
+
+
+def test_optional_note_does_not_replace_acknowledgement_or_remove_length_limit(store):
+    assert (
+        review(store, "interactions", "confirmed", note="", review_ack="").status_code
+        == 422
+    )
+    assert (
+        review(store, "interactions", "confirmed", note="Я" * 2001).status_code == 422
+    )
+    assert direction(store, "interactions")["level"] == "attention"
+
+
+@pytest.mark.parametrize(
     "diagnosis,confirmed,age,expected",
     [
         ("F41.1", True, 30, "favorable"),

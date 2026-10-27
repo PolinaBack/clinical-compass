@@ -19,13 +19,13 @@ def save(c, path, user, pid, form):
     } | {"revoke"}:
         raise HTTPException(422, "Выберите направление и результат проверки")
     note = str(form.get("note", "")).strip()
-    if decision != "revoke" and (
-        form.get("review_ack") != "yes" or not 8 <= len(note) <= 2000
-    ):
+    if decision != "revoke" and form.get("review_ack") != "yes":
         raise HTTPException(
             422,
-            "Подтвердите проверку текущих сведений и укажите основание (8–2000 символов)",
+            "Подтвердите проверку текущих сведений и выбранного результата",
         )
+    if decision != "revoke" and len(note) > 2000:
+        raise HTTPException(422, "Основание проверки — не более 2000 символов")
     if decision == "revoke":
         note = "Врач отменил подтверждение текущих сведений."
     report = build(c, path, user, pid)
