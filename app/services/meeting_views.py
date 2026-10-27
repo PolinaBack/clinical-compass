@@ -12,6 +12,7 @@ from app.services.consent import (
 )
 from app.services.meeting_ai import readiness, GROUPS
 from app.services.meeting_progress import job_status
+from app.services.meeting_summary import unique_summary
 
 
 def meeting_context(c, mid, user):
@@ -36,7 +37,7 @@ def meeting_context(c, mid, user):
     approvals = patient_media_permissions(c, meeting["patient_id"])
     records = []
     for r in c.execute(
-        "SELECT id,filename,mime,duration,created_at,expires_at,deleted_at FROM meeting_recordings WHERE meeting_id=? ORDER BY id DESC",
+        "SELECT id,filename,mime,duration,created_at,expires_at,deleted_at FROM meeting_recordings WHERE meeting_id=? ORDER BY id",
         (mid,),
     ):
         item = dict(r)
@@ -61,6 +62,11 @@ def meeting_context(c, mid, user):
                 }
         if item["deleted_at"] or item["expired"]:
             item["transcript"] = item["summary"] = None
+        item["number"] = len(records) + 1
+        if item["summary"]:
+            item["summary"]["display"] = unique_summary(
+                item["summary"]["data"], included_only=True
+            )
         item["jobs"] = (
             [
                 progress_view(job, r["duration"])

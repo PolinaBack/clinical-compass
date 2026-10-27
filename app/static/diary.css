@@ -1,10 +1,11 @@
 /* Without JavaScript the same form remains available as ordinary fields. */
 html:has(#diary-form) { scroll-behavior: auto; }
-.diary-cards, .diary-dialog .diary-visual, .diary-dialog .dialog-actions, .diary-dialog .diary-slider-label { display: none; }
+.diary-dialog .diary-visual, .diary-dialog .dialog-actions, .diary-dialog .diary-slider-label { display: none; }
 html:not(.diary-enhanced) .diary-dialog input[type=range] { display: none; }
 html:not(.diary-enhanced) .diary-dialog { display: block; position: static; width: auto; max-width: none; margin: 16px 0; padding: 16px; border: 1px solid var(--line); border-radius: 16px; }
-.diary-enhanced .diary-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin: 20px 0; }
-.portal-shell .diary-cards .diary-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; text-align: left; gap: 10px; padding: 20px; margin: 0; width: 100%; border: 1px solid var(--line); border-top: 4px solid var(--category-accent); border-radius: 16px; background: var(--category-bg); color: var(--ink); min-height: 210px; }
+.diary-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin: 20px 0; }
+.portal-shell .diary-cards .diary-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; text-align: left; text-decoration: none; gap: 10px; padding: 20px; margin: 0; width: 100%; border: 1px solid var(--line); border-top: 4px solid var(--category-accent); border-radius: 16px; background: var(--category-bg); color: var(--ink); min-height: 210px; }
+.portal-shell .diary-cards .diary-card:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
 .diary-card .category-icon { width: 32px; height: 32px; flex-basis: 32px; }
 .diary-card strong { font-size: 19px; }
 .diary-card output { font-size: 22px; font-weight: 650; overflow-wrap: anywhere; }
@@ -43,8 +44,8 @@ html:not(.diary-enhanced) .diary-dialog { display: block; position: static; widt
 .minimal-ui .profile-nav .category-icon { display: none; }
 @keyframes sleep-breath { 50% { transform: scaleY(1.035); } }
 @keyframes sleep-drift { 50% { transform: translateY(-5px); opacity: .5; } }
-@media(max-width:800px) { .diary-enhanced .diary-cards { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-@media(max-width:400px) { .diary-enhanced .diary-cards { grid-template-columns: 1fr; }.diary-enhanced .diary-dialog[open] { padding: 16px; } }
+@media(max-width:800px) { .diary-cards { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:400px) { .diary-cards { grid-template-columns: 1fr; }.diary-enhanced .diary-dialog[open] { padding: 16px; } }
 @media(prefers-reduced-motion:reduce) { .sleep-breath, .sleep-z { animation: none !important; } }
 
 .diary-card[hidden]{display:none!important}

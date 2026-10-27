@@ -347,11 +347,11 @@ def test_persistent_queue_sources_review_and_patient_publication(client, meeting
     login(client, "patient1")
     html = client.get(f"/meetings/{meeting[0]}").text
     assert "Обсуждался сон." not in html and "Уточнить детали сна." not in html
-    assert client.get(f"/meeting-recordings/{rid}/export").status_code == 403
+    assert client.get(f"/meeting-recordings/{rid}/export").status_code == 404
     assert queue(client, rid, "summary").status_code == 403
     assert client.get(f"/meeting-recordings/{rid}/media").status_code == 403
     login(client, "doctor")
-    assert client.get(f"/meeting-recordings/{rid}/export").json()["segments"]
+    assert client.get(f"/meeting-recordings/{rid}/export").status_code == 404
     data = summary_form(client, rid)
     assert (
         client.post(
@@ -371,12 +371,8 @@ def test_persistent_queue_sources_review_and_patient_publication(client, meeting
     assert "meeting-transcript" not in html and "data-meeting-seek" not in html
     assert "<audio " not in html and "<video " not in html
     assert client.get(f"/meeting-recordings/{rid}/media").status_code == 403
-    result = client.get(f"/meeting-recordings/{rid}/export").json()
-    assert (
-        "clarifications" not in result["summary"]
-        and result["segments"] == []
-        and result["transcript_version"] is None
-    )
+    assert client.get(f"/meeting-recordings/{rid}/export").status_code == 404
+    assert "Уточнить детали сна." not in html and "/export" not in html
     login(client, "doctor")
     assert (
         client.post(
@@ -386,7 +382,7 @@ def test_persistent_queue_sources_review_and_patient_publication(client, meeting
         == 200
     )
     login(client, "patient1")
-    assert client.get(f"/meeting-recordings/{rid}/export").status_code == 403
+    assert client.get(f"/meeting-recordings/{rid}/export").status_code == 404
 
 
 def test_revocation_before_and_during_model_never_saves_result(client, meeting):
@@ -647,10 +643,7 @@ def test_meeting_list_shows_brief_without_exposing_private_sources(client, meeti
     doctor = client.get("/patients/1/meetings")
     assert doctor.status_code == 200
     assert "Итоги" in doctor.text and "Следующие шаги" in doctor.text
-    assert (
-        "Обсуждался сон." in doctor.text
-        and "Черновик итогов" in doctor.text
-    )
+    assert "Обсуждался сон." in doctor.text and "Черновик итогов" in doctor.text
     assert "Уточнить детали сна." in doctor.text
     assert "Синтетический разговор о сне." in doctor.text
     login(client, "patient1")

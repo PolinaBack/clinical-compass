@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 from app.storage import now, audit, connect
+from app.services.meeting_summary import unique_summary
 from app.services.consent import (
     require_processing_consent,
     context_access,
@@ -358,6 +359,7 @@ def process_one(db_path, provider=None):
                     result[k].extend(validate_summary(single, segments)[k])
             if not any(result.values()):
                 raise ProcessingError("empty_summary")
+            result = unique_summary(result)
         checkpoint()
         stage = "save_result"
         checkpoint(stage=stage)

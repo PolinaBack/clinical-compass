@@ -2,8 +2,6 @@
 (() => {
   const form = document.getElementById('diary-form');
   if (!form || !window.HTMLDialogElement || !HTMLDialogElement.prototype.showModal) return;
-  document.documentElement.classList.add('diary-enhanced');
-  form.noValidate = true;
   const dialogs = [...form.querySelectorAll('.diary-dialog')];
   const snapshots = new WeakMap();
   const openers = new WeakMap();
@@ -39,7 +37,17 @@
     sync(dialog);
     dialog.showModal();
   }
-  form.querySelectorAll('[data-open]').forEach(button => button.addEventListener('click', () => open(document.getElementById(button.dataset.open), button)));
+  form.querySelectorAll('[data-open]').forEach(button => {
+    button.setAttribute('role', 'button');
+    button.setAttribute('aria-haspopup', 'dialog');
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      open(document.getElementById(button.dataset.open), button);
+    });
+    button.addEventListener('keydown', event => {
+      if (event.key === ' ') { event.preventDefault(); button.click(); }
+    });
+  });
   dialogs.forEach(dialog => {
     dialog.addEventListener('keydown', event => {
       if (event.key !== 'Tab') return;
@@ -121,4 +129,6 @@
     if (dialog && !dialog.open) open(dialog, form.querySelector(`[data-open="${dialog.id}"]`));
     invalid?.reportValidity();
   });
+  document.documentElement.classList.add('diary-enhanced');
+  form.noValidate = true;
 })();

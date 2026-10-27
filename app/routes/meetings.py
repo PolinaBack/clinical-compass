@@ -41,7 +41,17 @@ def register_meetings(app, db, account, access, csrf_check, render):
         if user["role"] != "doctor":
             raise HTTPException(403, "Это действие выполняет ведущий врач")
 
-    def reply(mid, form=None, user=None):
+    def reply(mid, form=None, user=None, rid=None):
+        def destination(url):
+            if rid is None:
+                return url
+            base = url.split("#")[0]
+            return (
+                base
+                + ("&" if "?" in base else "?")
+                + f"recording={rid}#recording-{rid}"
+            )
+
         if (
             form is not None
             and form.get("calendar") == "true"
@@ -56,10 +66,12 @@ def register_meetings(app, db, account, access, csrf_check, render):
                     (mid,),
                 ).fetchone()
             return RedirectResponse(
-                location(item["patient_id"], item["starts_at"][:10], mid=mid),
+                destination(
+                    location(item["patient_id"], item["starts_at"][:10], mid=mid)
+                ),
                 status_code=303,
             )
-        return RedirectResponse(f"/meetings/{mid}", status_code=303)
+        return RedirectResponse(destination(f"/meetings/{mid}"), status_code=303)
 
     def progress_view(row, duration):
         result = job_status(row, duration)
@@ -276,7 +288,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
             row = service.recording(c, rid, user["id"])
             service.enqueue(c, rid, kind, user)
             audit(c, user["id"], "meeting_" + kind + "_queued", row["patient_id"], rid)
-        return reply(row["meeting_id"], form, user)
+        return reply(row["meeting_id"], form, user, rid)
 
     @app.post("/meeting-recordings/{rid}/transcript")
     async def edit_transcript(request: Request, rid: int):
@@ -314,7 +326,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
             service.event(
                 c, rid, "withdrawn", user["id"], ident, reason="transcript_changed"
             )
-        return reply(row["meeting_id"], form, user)
+        return reply(row["meeting_id"], form, user, rid)
 
     @app.post("/meeting-recordings/{rid}/summary")
     async def edit_summary(request: Request, rid: int):
@@ -332,7 +344,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
                 service.event(
                     c, rid, "withdrawn", user["id"], reason="clinician_withdrawal"
                 )
-                return reply(row["meeting_id"], form, user)
+                return reply(row["meeting_id"], form, user, rid)
             service.permission_stamp(c, row, "summary")
             base = service.latest(c, rid, "summary")
             transcript = service.latest(c, rid, "transcript")
@@ -391,53 +403,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
                 ident,
                 reason="sources_and_medicines_checked" if intent == "publish" else "",
             )
-        return reply(row["meeting_id"], form, user)
-
-    @app.get("/meeting-recordings/{rid}/export")
-    def export(request: Request, rid: int):
-        user = account(request)
-        with db() as c:
-            row = service.recording(c, rid, user["id"])
-            summary = (
-                service.latest(c, rid, "summary")
-                if user["role"] == "doctor"
-                else service.published(c, rid)
-            )
-            if user["role"] == "patient" and not summary:
-                raise HTTPException(403, "Врач ещё не подтвердил сводку")
-            transcript = (
-                service.latest(c, rid, "transcript")
-                if user["role"] == "doctor"
-                else None
-            )
-            result = {
-                "recording": rid,
-                "transcript_version": transcript["id"] if transcript else None,
-                "segments": (
-                    json.loads(transcript["payload"])["segments"] if transcript else []
-                ),
-                "summary": json.loads(summary["payload"]) if summary else None,
-                "warning": (
-                    "Проверяйте названия лекарств и текст по исходной записи. Это не назначение лечения."
-                    if user["role"] == "doctor"
-                    else "Проверенные врачом итоги разговора. Это не назначение лечения."
-                ),
-            }
-            if user["role"] == "patient":
-                result["summary"] = {
-                    k: [i for i in v if i["included"]]
-                    for k, v in result["summary"].items()
-                    if k != "clarifications"
-                }
-            audit(c, user["id"], "meeting_export", row["patient_id"], rid)
-        return Response(
-            json.dumps(result, ensure_ascii=False, indent=2),
-            media_type="application/json",
-            headers={
-                "Content-Disposition": f'attachment; filename="meeting-{rid}.json"',
-                "Cache-Control": "no-store",
-            },
-        )
+        return reply(row["meeting_id"], form, user, rid)
 
     @app.get("/meeting-artifacts/{aid}")
     def artifact_version(request: Request, aid: int):
@@ -480,4 +446,4 @@ def register_meetings(app, db, account, access, csrf_check, render):
             row = service.recording(c, rid, user["id"])
             service.delete_recording(c, row, user["id"])
             audit(c, user["id"], "meeting_deleted", row["patient_id"], rid)
-        return reply(row["meeting_id"], form, user)
+        return reply(row["meeting_id"], form, user, rid)

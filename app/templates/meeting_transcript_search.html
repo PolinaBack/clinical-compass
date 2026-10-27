@@ -1,0 +1,12 @@
+<div class="meeting-transcript-tools" data-transcript-tools hidden>
+  <label for="transcript-search-{{ transcript_search_id }}">Найти фразу в расшифровке</label>
+  <input id="transcript-search-{{ transcript_search_id }}" type="search" data-transcript-query autocomplete="off" placeholder="Введите слово или фразу" aria-describedby="transcript-matches-{{ transcript_search_id }}">
+  <div class="meeting-search-actions">
+    <button type="button" class="secondary" data-transcript-prev disabled>Предыдущее совпадение</button>
+    <button type="button" class="secondary" data-transcript-next disabled>Следующее совпадение</button>
+    <button type="button" class="secondary" data-transcript-clear disabled>Сбросить поиск</button>
+  </div>
+  <p id="transcript-matches-{{ transcript_search_id }}" role="status" aria-live="polite" data-transcript-results>Введите фразу. Поиск без учёта регистра.</p>
+  <p class="caption">Enter — перейти к найденной фразе.</p>
+  <p class="meeting-search-snippet" data-transcript-snippet hidden></p>
+</div>

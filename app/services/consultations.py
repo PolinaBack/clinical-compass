@@ -350,7 +350,11 @@ def profile_context(c, user, pid):
                 else published
             )
             if summary:
-                data = json.loads(summary["payload"])
+                from app.services.meeting_summary import unique_summary
+
+                data = unique_summary(
+                    json.loads(summary["payload"]), included_only=True
+                )
                 briefs.append(
                     dict(
                         visit=visit,

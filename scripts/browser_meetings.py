@@ -11,6 +11,12 @@ from playwright.sync_api import expect
 
 def check_meetings(patient, doctor, url, run_job):
     """The disposable worker callback reports progress across a five-second poll."""
+
+    def open_first_recording(page):
+        record = page.locator("[data-meeting-recording]").first
+        if record.count() and not record.evaluate("node => node.open"):
+            record.locator(":scope > summary").click()
+
     errors = []
     for page in (doctor, patient):
         page.on("pageerror", lambda error: errors.append(str(error)))
@@ -47,6 +53,7 @@ def check_meetings(patient, doctor, url, run_job):
     expect(doctor.locator('form[action="/settings/consultations"]')).to_have_count(0)
     expect(doctor.locator('form[action*="/consents/"]')).to_have_count(0)
     doctor.goto(url + meeting_path)
+    open_first_recording(doctor)
     expect(doctor.locator('form[action*="/consents/"]')).to_have_count(0)
     with TemporaryDirectory(prefix="compass-browser-video-") as folder:
         path = Path(folder) / "synthetic.mp4"
@@ -91,6 +98,7 @@ def check_meetings(patient, doctor, url, run_job):
         }
     )
     doctor.get_by_role("button", name="Загрузить запись", exact=True).click()
+    open_first_recording(doctor)
     doctor.locator("video").evaluate(
         "async el => {el.muted=true; await el.play(); el.pause();}"
     )
@@ -135,6 +143,7 @@ def check_meetings(patient, doctor, url, run_job):
     )
     doctor.reload()
     patient.goto(url + meeting_path)
+    open_first_recording(patient)
     expect(patient.get_by_text("Обсуждался сон.", exact=True)).to_have_count(0)
     expect(
         patient.locator('input[type="file"],video,audio,[data-meeting-job]')
@@ -167,6 +176,7 @@ def check_meetings(patient, doctor, url, run_job):
         path="artifacts/consultations-approved-doctor-1280.png", full_page=True
     )
     doctor.goto(url + meeting_path)
+    open_first_recording(doctor)
     expect(
         patient.locator("#latest-meeting").get_by_text("Обсуждался сон.", exact=True)
     ).to_be_visible()
@@ -177,6 +187,7 @@ def check_meetings(patient, doctor, url, run_job):
         patient.get_by_role("navigation", name="Разделы личного профиля")
     ).to_be_visible()
     patient.goto(url + meeting_path)
+    open_first_recording(patient)
     expect(patient.get_by_text("Обсуждался сон.", exact=True)).to_be_visible()
     expect(patient.get_by_text("Уточнить детали сна.", exact=True)).to_have_count(0)
     expect(
@@ -203,6 +214,7 @@ def check_meetings(patient, doctor, url, run_job):
         for width in (320, 390, 768, 1280):
             page.set_viewport_size(dict(width=width, height=900))
             page.goto(url + meeting_path)
+            open_first_recording(page)
             assert page.evaluate("document.documentElement.scrollWidth<=innerWidth"), (
                 role,
                 width,
@@ -275,11 +287,13 @@ def check_meetings(patient, doctor, url, run_job):
                     path=f"artifacts/settings-{role}-{width}.png", full_page=True
                 )
     doctor.goto(url + meeting_path)
+    open_first_recording(doctor)
     doctor.get_by_text(
         "Редактировать, проверить источники и опубликовать", exact=True
     ).click()
     doctor.get_by_role("button", name="Снять публикацию итогов", exact=True).click()
     patient.goto(url + meeting_path)
+    open_first_recording(patient)
     expect(patient.get_by_text("Обсуждался сон.", exact=True)).to_have_count(0)
     assert not errors, errors
     if axe:
