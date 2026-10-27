@@ -191,6 +191,26 @@ if (meeting && meeting.querySelector('[data-meeting-job]')) {
         box.querySelector('[data-job-ready]').hidden = job.status !== 'done';
       }
       const available = new Set(data.jobs.map(job => String(job.id)));
+      meeting.querySelectorAll('[data-meeting-recording]').forEach(record => {
+        const badge = record.querySelector('[data-recording-status]');
+        if (!badge) return;
+        const id = Number(record.id.replace('recording-', ''));
+        const jobs = data.jobs.filter(job => job.recording_id === id);
+        const job = jobs.find(job => job.status === 'running') || jobs.find(job => job.status === 'queued') || jobs[0];
+        if (!job) {
+          if (record.querySelector('[data-meeting-job]')) {
+            badge.dataset.recordingState = 'unavailable';
+            badge.textContent = 'Запись недоступна';
+          }
+          return;
+        }
+        let label = `${job.kind === 'transcript' ? 'Расшифровка' : 'Подготовка итогов'}: ${job.status_label}`;
+        if (job.status === 'done') label = job.kind === 'transcript' ? 'Расшифровка готова' : 'Итоги готовы';
+        if (['queued', 'running'].includes(job.status)) label += ` · ${job.stage_label}`;
+        if (job.status === 'running' && job.progress_text) label += ` · ${job.progress_text}`;
+        badge.dataset.recordingState = job.status;
+        if (badge.textContent !== label) badge.textContent = label;
+      });
       meeting.querySelectorAll('[data-meeting-job]').forEach(box => {
         if (!available.has(box.dataset.meetingJob)) {
           setText(box, 'activity', '');

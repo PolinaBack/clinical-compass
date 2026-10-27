@@ -15,3 +15,8 @@
 .meeting-page mark { background: #ffe295; color: #282514; padding: .05em .1em; }
 .meeting-search-hit { border-left: 3px solid #a46b12; padding-left: .8rem; }
 .meeting-page [hidden] { display: none !important; }
+.meeting-recording-status { display: block; width: fit-content; max-width: 100%; margin: .6rem 0 .2rem 1.2rem; padding: .4rem .7rem; border-radius: 10px; font-size: .9rem; line-height: 1.5; background: #edf1f5; color: #344657; }
+.meeting-recording-status[data-recording-state=queued], .meeting-recording-status[data-recording-state=running] { background: #fff2cc; color: #755008; }
+.meeting-recording-status[data-recording-state=done], .meeting-recording-status[data-recording-state=ready] { background: #e3f3e9; color: #245b3b; }
+.meeting-recording-status[data-recording-state=failed], .meeting-recording-status[data-recording-state=cancelled] { background: #fbe5e5; color: #8c2939; }
+.meeting-uploaded, .meeting-recording-hint { background: #eef7f3; border: 1px solid #bedbd0; border-radius: 12px; padding: 1rem; color: #255448; }

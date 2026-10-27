@@ -17,6 +17,11 @@ def check_meetings(patient, doctor, url, run_job):
         if record.count() and not record.evaluate("node => node.open"):
             record.locator(":scope > summary").click()
 
+    def open_transcript(page):
+        transcript = page.locator(".meeting-transcript").first
+        if transcript.count() and not transcript.evaluate("node => node.open"):
+            transcript.locator(":scope > summary").click()
+
     errors = []
     for page in (doctor, patient):
         page.on("pageerror", lambda error: errors.append(str(error)))
@@ -117,7 +122,7 @@ def check_meetings(patient, doctor, url, run_job):
         "window.progressMessages.some(message=>message?.includes('Распознано до'))"
     )
     doctor.locator("[data-job-ready] a").first.click()
-    doctor.get_by_text("Расшифровка · версия", exact=False).click()
+    open_transcript(doctor)
     doctor.get_by_label("Говорящий · фрагмент 1", exact=True).fill(
         "Пациент — синтетический пример"
     )
@@ -130,7 +135,7 @@ def check_meetings(patient, doctor, url, run_job):
     doctor.get_by_role(
         "button", name="Подготовить итоги и следующие шаги", exact=True
     ).click()
-    doctor.get_by_text("Расшифровка · версия", exact=False).click()
+    open_transcript(doctor)
     doctor.get_by_label("Текст · фрагмент 1", exact=False).fill(
         "НЕСОХРАНЁННАЯ тестовая правка"
     )

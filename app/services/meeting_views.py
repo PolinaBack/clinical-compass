@@ -15,6 +15,43 @@ from app.services.meeting_progress import job_status
 from app.services.meeting_summary import unique_summary
 
 
+def recording_status(record, doctor):
+    if record["deleted_at"] or record["expired"]:
+        return dict(state="unavailable", label="Запись недоступна")
+    if not doctor:
+        return dict(
+            state="ready" if record["published_id"] else "idle",
+            label=(
+                "Итоги опубликованы"
+                if record["published_id"]
+                else "Итоги ещё не опубликованы"
+            ),
+        )
+    jobs = record["jobs"]
+    job = (
+        next((j for j in jobs if j["status"] == "running"), None)
+        or next((j for j in jobs if j["status"] == "queued"), None)
+        or (jobs[0] if jobs else None)
+    )
+    if job:
+        title = "Расшифровка" if job["kind"] == "transcript" else "Подготовка итогов"
+        label = title + ": " + job["status_label"]
+        if job["status"] == "done":
+            label = (
+                "Расшифровка готова" if job["kind"] == "transcript" else "Итоги готовы"
+            )
+        if job["status"] in ("queued", "running"):
+            label += " · " + job["stage_label"]
+        if job["status"] == "running" and job["progress_text"]:
+            label += " · " + job["progress_text"]
+        return dict(state=job["status"], label=label)
+    if record["summary"]:
+        return dict(state="done", label="Итоги готовы")
+    if record["transcript"]:
+        return dict(state="done", label="Расшифровка готова")
+    return dict(state="idle", label="Файл загружен · расшифровка не запущена")
+
+
 def meeting_context(c, mid, user):
     meeting = c.execute(
         "SELECT m.*,a.starts_at FROM meeting_sessions m JOIN appointments a ON a.id=m.appointment_id WHERE m.id=?",
@@ -86,6 +123,7 @@ def meeting_context(c, mid, user):
             if user["role"] == "doctor"
             else []
         )
+        item["list_status"] = recording_status(item, user["role"] == "doctor")
         records.append(item)
     return dict(
         meeting=meeting,

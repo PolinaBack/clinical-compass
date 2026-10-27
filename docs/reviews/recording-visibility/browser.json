@@ -1,0 +1,19 @@
+{
+  "synthetic_database": true,
+  "actual_wav_upload": true,
+  "new_record_opens": true,
+  "upload_confirmation_visible": true,
+  "status_visible_while_collapsed": true,
+  "actual_worker_updates_badge": true,
+  "ready_link_opens_transcript": true,
+  "ready_link_opens_summary": true,
+  "default_list_stays_collapsed": true,
+  "widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "javascript_errors": [],
+  "axe_violations": []
+}

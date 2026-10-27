@@ -41,7 +41,7 @@ def register_meetings(app, db, account, access, csrf_check, render):
         if user["role"] != "doctor":
             raise HTTPException(403, "Это действие выполняет ведущий врач")
 
-    def reply(mid, form=None, user=None, rid=None):
+    def reply(mid, form=None, user=None, rid=None, uploaded=None):
         def destination(url):
             if rid is None:
                 return url
@@ -49,7 +49,9 @@ def register_meetings(app, db, account, access, csrf_check, render):
             return (
                 base
                 + ("&" if "?" in base else "?")
-                + f"recording={rid}#recording-{rid}"
+                + f"recording={rid}"
+                + (f"&uploaded={uploaded}" if uploaded else "")
+                + f"#recording-{rid}"
             )
 
         if (
@@ -93,7 +95,13 @@ def register_meetings(app, db, account, access, csrf_check, render):
                    WHERE r.meeting_id=? AND r.deleted_at IS NULL AND r.expires_at>? ORDER BY j.id DESC""",
                 (mid, now()),
             ).fetchall()
-            result = [progress_view(row, row["duration"]) for row in rows]
+            result = [
+                dict(
+                    progress_view(row, row["duration"]),
+                    recording_id=row["recording_id"],
+                )
+                for row in rows
+            ]
         return JSONResponse({"jobs": result}, headers={"Cache-Control": "no-store"})
 
     @app.get("/patients/{pid}/meetings")
@@ -230,7 +238,9 @@ def register_meetings(app, db, account, access, csrf_check, render):
                     meeting["patient_id"],
                     rid,
                 )
-        return reply(mid, form, user)
+            else:
+                rid = old["id"]
+        return reply(mid, form, user, rid, uploaded="existing" if old else "new")
 
     @app.get("/meeting-recordings/{rid}/media")
     def media(request: Request, rid: int):
