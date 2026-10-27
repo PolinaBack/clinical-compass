@@ -37,7 +37,7 @@ def render(scope, key, value, **kwargs):
         field(scope, key, entity),
         value,
         context="entity" if entity else "",
-        **kwargs
+        **kwargs,
     )
 
 
@@ -203,7 +203,10 @@ def test_document_type_creates_independent_private_draft_and_repeated_post_is_id
         == response.headers["location"]
     )
     page = call(store, "/patients/{pid}/profile/extracts/{eid}/edit", pid=1, eid=second)
-    assert len(page.context["documents"]) == 2
+    assert "extract-document-picker" not in page.body.decode()
+    assert "Какой документ оформить?" not in page.body.decode()
+    shelf = call(store, "/patients/{pid}/profile/extracts", pid=1)
+    assert len(shelf.context["documents"]) == 2
     assert "Библиотека диагностических формулировок" in page.body.decode()
     assert (
         "data-diagnosis-picker"
@@ -271,6 +274,7 @@ def test_narrative_in_print_and_patient_version_without_questions_or_private_dra
         current(store, eid),
         intent="publish",
         reviewed="yes",
+        **{"include_intake-complaints": "yes"},
         diagnosis_code="F42.1",
         diagnosis="Преимущественно компульсивные действия",
         diagnosis_status="preliminary",
@@ -301,7 +305,7 @@ def test_refresh_converts_legacy_unchanged_text_keeps_manual_text_and_published_
     data["source"].pop("narrative_version")
     sections = {s["key"]: s for s in data["source"]["sections"]}
     old = "Какая причина обращения? Беспокойство"
-    sections["intake-complaints"].update(original=old, text=old)
+    sections["intake-complaints"].update(original=old, text=old, included=True)
     sections["intake-life"].update(text="Ручная формулировка врача")
     data["reviewed"] = True
     with connect(path) as c:
@@ -342,3 +346,57 @@ def test_doctor_assessment_is_human_text_without_opaque_json_or_promoting_stale_
     assert "противопоказания" in text and "Проверены сведения" in text
     assert "SECRET-SNAPSHOT" not in text and '"decision"' not in text
     assert "актуальность оценивается в анализе ИИ" in text
+
+
+def test_new_documents_exclude_all_sources_until_explicit_selection_and_refresh_keeps_choice(
+    store,
+):
+    seed(store)
+    eid = create(store)
+    original = current(store, eid)
+    sections = original["data"]["source"]["sections"]
+    assert any(s["text"] for s in sections)
+    assert not any(s["included"] for s in sections)
+    preview = save(store, eid, form_for(original, intent="preview"))
+    paper = (
+        preview.body.decode()
+        .split('<article class="document-paper"', 1)[1]
+        .split("</article>", 1)[0]
+    )
+    assert (
+        "Жалобы из отправленной анкеты" not in paper
+        and "Получен результат" not in paper
+    )
+    assert (
+        save(
+            store,
+            eid,
+            form_for(
+                original,
+                reviewed="yes",
+                intent="publish",
+                **{"include_intake-complaints": "yes"},
+            ),
+        ).status_code
+        == 303
+    )
+    _, path, users = store
+    with connect(path) as c:
+        public = service.read(c, path, users["p1"], 1, eid)
+    assert [s["key"] for s in public["data"]["source"]["sections"]] == [
+        "intake-complaints"
+    ]
+    assert (
+        save(store, eid, form_for(current(store, eid), intent="refresh")).status_code
+        == 303
+    )
+    selected = [
+        s["key"]
+        for s in current(store, eid)["data"]["source"]["sections"]
+        if s["included"]
+    ]
+    assert selected == ["intake-complaints"]
+    assert not any(
+        s["included"]
+        for s in current(store, create(store))["data"]["source"]["sections"]
+    )

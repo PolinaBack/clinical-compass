@@ -35,7 +35,7 @@ def collect(c, path, user, pid):
     entity_labels = source_catalog.get("entity_labels", ENTITY_LABELS)
     sections = []
 
-    def add(key, group, title, text, source="", default=False, count=None):
+    def add(key, group, title, text, source="", count=None):
         sections.append(
             dict(
                 key=key,
@@ -44,7 +44,7 @@ def collect(c, path, user, pid):
                 text=text,
                 original=text,
                 source=source,
-                included=bool(text) and default,
+                included=False,
                 count=count if count is not None else int(bool(text)),
             )
         )
@@ -102,7 +102,6 @@ def collect(c, path, user, pid):
             category["title"],
             " ".join(lines),
             source,
-            True,
             len(lines),
         )
 
@@ -137,7 +136,6 @@ def collect(c, path, user, pid):
                         + "»"
                     ),
                     "Сохранённый профиль пациента",
-                    False,
                 )
     family = []
     for row in c.execute(
@@ -170,10 +168,8 @@ def collect(c, path, user, pid):
             "Семейная родословная",
             " ".join(family),
             "Сохранённое семейное дерево",
-            True,
             len(family),
         )
-    latest = set()
     for row in c.execute(
         "SELECT a.*,s.period_start,s.period_end FROM assessments a JOIN assessment_sessions s ON s.id=a.session_id WHERE a.patient_id=? ORDER BY a.id DESC",
         (pid,),
@@ -218,16 +214,12 @@ def collect(c, path, user, pid):
             for key, label, choices in HCL_CONTEXT:
                 if "ctx_" + key in raw:
                     lines.append(prose.hcl_context(key, raw["ctx_" + key], choices))
-        default = row["status"] == "completed" and row["scale"] not in latest
-        if row["status"] == "completed":
-            latest.add(row["scale"])
         add(
             "assessment-" + str(row["id"]),
             "Анкеты и тесты",
             definition["name"],
             " ".join(lines),
             "Анкета от " + (row["completed_at"] or row["period_end"]),
-            default,
         )
     extras = diary.read_diary_extras(c, pid)
     for row in c.execute(
@@ -274,7 +266,6 @@ def collect(c, path, user, pid):
             "Дневник · " + row["day"],
             text,
             "Самоотчёт пациента",
-            False,
         )
     seen = set()
     for row in c.execute(
@@ -335,7 +326,6 @@ def collect(c, path, user, pid):
             "Отправлена "
             + row["created_at"]
             + ". Фактический приём требует уточнения.",
-            True,
         )
     for order in care_orders.listing(c, path, user, pid):
         text = " ".join(
@@ -356,7 +346,6 @@ def collect(c, path, user, pid):
             order["kind_label"],
             text,
             order["created_at"],
-            order["status"] != "cancelled",
         )
     for row in c.execute(
         "SELECT o.* FROM aviandr_observations o JOIN accounts a ON a.id=o.actor_id WHERE o.patient_id=? AND a.role='doctor' ORDER BY o.id DESC",
@@ -376,7 +365,6 @@ def collect(c, path, user, pid):
             ("Проверено врачом" if row["confirmed"] else "Требует уточнения")
             + " · "
             + row["observed_on"],
-            False,
         )
     for row in c.execute(
         "SELECT r.id,r.created_at,m.context_id FROM meeting_recordings r JOIN meeting_sessions m ON m.id=r.meeting_id WHERE m.patient_id=? AND r.deleted_at IS NULL AND r.expires_at>? ORDER BY r.id DESC",
@@ -405,7 +393,6 @@ def collect(c, path, user, pid):
                 "Проверенные итоги встречи",
                 "\n".join(lines),
                 "Опубликованные итоги · " + summary["created_at"],
-                False,
             )
     packet = dict(
         narrative_version=prose.VERSION,

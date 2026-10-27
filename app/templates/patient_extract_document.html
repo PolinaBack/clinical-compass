@@ -1,6 +1,5 @@
 <article class="document-paper" aria-label="Предпросмотр документа">
     <header class="document-letterhead"><h2>{{ document_data.organization or 'Медицинская организация не указана' }}</h2><p>Клинический компас · демонстрационный документ</p></header>
-    <p class="document-watermark">ОБРАЗЕЦ · НЕ ДЕЙСТВИТЕЛЕН</p>
     <h2 class="document-title">{{ document_data.title }}</h2>
     {% if not document_data.reviewed %}<p class="document-draft">Черновик · сведения ещё не проверены специалистом</p>{% endif %}
     <dl class="document-demographics"><div><dt>Дата:</dt><dd>{{ document_data.date|extract_date }}</dd></div><div><dt>Кому:</dt><dd>{{ document_data.recipient or 'Не указано' }}</dd></div><div><dt>ФИО:</dt><dd>{{ document_data.identity.full_name or 'Не указано' }}</dd></div><div><dt>Дата рождения:</dt><dd>{{ document_data.identity.birth_date|extract_date }}</dd></div><div><dt>Возраст:</dt><dd>{{ calculations.age if calculations.age is not none else 'Не указан' }}{% if calculations.age is not none %} лет{% endif %}</dd></div><div><dt>Пол:</dt><dd>{{ document_data.identity.sex or 'Не указан' }}</dd></div></dl>

@@ -78,7 +78,7 @@ def test_document_editor_print_publication_and_private_draft_in_real_sessions(cl
     login(client, "doctor")
     printed = client.get(f"/patients/1/profile/extracts/{eid}/print?revision=2")
     assert printed.status_code == 200 and "data-print-document" in printed.text
-    assert "ОБРАЗЕЦ · НЕ ДЕЙСТВИТЕЛЕН" in printed.text
+    assert "ОБРАЗЕЦ · НЕ ДЕЙСТВИТЕЛЕН" not in printed.text
 
 
 def test_patient_role_foreign_patient_csrf_and_no_implicit_publication(client):

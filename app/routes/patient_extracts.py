@@ -32,7 +32,6 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
                 "SELECT id FROM extract_requests WHERE patient_id=? AND document_id=?",
                 (pid, doc["id"]),
             ).fetchone()
-            documents = service.listing(c, app.state.db_path, account(request), pid)
         filters = getattr(request.state, "extract_diagnosis_filter", {})
         group = filters.get("group", request.query_params.get("diagnosis_group", ""))
         query = filters.get("query", request.query_params.get("diagnosis_query", ""))
@@ -57,10 +56,6 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
             document_titles=tuple(
                 dict.fromkeys((*(t[0] for t in service.DOCUMENT_TYPES), data["title"]))
             ),
-            document_types=service.DOCUMENT_TYPES,
-            documents=documents,
-            account_id=account(request)["id"],
-            create_token=secrets.token_urlsafe(24),
             diagnosis_groups=diagnosis_library.GROUPS,
             diagnosis_entries=diagnosis_library.search(),
             diagnosis_matching=matching,
@@ -127,7 +122,6 @@ def register_patient_extracts(app, db, account, access, csrf_check, render):
             documents=documents,
             account_id=user["id"],
             create_token=secrets.token_urlsafe(24),
-            document_types=service.DOCUMENT_TYPES,
             **requests_context,
         )
         response.headers["Cache-Control"] = "no-store"

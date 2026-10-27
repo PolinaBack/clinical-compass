@@ -217,7 +217,7 @@ def test_preview_has_no_write_and_print_confirmation_is_available_on_same_form(s
         print_page.status_code == 200
         and "data-print-document" in print_page.body.decode()
     )
-    assert "ОБРАЗЕЦ · НЕ ДЕЙСТВИТЕЛЕН" in print_page.body.decode()
+    assert "ОБРАЗЕЦ · НЕ ДЕЙСТВИТЕЛЕН" not in print_page.body.decode()
 
 
 def test_clinician_corrections_publish_snapshot_and_never_rewrite_intake(store):
@@ -440,7 +440,7 @@ def test_invalid_identity_stays_in_editor_and_unselected_text_is_not_published(s
         intent="publish",
         **{"source_intake-life": "PRIVATE_UNSELECTED_TEXT"}
     )
-    data.pop("include_intake-life")
+    data.pop("include_intake-life", None)
     assert save(store, eid, data).status_code == 303
     page = call(
         store, "/patients/{pid}/profile/extracts/{eid}", who="p1", pid=1, eid=eid

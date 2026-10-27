@@ -17,16 +17,10 @@
 @media(max-width:650px){.extract-request-types,.extract-request-form .grid.two,.extract-request-data>div{grid-template-columns:1fr}.extract-request-form button{width:100%}}
 .extract-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
 .extract-form,.extract-preview{min-width:0}
-.extract-document-picker{margin:20px 0}.extract-document-picker fieldset{border:0;margin:18px 0;padding:0}.extract-document-picker legend{font-weight:700;margin-bottom:12px}
-.extract-document-types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.extract-document-types label{position:relative;display:flex;flex-direction:column;gap:8px;min-width:0;padding:18px;border:1px solid #e4dfed;border-radius:14px;cursor:pointer;background:#fcfbfe;overflow-wrap:anywhere}
-.extract-document-types label:has(input:checked){background:#f0eafa;border:2px solid #8966bd;padding:17px}.extract-document-types label:focus-within{outline:3px solid #8966bd;outline-offset:2px}
-.extract-document-types input{position:absolute;opacity:0;width:20px;height:20px;margin:0;top:14px;right:12px}.extract-type-icon{font-size:1.5rem;color:#715098}.extract-document-types small{font-weight:400;color:var(--muted)}
-.extract-document-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.extract-document-tabs a{flex:1 1 160px;display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;padding:14px;border:1px solid #e4dfed;border-radius:12px;min-width:0;overflow-wrap:anywhere;text-decoration:none;background:#fcfbfe}.extract-document-tabs a[aria-current=page]{border-color:#8966bd;background:#f0eafa}.extract-document-tabs small{color:var(--muted)}
 .extract-diagnosis{padding:18px;border:1px solid var(--line);border-radius:16px;margin:20px 0}.extract-diagnosis h3{margin:0;font-size:1.15rem}.extract-selected-diagnosis{padding:16px;border:1px solid var(--line);border-radius:12px;overflow-wrap:anywhere}
 .extract-form .extract-diagnosis-library{background:#fcfaff;border-color:#e4dfed}.extract-diagnosis-library small{font-weight:400;color:var(--muted)}.extract-diagnosis-results{display:grid;gap:10px;max-height:420px;overflow:auto;padding:3px}
-.extract-diagnosis-option{white-space:normal;text-align:left;color:var(--ink);background:white;border:1px solid #e4dfed;max-width:100%;overflow-wrap:anywhere}.extract-diagnosis-option small,.extract-diagnosis-option span{display:block}.extract-diagnosis-option[aria-pressed=true]{background:#f0eafa;border:2px solid #8966bd}.extract-diagnosis-option[hidden]{display:none}
-@media(max-width:1000px){.extract-document-types{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:550px){.extract-document-types{grid-template-columns:1fr}.extract-diagnosis{padding:12px}.extract-diagnosis .section-heading{flex-wrap:wrap}}
+@media(max-width:550px){.extract-diagnosis{padding:12px}.extract-diagnosis .section-heading{flex-wrap:wrap}}
+.extract-form .extract-diagnosis button.extract-diagnosis-option{display:flex;flex-direction:column;align-items:flex-start;white-space:normal;text-align:left;color:var(--ink);background:white;border:1px solid #e4dfed;max-width:100%;overflow-wrap:anywhere}.extract-form .extract-diagnosis button.extract-diagnosis-option:hover{background:#f7f3fc;color:var(--ink)}.extract-diagnosis-option small,.extract-diagnosis-option span{display:block}.extract-form .extract-diagnosis button.extract-diagnosis-option[aria-pressed=true]{background:#f0eafa;border:2px solid #8966bd}.extract-form .extract-diagnosis-option[hidden]{display:none!important}
 .extract-form>.card{margin:0 0 20px}
 .extract-form .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .extract-patient-summary{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;margin:20px 0}
@@ -55,7 +49,6 @@
 .document-paper{background:#fff;color:#17202a;border:1px solid #d5d9dd;box-shadow:0 7px 24px #1533290a;padding:32px;min-height:900px;font-family:Arial,sans-serif;overflow-wrap:anywhere;border-radius:4px}
 .document-letterhead{border-bottom:3px solid #60726c;padding-bottom:16px;margin-bottom:20px}
 .document-letterhead h2{font-size:19px;margin:0 0 9px;color:#17202a}.document-letterhead p{font-size:12px;margin:0}
-.document-watermark{border:1px dashed #996d78;color:#79505d;font-size:11px;padding:6px;display:table;margin-left:auto}
 .document-title{text-align:center;font-size:24px;line-height:1.4;color:#17202a}
 .document-demographics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 22px;margin:24px 0}
 .document-demographics>div{display:flex;flex-wrap:wrap;gap:5px}.document-demographics dt{font-weight:700}.document-demographics dd{margin:0;overflow-wrap:anywhere}
@@ -68,7 +61,7 @@
 @media print{
  @page{size:A4;margin:16mm}
  html,body,.portal-shell{background:white!important;color:#111!important;font-size:11pt!important}
- .site-header,.site-footer,.skip-link,.demo-line,#voice-status,nav,.extract-editor-intro,.extract-form,.extract-controls,.document-preview-header,.extract-list,.section-page-heading,.extract-document-picker{display:none!important}
+ .site-header,.site-footer,.skip-link,.demo-line,#voice-status,nav,.extract-editor-intro,.extract-form,.extract-controls,.document-preview-header,.extract-list,.section-page-heading{display:none!important}
  body main,#main{display:block!important;margin:0!important;padding:0!important;max-width:none!important;width:auto!important}
  .extract-layout,.extract-preview{display:block!important;width:auto!important;max-width:none!important;margin:0!important}
  .document-paper{border:0!important;box-shadow:none!important;border-radius:0;padding:0!important;min-height:0!important;width:auto!important;max-width:none!important;font-size:11pt!important}
