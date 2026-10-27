@@ -76,10 +76,82 @@
   document.querySelectorAll('[data-aviandr-analysis][data-av-refresh-url]').forEach(block => {
     const status = block.querySelector('[data-av-live-status]');
     status.hidden = false;
-    let pending = false, stopped = false, timer;
+    let pending = false, stopped = false, timer, localRevision = 0;
     function announce(message) {
       if (status.textContent !== message) status.textContent = message;
     }
+    // Save the current card without a navigation or a wait for the polling timer.
+    // Other open confirmation forms and unsaved text remain in place.
+    block.addEventListener('submit', async event => {
+      const form = event.target.closest('[data-av-review-form]');
+      if (!form || !window.fetch || !window.FormData) return;
+      event.preventDefault();
+      if (form.dataset.saving === 'true') return;
+      const card = form.closest('[data-direction]');
+      const key = card.dataset.direction;
+      const button = form.querySelector('button');
+      const label = button.textContent;
+      const fields = new FormData(form);
+      localRevision++;
+      form.dataset.dirty = 'true';
+      form.dataset.saving = 'true';
+      button.disabled = true;
+      button.textContent = 'Сохраняем подтверждение…';
+      announce('Сохраняем проверку врача.');
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST', body: fields, credentials: 'same-origin', cache: 'no-store',
+          headers: {Accept: 'application/json'}
+        });
+        if ([401, 403, 404].includes(response.status)) throw Error('access');
+        let html;
+        if (response.ok) html = (await response.json()).html;
+        else if ([409, 422].includes(response.status)) html = await response.text();
+        else throw Error();
+        const holder = document.createElement('template');
+        holder.innerHTML = html;
+        const fresh = holder.content.querySelector(`[data-direction="${key}"]`);
+        if (!fresh || !card.isConnected) throw Error();
+        // Also invalidate polls that began while this POST was in flight.
+        localRevision++;
+        const before = card.getBoundingClientRect().top;
+        card.replaceWith(fresh);
+        const currentItem = block.querySelector(`.aviandr-status-chart a[href="#av-${key}"]`)?.closest('li');
+        const freshItem = holder.content.querySelector(`.aviandr-status-chart a[href="#av-${key}"]`)?.closest('li');
+        if (currentItem && freshItem) currentItem.replaceWith(freshItem);
+        window.scrollBy(0, fresh.getBoundingClientRect().top - before);
+        if (response.ok) {
+          const message = `Проверка сохранена. ${fresh.querySelector('h3').textContent}: ${fresh.querySelector('.aviandr-status').textContent}.`;
+          let feedback = fresh.querySelector('[data-av-save-feedback]');
+          if (!feedback) {
+            feedback = document.createElement('p');
+            feedback.dataset.avSaveFeedback = '';
+            feedback.className = 'aviandr-review-summary';
+            feedback.setAttribute('role', 'status');
+            fresh.append(feedback);
+          }
+          feedback.textContent = message;
+          announce(message);
+        } else {
+          fresh.querySelector('[data-av-review-form]').dataset.dirty = 'true';
+          const error = fresh.querySelector('[role=alert]');
+          error?.setAttribute('tabindex', '-1');
+          error?.focus({preventScroll: true});
+          announce(error?.textContent || 'Проверьте сведения и повторите подтверждение.');
+        }
+        refresh();
+      } catch (error) {
+        announce(error.message === 'access'
+          ? 'Подтверждение не сохранено: проверьте вход и доступ к карте.'
+          : 'Не удалось получить подтверждение сохранения. Данные формы сохранены на экране; повторите отправку.');
+      } finally {
+        if (form.isConnected) {
+          delete form.dataset.saving;
+          button.disabled = false;
+          button.textContent = label;
+        }
+      }
+    });
     function applyUpdate(html, checksum) {
       const holder = document.createElement('template');
       holder.innerHTML = html;
@@ -135,6 +207,7 @@
         return;
       }
       pending = true;
+      const revision = localRevision;
       try {
         const url = new URL(block.dataset.avRefreshUrl, location.origin);
         url.searchParams.set('checksum', block.dataset.avChecksum);
@@ -147,6 +220,7 @@
         }
         if (!response.ok) throw Error();
         const result = await response.json();
+        if (revision !== localRevision) return;
         if (result.changed) {
           if (applyUpdate(result.html, result.checksum)) {
             announce('Карточки обновлены по новым сохранённым данным.');

@@ -42,7 +42,13 @@ def register_patient_ai(app, db, account, csrf_check, render):
             av_calculated_at=now(),
             av_selected=selected,
             av_history=history,
-            av_stale=bool(selected and selected["snapshot_hash"] != report["checksum"]),
+            av_stale=bool(
+                selected
+                and selected["snapshot"].get(
+                    "source_checksum", selected["snapshot_hash"]
+                )
+                != report.get("source_checksum", report["checksum"])
+            ),
             av_sources=aviandr_sources.active_sources(c),
             av_drugs=aviandr_sources.library.search(c),
             av_messages=aviandr_jobs.MESSAGES,
@@ -267,6 +273,8 @@ def register_patient_ai(app, db, account, csrf_check, render):
             response = page(request, pid)
             response.status_code = error.status_code
             return response
+        if "application/json" in request.headers.get("accept", ""):
+            return aviandr_current(request, pid, checksum="", aviandr_id=None)
         return RedirectResponse(
             f"/patients/{pid}/ai-analysis?av_saved=1#av-{form['direction']}",
             status_code=303,

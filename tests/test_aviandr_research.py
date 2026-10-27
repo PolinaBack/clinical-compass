@@ -396,7 +396,7 @@ def test_real_transport_schema_provenance_and_unchanged_statuses(research):
         row["status"] == "completed"
         and result["provenance"]["provider"] == "mock-http-test-only"
     )
-    assert [r.url.path for r in calls] == ["/api/show", "/api/chat"]
+    assert [r.url.path for r in calls] == ["/api/show", "/api/chat", "/api/chat"]
     request = json.loads(calls[-1].content)
     assert request["format"]["additionalProperties"] is False
     assert "questionnaires" in request["messages"][1]["content"]

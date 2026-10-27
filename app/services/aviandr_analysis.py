@@ -715,6 +715,6 @@ def build(c, path, user, pid):
     aviandr_narratives.attach(result, pid)
     from app.services import aviandr_applicability
 
-    aviandr_applicability.apply(c, result, results)
+    aviandr_applicability.apply(c, result, results, path)
     result["checksum"] = digest(result)
     return result

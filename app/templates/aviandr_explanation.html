@@ -1,6 +1,6 @@
 <section class="aviandr-panel" id="av-explanation">
 <h3>Объяснение локального ИИ</h3><p>Ответ проверяет врач.</p>
-<form action="/patients/{{ patient.id }}/ai-analysis/aviandr/run" method="post"><input type="hidden" name="csrf" value="{{ csrf }}">{% include 'ai_response_mode.html' %}<button>Объяснить этот расчёт с помощью ИИ</button></form>
+<form action="/patients/{{ patient.id }}/ai-analysis/aviandr/run" method="post"><input type="hidden" name="csrf" value="{{ csrf }}">{% include 'ai_response_mode.html' %}<button>Объяснить этот расчёт с помощью ИИ</button><p class="caption">ИИ также сопоставит описания пациента с показаниями, противопоказаниями, сочетаниями и нежелательными эффектами из библиотеки.</p></form>
 <div data-ai-result-area="aviandr">
 {% if av_selected %}
 <div class="aviandr-job" data-patient-ai data-status="{{ av_selected.status }}" data-result-url="/patients/{{ patient.id }}/ai-analysis?aviandr_id={{ av_selected.id }}#aviandr" data-status-url="/api/patients/{{ patient.id }}/ai-analysis/aviandr/{{ av_selected.id }}">
@@ -11,7 +11,7 @@
 <form action="/patients/{{ patient.id }}/ai-analysis#aviandr" method="get"><input type="hidden" name="aviandr_id" value="{{ av_selected.id }}"><input type="hidden" name="refresh" value="{{ av_refresh_token }}"><button class="secondary" data-result-link {% if av_selected.status in ['queued','running'] %}hidden{% endif %}>Обновить объяснение</button></form>
 {% if av_selected.status in ['queued','running'] %}<p data-job-pending>Ожидается ответ локальной модели.</p>{% endif %}
 <p data-job-failure {% if av_selected.status!='error' %}hidden{% endif %}>Объяснение не получено. Проверьте сообщение выше и повторите запуск.</p>
-{% if av_stale %}<p class="caption">Этот ответ относится к прежнему снимку карты.</p>{% endif %}
+{% if av_stale %}<p class="caption" data-aviandr-stale>Этот ответ относится к прежнему снимку карты.</p>{% endif %}
 {% if av_selected.result %}<div data-aviandr-result>
 <p class="aviandr-mode">{{ 'ТРАНСПОРТНАЯ ФИКСТУРА · НЕ НАСТОЯЩАЯ ГЕНЕРАЦИЯ' if av_selected.provenance.provider=='mock-http-test-only' else 'ОТВЕТ ЛОКАЛЬНОЙ МОДЕЛИ · ПРОВЕРЯЕТ ВРАЧ' }}</p>
 {% if av_selected.result.get('output_format')=='free_text' %}<h4>Свободный ответ модели</h4>{% set unverified_result=av_selected.result %}{% include 'ai_unverified_text.html' %}

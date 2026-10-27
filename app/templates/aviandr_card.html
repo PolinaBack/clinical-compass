@@ -11,6 +11,13 @@
     <div class="aviandr-card-body">
         <h4 class="visually-hidden">Вывод по пациенту</h4>
         <p class="aviandr-conclusion" data-conclusion>{{ d.narrative.conclusion|join(' ') }}</p>
+        {% if d.ai_comparison %}<section class="aviandr-comparison" data-av-comparison>
+        <h4>Сопоставление ИИ · {{ 'проверено врачом' if d.review.current else 'проверяет врач' }}</h4>
+        {% if d.review.current and d.ai_comparison.assessment=='uncertain' %}<p>Врач проверил недостающие сведения. Актуальный вывод с учётом подтверждения приведён выше.</p>{% endif %}
+        <div class="ai-markdown">{{ d.ai_comparison.explanation|ai_markdown }}</div>
+        {% if d.ai_comparison.patient_quote %}<p><strong>Из карты:</strong> {{ d.ai_comparison.patient_quote }}</p>{% endif %}
+        {% if d.ai_comparison.library_quote %}<p><strong>Из инструкции / библиотеки:</strong> {{ d.ai_comparison.library_quote }}</p>{% endif %}
+        </section>{% endif %}
         <div class="aviandr-card-columns"><section>
         <h4>На чём основан вывод</h4>
         <ul class="aviandr-basis" data-basis>

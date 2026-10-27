@@ -1,0 +1,21 @@
+{
+  "synthetic_only": true,
+  "model": "httpx transport fixture, not a real model accuracy evaluation",
+  "actual_queue_and_polling": true,
+  "semantic_indication": true,
+  "semantic_contraindication": true,
+  "four_ajax_confirmations_without_notes": true,
+  "no_navigation_on_confirmation": true,
+  "delayed_old_poll_cannot_revert_confirmation": true,
+  "actual_background_colours": true,
+  "separate_unsaved_form_preserved": true,
+  "real_risk_survives_confirmation": true,
+  "responsive_widths": [
+    320,
+    390,
+    768,
+    1440
+  ],
+  "javascript_errors": [],
+  "axe_violations": []
+}

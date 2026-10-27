@@ -48,15 +48,14 @@ def check_ai_formatting(page, base_url, output):
             card.evaluate(
                 "e => getComputedStyle(e).getPropertyValue('--av-tint').trim()"
             )
-            == "#fff5dc"
+            == "#fff1c9"
         )
         card.locator(".aviandr-review > summary").click()
         form = card.locator("[data-av-review-form]")
         assert form.locator("[name=note]").input_value() == ""
         form.locator("[name=decision]").select_option(decision)
         form.locator("[name=review_ack]").check()
-        with page.expect_navigation(wait_until="domcontentloaded"):
-            form.get_by_role("button", name="Сохранить подтверждение врача").click()
+        form.get_by_role("button", name="Сохранить подтверждение врача").click()
         expect(page.locator(f"[data-direction={key}]")).to_have_attribute(
             "data-level", "favorable"
         )
@@ -64,7 +63,7 @@ def check_ai_formatting(page, base_url, output):
             page.locator(f"[data-direction={key}]").evaluate(
                 "e => getComputedStyle(e).getPropertyValue('--av-tint').trim()"
             )
-            == "#edf9f0"
+            == "#ddf2e2"
         )
 
     dimensions = []

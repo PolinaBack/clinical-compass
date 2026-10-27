@@ -1,4 +1,4 @@
-"""Local explanatory generation. The model cannot alter deterministic statuses."""
+"""Local semantic comparisons and explanations; known restrictions stay intact."""
 
 import json
 import re
@@ -9,8 +9,9 @@ from app.experimental_ai.store import ExperimentError
 from app.experimental_ai.scenarios import canonical, digest
 from app.experimental_ai.free_text import MODES, unverified_text
 from app.services.patient_ai_data import text as clinical_text
+from app.services import aviandr_matching
 
-VERSION = "aviandr-explanation-v3"
+VERSION = "aviandr-explanation-v4-semantic"
 PROHIBITED = re.compile(
     r"(?:%|\b(?:мг|мкг|mg|mcg|таблет\w*|капсул\w*)\b|назнач(?:ить|ьте|аем)|отмен(?:ить|ите)|увелич\w*\s+доз|уменьш\w*\s+доз|препарат\s+(?:безопас|подходит|показан|противопоказан)|совместим\w*\s+и\s+безопас|(?:вызва|обуслов|прив[её]л)|\b(?:лечит|вылеч\w*|эффективен|устраняет|нормализует|гарантирует)\b|(?:авиандр|препарат)\s+снижает|эффективност\w*\s*\d|диагноз\s*[:=]|https?://)",
     re.I,
@@ -77,6 +78,7 @@ def input_data(report):
                 conclusion=d["narrative"]["conclusion"],
                 unknowns=d["narrative"]["unknowns"],
                 patient_evidence_ids=[b["id"] for b in d["narrative"]["basis"]],
+                ai_comparison=d.get("ai_comparison"),
             )
             for d in report["directions"]
         ],
@@ -298,8 +300,74 @@ class AviandrOllama(Ollama):
                 or not meta["model_info"].get("general.architecture")
             ):
                 raise ExperimentError("local_only")
+            comparisons = {}
+            comparison_request_hash = None
+            materials = report.get("comparison_material", {})
+            if materials:
+                stage("compare")
+                comparison_payload = dict(
+                    model=settings["model"],
+                    stream=False,
+                    format=aviandr_matching.schema(),
+                    options=dict(temperature=0, num_ctx=16384, num_predict=2000),
+                    messages=[
+                        dict(role="system", content=aviandr_matching.PROMPT),
+                        dict(
+                            role="user",
+                            content=canonical(
+                                dict(data, comparison_material=materials)
+                            ),
+                        ),
+                    ],
+                )
+                comparison_request_hash = digest(comparison_payload)
+                try:
+                    comparison_envelope = self.request(
+                        client, "/api/chat", comparison_payload
+                    )
+                    comparisons = aviandr_matching.read(comparison_envelope, materials)
+                except ExperimentError:
+                    pass  # A comparison failure must not suppress the model's prose.
+                if comparisons:
+                    context = aviandr_matching.prompt_context(report, comparisons)
+                    data["direction_context"] = context
+                    data["statuses"] = [
+                        {k: d[k] for k in ("direction", "level", "status")}
+                        for d in context
+                    ]
+                    data["skip_candidate"] = context[0]["level"] == "critical"
+                    payload["messages"][1]["content"] = canonical(data)
+            payload["messages"][0]["content"] += (
+                " В ai_comparison находятся результаты смыслового сопоставления с точными цитатами. "
+                "Объясни их индивидуально и укажи, совпадают ли сведения с соответствующим разделом инструкции. "
+                "Это предложения ИИ для проверки врачом; не представляй возможное совпадение как установленный диагноз."
+            )
             stage("generate")
-            envelope = self.request(client, "/api/chat", payload)
+            explanation_error = None
+            try:
+                envelope = self.request(client, "/api/chat", payload)
+            except ExperimentError as error:
+                if not comparisons:
+                    raise
+                explanation_error = error.code
+                envelope = {}
+            message = envelope.get("message")
+            if comparisons and (
+                not isinstance(message, dict)
+                or not isinstance(message.get("content"), str)
+                or not message["content"].strip()
+            ):
+                # Preserve genuine model text from the comparison pass even if
+                # the separate explanatory pass failed or returned no text.
+                explanation_error = explanation_error or "empty_response"
+                envelope = dict(
+                    done=True,
+                    message=dict(
+                        content="\n\n".join(
+                            v["explanation"] for v in comparisons.values()
+                        )
+                    ),
+                )
         if response_mode == "free":
             stage("read")
             result = unverified_text(envelope)
@@ -319,6 +387,8 @@ class AviandrOllama(Ollama):
                     result = validate(raw, report)
                 except ExperimentError:
                     result = unverified_text(envelope)
+        if comparisons:
+            result["clinical_comparison"] = comparisons
         return result, dict(
             provider=(
                 "mock-http-test-only"
@@ -327,7 +397,7 @@ class AviandrOllama(Ollama):
             ),
             model=settings["model"],
             prompt_version=(
-                "aviandr-free-text-v1" if response_mode == "free" else VERSION
+                "aviandr-free-text-v2-semantic" if response_mode == "free" else VERSION
             ),
             response_mode=response_mode,
             output_validation=(
@@ -338,6 +408,10 @@ class AviandrOllama(Ollama):
             request_sha256=digest(payload),
             model_metadata_sha256=digest(meta),
             analysis_version=report["version"],
+            comparison_version=aviandr_matching.VERSION,
+            comparison_request_sha256=comparison_request_hash,
+            comparison_directions=list(comparisons),
+            explanation_error=explanation_error,
             input_coverage=data["coverage"],
             eval_count=envelope.get("eval_count"),
         )

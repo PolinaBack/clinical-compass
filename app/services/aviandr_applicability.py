@@ -8,7 +8,7 @@ import re
 from app.experimental_ai.scenarios import digest
 from app.services import drug_library, medicine_reference, adverse_reactions
 
-VERSION = "aviandr-colours-v3"
+VERSION = "aviandr-colours-v4-semantic"
 REGISTERED = {
     "gad": "Генерализованное тревожное расстройство у взрослых от 18 лет",
     "postcovid": "Определённые тревожные состояния со стрессовой реакцией и нарушением адаптации лёгкой/средней степени после COVID-19 у взрослых от 18 лет",
@@ -551,8 +551,20 @@ def current_description(key, material):
     )
 
 
-def apply(c, report, rules):
+def apply(c, report, rules, path):
+    from app.services import aviandr_matching
+
     material = inputs(c, report, rules)
+    report["comparison_material"] = material
+    comparisons = aviandr_matching.load(c, path, report["data"]["patient_id"], material)
+    report["source_checksum"] = digest(
+        dict(
+            version=VERSION,
+            data=report["data"],
+            material=material,
+            sources=report["sources"],
+        )
+    )
     gaps = []
     for direction in report["directions"]:
         key = direction["key"]
@@ -560,9 +572,18 @@ def apply(c, report, rules):
         old_conclusion = original["conclusion"]
         old_basis = original["basis"]
         old_questions = original["questions"]
-        review = review_state(report["data"], key, material[key])
+        comparison = comparisons.get(key)
+        review_material = (
+            dict(material[key], ai_comparison=comparison)
+            if comparison
+            else material[key]
+        )
+        review = review_state(report["data"], key, review_material)
         level, status, summary, detail = CALCULATORS[key](material[key], review)
-        direction.update(level=level, status=status)
+        level, status, summary, detail = aviandr_matching.evaluate(
+            key, material[key], review, (level, status, summary, detail), comparison
+        )
+        direction.update(level=level, status=status, ai_comparison=comparison)
         if key == "indications":
             context = [
                 old_conclusion[0],
@@ -596,7 +617,7 @@ def apply(c, report, rules):
         direction["narrative"]["unknowns"] = [detail]
         direction["review"] = dict(
             **review,
-            snapshot=digest(material[key]),
+            snapshot=digest(review_material),
             options=OPTIONS[key],
             unknown_drugs=[
                 p["drug"]["name"]
