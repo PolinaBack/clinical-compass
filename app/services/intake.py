@@ -542,7 +542,7 @@ def computations(data, as_of=None):
         age=None,
         bmi=None,
         bmi_inputs="",
-        bmi_note="Укажите дату рождения в личных данных, рост в сантиметрах и массу в килограммах.",
+        bmi_note="",
         as_of=reference.isoformat(),
     )
     birth = date.fromisoformat(value("birth_date")) if value("birth_date") else None

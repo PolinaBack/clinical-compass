@@ -51,7 +51,7 @@ def check_medicine_workspace(doctor, patient, url):
     for code in ("D01", "D09", "D11"):
         item = form.locator(f'[data-draft-item="{code}"]')
         expect(item.locator(f'[name="{code}.dose"]')).to_have_value("")
-    form.get_by_role("button", name="Сохранить учебный черновик", exact=True).click()
+    form.get_by_role("button", name="Сохранить черновик", exact=True).click()
     assert doctor.locator("input:invalid").count() >= 3
     for code in ("D01", "D09", "D11"):
         form.locator(f'[name="{code}.dose"]').fill("ВЫМЫШЛЕННАЯ ДОЗА ДЛЯ ПРОВЕРКИ")
@@ -70,7 +70,7 @@ def check_medicine_workspace(doctor, patient, url):
     item.locator('[name="D01.start"]').fill("2026-11-02")
     item.locator('[name="D01.duration"]').fill("ВЫМЫШЛЕННЫЙ КУРС")
     item.locator('[name="D01.comment"]').fill("ВЫМЫШЛЕННЫЙ КОММЕНТАРИЙ")
-    form.get_by_role("button", name="Сохранить учебный черновик", exact=True).click()
+    form.get_by_role("button", name="Сохранить черновик", exact=True).click()
     doctor.wait_for_url("**/medicines/prescriptions?patient_id=1&saved=1")
     doctor.reload()
     expect(form.locator('[name="D01.times"]')).to_have_value("08:15, 20:15")
@@ -82,7 +82,7 @@ def check_medicine_workspace(doctor, patient, url):
     expect(form.locator("[data-draft-item]:visible")).to_have_count(1)
     form.locator('[name="D04.dose"]').fill("ТОЛЬКО КАРТА ДВА")
     form.locator('[name="D04.frequency"]').select_option("2 раза в день")
-    form.get_by_role("button", name="Сохранить учебный черновик", exact=True).click()
+    form.get_by_role("button", name="Сохранить черновик", exact=True).click()
     doctor.wait_for_url("**/medicines/prescriptions?patient_id=2&saved=1")
     doctor.locator("#draft-patient").select_option("1")
     doctor.get_by_role("button", name="Открыть карту", exact=True).click()

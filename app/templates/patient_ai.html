@@ -4,7 +4,6 @@
 <div class="section-page-heading"><h1>{{ patient.name }}</h1><a href="/doctor">Мои пациенты</a></div>
 {% include 'specialist_nav.html' %}
 <div class="experiment-page">
-    <div class="experiment-banner">ИИ-анализ данных выбранной карты · локальная Ollama</div>
     <h2>Сводка и вопросы для подготовки к консультации</h2>
     <p>Предобученная модель анализирует сохранённые сведения этой карты. Результат требует проверки врача. Автоматического подбора лекарства, дозы и изменения лечения нет.</p>
     <section class="card"><h2>Актуальные данные карты</h2><p>Дневник: {{ current.period_start }} — {{ current.period_end }}. Используются доступный профиль, последние анкеты, заметки, сообщения, семейные сведения и отправленная врачу версия анамнеза. Частный черновик пациента не читается.</p><p>Новые записи и ручные изменения войдут в следующий запуск. ИИ не обучается на карте автоматически; новые ответы генерируются локальной моделью.</p>
@@ -13,7 +12,7 @@
     </section>
     <div data-ai-result-area="general">
     {% if selected %}<section class="card" data-patient-ai data-status="{{ selected.status }}" data-result-url="/patients/{{ patient.id }}/ai-analysis?run_id={{ selected.id }}" data-status-url="/api/patients/{{ patient.id }}/ai-analysis/{{ selected.id }}"><h2>Анализ №{{ selected.id }}</h2><p>Снимок карты: {{ selected.created_at|local_datetime }}</p><p role="status" data-stage>{{ stages.get(selected.stage,selected.stage) }}</p><p class="caption" data-heartbeat>Связь с обработчиком: {{ selected.heartbeat_at or 'ещё не было' }}{% if selected.heartbeat_at %} (UTC){% endif %}</p>
-        {% if selected.status=='queued' %}<p>Ожидает обработчика. Запустите <code>python -m scripts.patient_ai_worker</code> или обновлённый <code>scripts.experimental_ai_worker</code>.</p>{% elif selected.status=='running' %}<p>Модель готовит ответ. Процент генерации неизвестен.</p>{% endif %}
+        {% if selected.status=='queued' %}<p>Ожидает обработчика.</p>{% elif selected.status=='running' %}<p>Модель готовит ответ. Процент генерации неизвестен.</p>{% endif %}
         <p class="experiment-error" data-error {% if not selected.error_code %}hidden{% endif %}>{{ messages.get(selected.error_code,'') }}</p>
         <a class="button secondary" data-result-link href="/patients/{{ patient.id }}/ai-analysis?run_id={{ selected.id }}" {% if selected.status in ['queued','running'] %}hidden{% endif %}>Обновить результат анализа</a>
         {% if stale %}<p class="notice">Карта изменилась после этого снимка. Для актуальной сводки запустите новый анализ.</p>{% endif %}

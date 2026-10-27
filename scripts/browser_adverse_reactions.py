@@ -67,7 +67,7 @@ def check_adverse_reactions(doctor, patient, url):
     )
     doctor.locator('[name="D01.dose"]').fill("ВЫМЫШЛЕННАЯ ДОЗА")
     doctor.locator('[name="D01.frequency"]').select_option("1 раз в день")
-    doctor.get_by_role("button", name="Сохранить учебный черновик", exact=True).click()
+    doctor.get_by_role("button", name="Сохранить черновик", exact=True).click()
     doctor.wait_for_url("**/patients/1/assignments?saved=1#medicines")
     doctor.reload()
     expect(doctor.locator('[data-preference-matches="D01"]')).to_contain_text(

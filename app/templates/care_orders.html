@@ -5,13 +5,12 @@
 <div class="care-page" data-care-page>
 <header class="care-heading"><p class="care-eyebrow">Кабинет специалиста · единый план</p><h2>Назначения и направления</h2><p>Лекарственные схемы, лабораторные исследования, обследования, консультации специалистов и дополнительные рекомендации. Сроки и документы сохраняются рядом с каждым пунктом.</p></header>
 <section class="care-panel medicine-editor" id="medicines"><h3>Лекарства</h3>
-<p class="medicine-notice">Учебный черновик · только синтетические данные. Схему вводит специалист. Схема не является рецептом. Пациент видит сохранённую версию только после отдельной отправки специалистом.</p>
 <form method="get" action="/medicines/prescriptions" class="medicine-patient-picker"><label for="draft-patient">Выберите пациента</label><div class="medicine-actions"><select id="draft-patient" name="patient_id">{% for p in patients %}<option value="{{ p.id }}" {% if p.id==patient.id %}selected{% endif %}>{{ p.name }} · карта № {{ p.id }}</option>{% endfor %}</select><button class="medicine-secondary">Открыть карту</button></div></form>
 {% include 'medicine_draft_editor.html' %}</section>
 {% include 'care_order_notice.html' %}
 <h3 class="care-referrals-heading">Направления и обследования</h3>
 <div class="care-columns">
-<section class="care-panel"><h3>Новое назначение</h3><p class="care-muted">Назначения добавляет специалист. Система ничего не выписывает автоматически.</p>
+<section class="care-panel"><h3>Новое назначение</h3><p class="care-muted">Назначения добавляет специалист.</p>
 <form method="post" action="/patients/{{ patient.id }}/assignments/orders" data-care-form>
 <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="client_token" value="{{ order_token }}"><input type="hidden" name="return_to" value="/patients/{{ patient.id }}/assignments">
 <label>Тип назначения<select name="kind" data-care-kind>{% for key,label in order_kinds.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label>

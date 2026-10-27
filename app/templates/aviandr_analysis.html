@@ -7,10 +7,9 @@
         <p class="aviandr-mode">Тестовый режим · только синтетические данные</p>
         <h2>Авиандр — клиническая применимость</h2>
         <p class="aviandr-patient">Карта: {{ patient.name }}</p>
-        <p>Сопоставление с локальной библиотекой лекарств и сведениями карты. Врач отдельно подтверждает полноту анамнеза и свою оценку; цвет не заменяет клиническое решение.</p>
+        <p>Сопоставление с локальной библиотекой лекарств и сведениями карты. Врач отдельно подтверждает полноту анамнеза и свою оценку.</p>
         <div class="aviandr-meta"><p>Расчёт от <time datetime="{{ av_calculated_at }}">{{ av_calculated_at|local_datetime }}</time></p><p>Наблюдения: {{ av_report.data.period_start }} — {{ av_report.data.period_end }}</p></div>
         <p class="caption" data-av-data-summary>Анкет учтено: {{ av_report.data.questionnaires|length }}, завершено: {{ av_report.data.questionnaires|selectattr('status','equalto','completed')|list|length }}. {% if av_report.data.intake_submission %}Анамнез: отправленная врачу версия {{ av_report.data.intake_submission.revision }} от {{ av_report.data.intake_submission.created_at|local_datetime }}.{% else %}Отправленной врачу версии анамнеза нет.{% endif %} Личный черновик пациента учитывается после отправки врачу.</p>
-        <p class="caption">Четыре независимых вывода Python доступны без Ollama. Решение о лечении принимает врач; общего процента полезности или безопасности нет.</p>
         <form action="/patients/{{ patient.id }}/ai-analysis#aviandr" method="get" class="aviandr-refresh">
             <input type="hidden" name="refresh" value="{{ av_refresh_token }}">
             {% if av_selected %}<input type="hidden" name="aviandr_id" value="{{ av_selected.id }}">{% endif %}
@@ -19,7 +18,6 @@
     </header>
     {% if request.query_params.get('av_saved') or request.query_params.get('av_rule_saved') %}<p class="aviandr-feedback" role="status">Запись сохранена. Проверяемый расчёт обновлён.</p>{% endif %}
     {% if av_review_error|default('') %}<p class="aviandr-review-stale" role="alert">{{ av_review_error }}</p>{% endif %}
-    {% if av_stale %}<p class="caption" role="status" data-aviandr-stale>Карточки обновлены. Объяснение №{{ av_selected.id }} относится к прежнему снимку карты.</p>{% endif %}
     <nav aria-label="Статусы четырёх направлений, без общего процента"><ol class="aviandr-status-chart">
         {% for d in av_report.directions %}<li data-level="{{ d.level }}"><a href="#av-{{ d.key }}"><span>{{ loop.index }} · {{ d.title }}</span><strong>{{ d.status }}</strong></a></li>{% endfor %}
     </ol></nav>
