@@ -1,0 +1,26 @@
+{
+  "tested_commit": "f388634e1e89e115eb7ece9a3db1be9f917195ba",
+  "date": "2026-10-28",
+  "python_tests": {
+    "total": 1039,
+    "passed": 1031,
+    "failed": 8,
+    "skipped": 0,
+    "elapsed_seconds": 556.721
+  },
+  "line_coverage_percent": 90.9292,
+  "branch_coverage_percent": 81.6067,
+  "combined_coverage_percent": 88.41451581602949,
+  "js_cases_passed": 19,
+  "js_syntax_files": 24,
+  "browser": {
+    "page_viewport_combinations": 48,
+    "overflows": 0,
+    "js_errors": 0,
+    "axe_scans": 24,
+    "axe_scans_with_violations": 4
+  },
+  "load_attempts": 728,
+  "load_errors": 8,
+  "working_database_unchanged": true
+}

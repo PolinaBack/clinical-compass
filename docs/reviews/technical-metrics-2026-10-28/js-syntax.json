@@ -1,0 +1,122 @@
+[
+  {
+    "file": "app/static/adverse.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/app.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/camera.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/care_orders.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/diary.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/diary_cards.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/diary_question_builder.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/doctor_calendar.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/experimental_ai.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/family.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/information_requests.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/intake.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/medication_preferences.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/medicine_reactions.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/medicines.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/meetings.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/patient_ai.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/patient_extracts.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/patient_journey.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/questionnaires.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/resources.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/safety_support.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/video_choice.js",
+    "passed": true,
+    "error": ""
+  },
+  {
+    "file": "app/static/workflows.js",
+    "passed": true,
+    "error": ""
+  }
+]

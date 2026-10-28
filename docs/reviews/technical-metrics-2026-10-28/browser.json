@@ -1,0 +1,937 @@
+{
+  "synthetic": true,
+  "browser_checks": [
+    {
+      "role": "public",
+      "path": "/",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "public",
+      "path": "/",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "public",
+      "path": "/",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "public",
+      "path": "/",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "public",
+      "path": "/login/patient",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "public",
+      "path": "/login/patient",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "public",
+      "path": "/login/patient",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "public",
+      "path": "/login/patient",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "public",
+      "path": "/help-now",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "public",
+      "path": "/help-now",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "public",
+      "path": "/help-now",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "public",
+      "path": "/help-now",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/diary",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/diary",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/diary",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/diary",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile/assessments",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile/assessments",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile/assessments",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile/assessments",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile/extracts",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile/extracts",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile/extracts",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "patient",
+      "path": "/patients/1/profile/extracts",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor/messages",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor/messages",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor/messages",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor/messages",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/medicines",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/medicines",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/medicines",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/medicines",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor/diary-cards",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor/diary-cards",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor/diary-cards",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/doctor/diary-cards",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/patients/1/ai-analysis",
+      "width": 320,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/patients/1/ai-analysis",
+      "width": 390,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/patients/1/ai-analysis",
+      "width": 768,
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "role": "doctor",
+      "path": "/patients/1/ai-analysis",
+      "width": 1440,
+      "status": 200,
+      "overflow": false
+    }
+  ],
+  "navigation": [
+    {
+      "path": "/",
+      "width": 320,
+      "ttfb_ms": 5.5,
+      "dom_content_loaded_ms": 34.09999996423721,
+      "load_ms": 112.59999996423721
+    },
+    {
+      "path": "/",
+      "width": 390,
+      "ttfb_ms": 10.199999988079071,
+      "dom_content_loaded_ms": 65.5,
+      "load_ms": 81.80000001192093
+    },
+    {
+      "path": "/",
+      "width": 768,
+      "ttfb_ms": 11.899999976158142,
+      "dom_content_loaded_ms": 65.30000001192093,
+      "load_ms": 76.69999998807907
+    },
+    {
+      "path": "/",
+      "width": 1440,
+      "ttfb_ms": 6.800000011920929,
+      "dom_content_loaded_ms": 53.19999998807907,
+      "load_ms": 60.39999997615814
+    },
+    {
+      "path": "/login/patient",
+      "width": 320,
+      "ttfb_ms": 12.699999988079071,
+      "dom_content_loaded_ms": 36.89999997615814,
+      "load_ms": 39.30000001192093
+    },
+    {
+      "path": "/login/patient",
+      "width": 390,
+      "ttfb_ms": 7,
+      "dom_content_loaded_ms": 32.19999998807907,
+      "load_ms": 35.69999998807907
+    },
+    {
+      "path": "/login/patient",
+      "width": 768,
+      "ttfb_ms": 4.5,
+      "dom_content_loaded_ms": 22.80000001192093,
+      "load_ms": 23.900000035762787
+    },
+    {
+      "path": "/login/patient",
+      "width": 1440,
+      "ttfb_ms": 6.600000023841858,
+      "dom_content_loaded_ms": 24.5,
+      "load_ms": 26.30000001192093
+    },
+    {
+      "path": "/help-now",
+      "width": 320,
+      "ttfb_ms": 12.5,
+      "dom_content_loaded_ms": 71.80000001192093,
+      "load_ms": 71.90000003576279
+    },
+    {
+      "path": "/help-now",
+      "width": 390,
+      "ttfb_ms": 6,
+      "dom_content_loaded_ms": 29,
+      "load_ms": 32.30000001192093
+    },
+    {
+      "path": "/help-now",
+      "width": 768,
+      "ttfb_ms": 25.30000001192093,
+      "dom_content_loaded_ms": 57.30000001192093,
+      "load_ms": 59.60000002384186
+    },
+    {
+      "path": "/help-now",
+      "width": 1440,
+      "ttfb_ms": 6.899999976158142,
+      "dom_content_loaded_ms": 27.19999998807907,
+      "load_ms": 30.80000001192093
+    },
+    {
+      "path": "/patients/1/diary",
+      "width": 320,
+      "ttfb_ms": 54.40000003576279,
+      "dom_content_loaded_ms": 130,
+      "load_ms": 137.80000001192093
+    },
+    {
+      "path": "/patients/1/diary",
+      "width": 390,
+      "ttfb_ms": 28.30000001192093,
+      "dom_content_loaded_ms": 78.5,
+      "load_ms": 86.70000004768372
+    },
+    {
+      "path": "/patients/1/diary",
+      "width": 768,
+      "ttfb_ms": 42.09999996423721,
+      "dom_content_loaded_ms": 100.60000002384186,
+      "load_ms": 108.90000003576279
+    },
+    {
+      "path": "/patients/1/diary",
+      "width": 1440,
+      "ttfb_ms": 38.19999998807907,
+      "dom_content_loaded_ms": 96.79999995231628,
+      "load_ms": 100.89999997615814
+    },
+    {
+      "path": "/patients/1/profile",
+      "width": 320,
+      "ttfb_ms": 101.20000004768372,
+      "dom_content_loaded_ms": 208,
+      "load_ms": 220.30000001192093
+    },
+    {
+      "path": "/patients/1/profile",
+      "width": 390,
+      "ttfb_ms": 36,
+      "dom_content_loaded_ms": 130.0999999642372,
+      "load_ms": 138.69999998807907
+    },
+    {
+      "path": "/patients/1/profile",
+      "width": 768,
+      "ttfb_ms": 48.69999998807907,
+      "dom_content_loaded_ms": 106.60000002384186,
+      "load_ms": 112.60000002384186
+    },
+    {
+      "path": "/patients/1/profile",
+      "width": 1440,
+      "ttfb_ms": 84.60000002384186,
+      "dom_content_loaded_ms": 168.5,
+      "load_ms": 177.5
+    },
+    {
+      "path": "/patients/1/profile/assessments",
+      "width": 320,
+      "ttfb_ms": 69.89999997615814,
+      "dom_content_loaded_ms": 127.5,
+      "load_ms": 130.20000004768372
+    },
+    {
+      "path": "/patients/1/profile/assessments",
+      "width": 390,
+      "ttfb_ms": 34.69999998807907,
+      "dom_content_loaded_ms": 67.39999997615814,
+      "load_ms": 70.5
+    },
+    {
+      "path": "/patients/1/profile/assessments",
+      "width": 768,
+      "ttfb_ms": 38.5,
+      "dom_content_loaded_ms": 81.80000001192093,
+      "load_ms": 86.5
+    },
+    {
+      "path": "/patients/1/profile/assessments",
+      "width": 1440,
+      "ttfb_ms": 33.700000047683716,
+      "dom_content_loaded_ms": 67.69999998807907,
+      "load_ms": 70.19999998807907
+    },
+    {
+      "path": "/patients/1/profile/extracts",
+      "width": 320,
+      "ttfb_ms": 40,
+      "dom_content_loaded_ms": 96.79999995231628,
+      "load_ms": 112.09999996423721
+    },
+    {
+      "path": "/patients/1/profile/extracts",
+      "width": 390,
+      "ttfb_ms": 19.69999998807907,
+      "dom_content_loaded_ms": 68.89999997615814,
+      "load_ms": 76.5
+    },
+    {
+      "path": "/patients/1/profile/extracts",
+      "width": 768,
+      "ttfb_ms": 16,
+      "dom_content_loaded_ms": 51.30000001192093,
+      "load_ms": 57.40000003576279
+    },
+    {
+      "path": "/patients/1/profile/extracts",
+      "width": 1440,
+      "ttfb_ms": 20.5,
+      "dom_content_loaded_ms": 65.5,
+      "load_ms": 71.19999998807907
+    },
+    {
+      "path": "/doctor",
+      "width": 320,
+      "ttfb_ms": 15.399999976158142,
+      "dom_content_loaded_ms": 71.09999996423721,
+      "load_ms": 83.29999995231628
+    },
+    {
+      "path": "/doctor",
+      "width": 390,
+      "ttfb_ms": 16.69999998807907,
+      "dom_content_loaded_ms": 43.799999952316284,
+      "load_ms": 49.19999998807907
+    },
+    {
+      "path": "/doctor",
+      "width": 768,
+      "ttfb_ms": 15.899999976158142,
+      "dom_content_loaded_ms": 65.60000002384186,
+      "load_ms": 69.60000002384186
+    },
+    {
+      "path": "/doctor",
+      "width": 1440,
+      "ttfb_ms": 18.30000001192093,
+      "dom_content_loaded_ms": 48.30000001192093,
+      "load_ms": 52.69999998807907
+    },
+    {
+      "path": "/doctor/messages",
+      "width": 320,
+      "ttfb_ms": 11.5,
+      "dom_content_loaded_ms": 49.09999996423721,
+      "load_ms": 55.39999997615814
+    },
+    {
+      "path": "/doctor/messages",
+      "width": 390,
+      "ttfb_ms": 8.300000011920929,
+      "dom_content_loaded_ms": 38.69999998807907,
+      "load_ms": 45.19999998807907
+    },
+    {
+      "path": "/doctor/messages",
+      "width": 768,
+      "ttfb_ms": 8.099999964237213,
+      "dom_content_loaded_ms": 30.19999998807907,
+      "load_ms": 36
+    },
+    {
+      "path": "/doctor/messages",
+      "width": 1440,
+      "ttfb_ms": 20.30000001192093,
+      "dom_content_loaded_ms": 44.40000003576279,
+      "load_ms": 48.60000002384186
+    },
+    {
+      "path": "/medicines",
+      "width": 320,
+      "ttfb_ms": 30.80000001192093,
+      "dom_content_loaded_ms": 343.60000002384186,
+      "load_ms": 344.7000000476837
+    },
+    {
+      "path": "/medicines",
+      "width": 390,
+      "ttfb_ms": 17.80000001192093,
+      "dom_content_loaded_ms": 50.09999996423721,
+      "load_ms": 83.5
+    },
+    {
+      "path": "/medicines",
+      "width": 768,
+      "ttfb_ms": 19.600000023841858,
+      "dom_content_loaded_ms": 61.59999996423721,
+      "load_ms": 86.19999998807907
+    },
+    {
+      "path": "/medicines",
+      "width": 1440,
+      "ttfb_ms": 19.30000001192093,
+      "dom_content_loaded_ms": 60.69999998807907,
+      "load_ms": 76.90000003576279
+    },
+    {
+      "path": "/doctor/diary-cards",
+      "width": 320,
+      "ttfb_ms": 53.80000001192093,
+      "dom_content_loaded_ms": 152.89999997615814,
+      "load_ms": 270.60000002384186
+    },
+    {
+      "path": "/doctor/diary-cards",
+      "width": 390,
+      "ttfb_ms": 32.80000001192093,
+      "dom_content_loaded_ms": 93.60000002384186,
+      "load_ms": 247.80000001192093
+    },
+    {
+      "path": "/doctor/diary-cards",
+      "width": 768,
+      "ttfb_ms": 40.60000002384186,
+      "dom_content_loaded_ms": 129.39999997615814,
+      "load_ms": 242.5
+    },
+    {
+      "path": "/doctor/diary-cards",
+      "width": 1440,
+      "ttfb_ms": 26.69999998807907,
+      "dom_content_loaded_ms": 100,
+      "load_ms": 233.5999999642372
+    },
+    {
+      "path": "/patients/1/ai-analysis",
+      "width": 320,
+      "ttfb_ms": 123.5,
+      "dom_content_loaded_ms": 267.5999999642372,
+      "load_ms": 290.5
+    },
+    {
+      "path": "/patients/1/ai-analysis",
+      "width": 390,
+      "ttfb_ms": 42.19999998807907,
+      "dom_content_loaded_ms": 82.69999998807907,
+      "load_ms": 118.5
+    },
+    {
+      "path": "/patients/1/ai-analysis",
+      "width": 768,
+      "ttfb_ms": 44.39999997615814,
+      "dom_content_loaded_ms": 79.80000001192093,
+      "load_ms": 114.60000002384186
+    },
+    {
+      "path": "/patients/1/ai-analysis",
+      "width": 1440,
+      "ttfb_ms": 42.19999998807907,
+      "dom_content_loaded_ms": 76.60000002384186,
+      "load_ms": 103.5
+    }
+  ],
+  "ergonomics": [
+    {
+      "scenario": "diary_wellbeing_sleep_note",
+      "actions": 8,
+      "elapsed_ms": 659.813,
+      "saved": true
+    },
+    {
+      "scenario": "diary_wellbeing_sleep_note",
+      "actions": 8,
+      "elapsed_ms": 822.376,
+      "saved": true
+    },
+    {
+      "scenario": "diary_wellbeing_sleep_note",
+      "actions": 8,
+      "elapsed_ms": 578.161,
+      "saved": true
+    }
+  ],
+  "accessibility": [
+    {
+      "path": "/",
+      "width": 390,
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            [
+              ".demo-line"
+            ],
+            [
+              ".step-card:nth-child(1) > span"
+            ],
+            [
+              ".step-card:nth-child(2) > span"
+            ],
+            [
+              ".step-card:nth-child(3) > span"
+            ],
+            [
+              ".peach > .resource-number"
+            ],
+            [
+              ".lavender > .resource-number"
+            ],
+            [
+              ".blue > .resource-number"
+            ],
+            [
+              ".mint > .resource-number"
+            ],
+            [
+              ".rose > .resource-number"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/",
+      "width": 1440,
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            [
+              ".demo-line"
+            ],
+            [
+              ".step-card:nth-child(1) > span"
+            ],
+            [
+              ".step-card:nth-child(2) > span"
+            ],
+            [
+              ".step-card:nth-child(3) > span"
+            ],
+            [
+              ".peach > .resource-number"
+            ],
+            [
+              ".lavender > .resource-number"
+            ],
+            [
+              ".blue > .resource-number"
+            ],
+            [
+              ".mint > .resource-number"
+            ],
+            [
+              ".rose > .resource-number"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/login/patient",
+      "width": 390,
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            [
+              ".demo-line"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/login/patient",
+      "width": 1440,
+      "violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "nodes": [
+            [
+              ".demo-line"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/help-now",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "path": "/help-now",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "path": "/patients/1/diary",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "path": "/patients/1/diary",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "path": "/patients/1/profile",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "path": "/patients/1/profile",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "path": "/patients/1/profile/assessments",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "path": "/patients/1/profile/assessments",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "path": "/patients/1/profile/extracts",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "path": "/patients/1/profile/extracts",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "path": "/doctor",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "path": "/doctor",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "path": "/doctor/messages",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "path": "/doctor/messages",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "path": "/medicines",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "path": "/medicines",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "path": "/doctor/diary-cards",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "path": "/doctor/diary-cards",
+      "width": 1440,
+      "violations": []
+    },
+    {
+      "path": "/patients/1/ai-analysis",
+      "width": 390,
+      "violations": []
+    },
+    {
+      "path": "/patients/1/ai-analysis",
+      "width": 1440,
+      "violations": []
+    }
+  ],
+  "page_errors": [],
+  "http_errors": [],
+  "urgent_delivery": [
+    {
+      "save_http_ms": 50.676,
+      "response_to_visible_ms": 4599.629,
+      "total_ms": 4650.306,
+      "doctor_already_visible": true
+    }
+  ],
+  "browser_version": "154.0.8037.57",
+  "local_help_ms": 130.639,
+  "urgent_lifecycle": {
+    "results_visible": true,
+    "acknowledgement_keeps_pinned": true,
+    "documented_action_unpins": true
+  },
+  "bundled_browser_engines": {
+    "chromium": false,
+    "firefox": false,
+    "webkit": false
+  },
+  "actual_engine": "chromium",
+  "browser_executable": "/usr/bin/chromium"
+}

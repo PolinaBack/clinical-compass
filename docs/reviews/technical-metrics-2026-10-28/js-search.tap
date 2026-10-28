@@ -1,0 +1,14 @@
+✔ finds all phrases ignoring case, whitespace, and е/ё without changing the text (5.160927ms)
+✔ finds a phrase spanning consecutive fragments and maps both selection ranges (0.620559ms)
+✔ treats regular expression and HTML characters as literal search text (7.298355ms)
+✔ uses original UTF-16 offsets for selecting emoji and Unicode case variants (1.263545ms)
+✔ returns no matches for an empty or absent phrase (1.410339ms)
+✔ rebuilding from an edited transcript reflects unsaved corrections (0.656234ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33.160885

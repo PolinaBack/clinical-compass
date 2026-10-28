@@ -1,0 +1,7 @@
+Synthetic dataset ready
+Load 1: 8 requests, 0 errors, p95=33.066 ms
+Load 5: 40 requests, 0 errors, p95=275.563 ms
+Load 10: 80 requests, 0 errors, p95=619.337 ms
+Load 25: 200 requests, 0 errors, p95=2027.65 ms
+Load 50: 400 requests, 8 errors, p95=4421.872 ms
+Saved /workspace/clinical-compass/docs/reviews/technical-metrics-2026-10-28/benchmarks.json

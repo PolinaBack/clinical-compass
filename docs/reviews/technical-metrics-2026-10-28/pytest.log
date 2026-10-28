@@ -1,0 +1,460 @@
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  6%]
+........................................................................ [ 13%]
+........................................................................ [ 20%]
+........................................................................ [ 27%]
+........................................................................ [ 34%]
+....................................................F................... [ 41%]
+.....................................................F.................. [ 48%]
+........................................................................ [ 55%]
+........................................................................ [ 62%]
+...........................F............................................ [ 69%]
+........................................................................ [ 76%]
+........................................................................ [ 83%]
+...........F.........................................F.................. [ 90%]
+.................................F.........F............................ [ 97%]
+F..............................                                          [100%]
+=================================== FAILURES ===================================
+________ test_migration_checksum_and_original_records_survive_restarts _________
+[gw3] linux -- Python 3.12.14 /workspace/clinical-compass/.venv/bin/python
+
+client = <starlette.testclient.TestClient object at 0x7f16bd293080>
+
+    def test_migration_checksum_and_original_records_survive_restarts(client):
+        login(client, "patient1")
+        original = user_row(client, "patient1")
+        with TestClient(create_app(client.app.state.db_path)) as restarted:
+            with connect(restarted.app.state.db_path) as c:
+>               assert [
+                    r[0]
+                    for r in c.execute(
+                        "SELECT version FROM schema_migrations ORDER BY version"
+                    )
+                ] == [
+                    "001_account_settings.sql",
+                    "002_interface_preferences.sql",
+                    "003_diary_cards.sql",
+                    "004_drug_library.sql",
+                    "005_meeting_processing.sql",
+                    "006_meeting_progress.sql",
+                    "007_account_meeting_consents.sql",
+                    "008_intake_and_diary_questions.sql",
+                    "009_resources_and_family.sql",
+                    "010_consultation_slots.sql",
+                    "011_patient_ai.sql",
+                    "012_clinician_forum.sql",
+                    "013_patient_information_requests.sql",
+                    "014_medicine_drafts.sql",
+                    "015_care_orders.sql",
+                    "016_medication_preferences.sql",
+                    "017_medicine_reactions.sql",
+                    "018_aviandr_research.sql",
+                ]
+E               AssertionError: assert ['001_account...ess.sql', ...] == ['001_account...ess.sql', ...]
+E
+E                 Left contains 5 more items, first extra item: '019_forum_files_and_preference_requests.sql'
+E                 Use -v to get more diff
+
+tests/test_settings.py:455: AssertionError
+___ test_drafts_are_encrypted_versioned_per_patient_and_do_not_change_orders ___
+[gw2] linux -- Python 3.12.14 /workspace/clinical-compass/.venv/bin/python
+
+client = <starlette.testclient.TestClient object at 0x7f1b61ff9ca0>
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-171/popen-gw2/test_drafts_are_encrypted_vers0')
+
+    def test_drafts_are_encrypted_versioned_per_patient_and_do_not_change_orders(
+        client, tmp_path
+    ):
+        login(client, "doctor")
+        form = scheme(
+            client,
+            codes=("D01", "D09"),
+            **{
+                "D01.times": "08:15, 20:15",
+                "D01.food": "Другое",
+                "D01.food_other": "СИНТЕТИЧЕСКОЕ УТОЧНЕНИЕ",
+                "D01.route": "Внутрь",
+                "D01.start": "2026-11-02",
+                "D01.duration": "СИНТЕТИЧЕСКИЙ КУРС",
+                "D01.comment": '<script>alert("XSS")</script>',
+            },
+        )
+        with connect(client.app.state.db_path) as c:
+            counts = {
+                t: c.execute(f"SELECT count(*) FROM {t}").fetchone()[0]
+                for t in (
+                    "decisions",
+                    "resource_assignments",
+                    "diary",
+                    "intake_submissions",
+                )
+            }
+        assert client.post("/medicines/prescriptions/save", data=form).status_code == 200
+        item = saved(client)["items"][0]
+        assert (
+            item["times"] == "08:15, 20:15"
+            and item["reference"]["registration"]
+            and item["reference"]["status"] == "rf_instruction_verified"
+        )
+        assert saved(client, 2)["items"] == []
+        assert (
+            "СИНТЕТИЧЕСКАЯ ДОЗА"
+            not in client.get("/medicines/prescriptions?patient_id=2").text
+        )
+        with connect(client.app.state.db_path) as c:
+            encrypted = c.execute("SELECT payload FROM medicine_drafts").fetchone()[0]
+>           assert (
+                b"XSS" not in encrypted and "СИНТЕТИЧЕСКАЯ ДОЗА".encode() not in encrypted
+            )
+E           AssertionError: assert (b'XSS' not in b'gAAAAABq4bZtXTM8i-HSKW54XZ9N1ZmrzL5seRO-JUa5_CrBnby_CKV1oH3IYVe8NMmMsywi8DupDgPDbjTscPZUwicoDi0KMQm9OhmR6HPqTPhRYTxG...97CF2Jd9fJjKPAahcWmtrcR3r0ssVm0dyXmLdXBIMdEQCqSS4jmMvAsaBJHoyB2DHML6XSS_iEgQuW1lhng-lTMr6LcIJr8FdiSTRJXKonysAxLO8ATEk=')
+
+tests/test_medicine_workspace.py:230: AssertionError
+____________ test_patient_opens_diary_without_home_or_card_controls ____________
+[gw0] linux -- Python 3.12.14 /workspace/clinical-compass/.venv/bin/python
+
+client = <starlette.testclient.TestClient object at 0x7fe5764ea9c0>
+
+    def test_patient_opens_diary_without_home_or_card_controls(client):
+        login(client, 'patient1')
+        for entry in ('/', '/me', '/me/overview', '/patients/1'):
+>           assert client.get(entry).url.path == '/patients/1/diary'
+E           AssertionError: assert '/' == '/patients/1/diary'
+E
+E             - /patients/1/diary
+E             + /
+
+tests/test_diary_cards.py:28: AssertionError
+_ test_custom_library_card_survives_restart_and_patient_edits_keep_previous_answers _
+[gw3] linux -- Python 3.12.14 /workspace/clinical-compass/.venv/bin/python
+
+client = <starlette.testclient.TestClient object at 0x7f16bda8ec30>
+
+    def test_custom_library_card_survives_restart_and_patient_edits_keep_previous_answers(
+        client,
+    ):
+        login(client, "doctor")
+        page = client.get("/doctor/diary-cards/new?patient_id=1")
+        assert (
+            page.status_code == 200
+            and 'name="prompt"' in page.text
+            and 'name="palette"' in page.text
+        )
+        nonce = re.search(r'name="client_token" value="([^"]+)"', page.text)[1]
+        data = dict(
+            csrf=token(client),
+            client_token=nonce,
+            patient_id="1",
+            question_builder="yes",
+            title="Мой показатель",
+            prompt="Что было полезным?",
+            kind="multi",
+            options="Отдых\nРазговор",
+            category="activity",
+            palette="goals",
+            frequency="daily",
+            condition="always",
+        )
+        assert client.post("/doctor/diary-cards/new", data=data).status_code == 200
+        assert client.post("/doctor/diary-cards/new", data=data).status_code == 200
+        metric = assigned(client)[0]
+        mid = metric["id"]
+        assert len(assigned(client)) == 1 and metric["palette"] == "goals"
+        with TestClient(create_app(client.app.state.db_path)) as restarted:
+            login(restarted, "doctor")
+            own = restarted.get("/doctor/diary-cards?category=own")
+            assert (
+                len(own.context["cards"]) == 1
+                and own.context["cards"][0]["prompt"] == "Что было полезным?"
+            )
+        login(client, "patient1")
+        assert (
+            save_entry(
+                client, **{f"version_{mid}": "1", f"metric_{mid}": ["Отдых", "Разговор"]}
+            ).status_code
+            == 200
+        )
+        login(client, "doctor")
+        change = {**data, "title": "Новый заголовок", "revision": "1"}
+>       assert (
+            client.post(f"/patients/1/diary/questions/{mid}/save", data=change).status_code
+            == 200
+        )
+E       AssertionError: assert 403 == 200
+E        +  where 403 = <Response [403 Forbidden]>.status_code
+E        +    where <Response [403 Forbidden]> = post('/patients/1/diary/questions/1/save', data={'category': 'activity', 'client_token': 'H7Ge1QZ08_Gy96GMnBfzMGj88xhL4IXM', 'condition': 'always', 'csrf': '-40t6mNSYGAijm9ezv2lw8p2iLDkT4Lh', ...})
+E        +      where post = <starlette.testclient.TestClient object at 0x7f16bda8ec30>.post
+
+tests/test_diary_library.py:290: AssertionError
+____________ test_initial_page_and_profile_sections_load_separately ____________
+[gw0] linux -- Python 3.12.14 /workspace/clinical-compass/.venv/bin/python
+
+client = <starlette.testclient.TestClient object at 0x7fe5783e9940>
+
+    def test_initial_page_and_profile_sections_load_separately(client):
+        login(client, "patient1")
+        r = client.get("/me")
+        assert r.url.path == "/patients/1/diary"
+        for entry in ["/", "/patients/1", "/me/overview"]:
+>           assert client.get(entry).url.path == r.url.path
+E           AssertionError: assert '/' == '/patients/1/diary'
+E
+E             - /patients/1/diary
+E             + /
+
+tests/test_navigation_v4.py:19: AssertionError
+______ test_library_sections_active_navigation_and_forum_at_end_of_tasks _______
+[gw0] linux -- Python 3.12.14 /workspace/clinical-compass/.venv/bin/python
+
+client = <starlette.testclient.TestClient object at 0x7fe5783a0350>
+
+    def test_library_sections_active_navigation_and_forum_at_end_of_tasks(client):
+        login(client, "doctor")
+        library = client.get("/doctor/library", follow_redirects=False)
+        assert library.status_code == 200 and library.headers["cache-control"] == "no-store"
+>       assert library.text.count('class="library-section"') == 4
+E       assert 0 == 4
+E        +  where 0 = <built-in method count of str object at 0x41205420>('class="library-section"')
+E        +    where <built-in method count of str object at 0x41205420> = '<!DOCTYPE html>\n\n<html lang="ru">\n    <head>\n        <meta charset="utf-8">\n        <meta name="csrf-token" cont...ите реальные медицинские данные.</small>\n    </footer>\n    <p id="voice-status" role="status"></p>\n</body>\n</html>'.count
+E        +      where '<!DOCTYPE html>\n\n<html lang="ru">\n    <head>\n        <meta charset="utf-8">\n        <meta name="csrf-token" cont...ите реальные медицинские данные.</small>\n    </footer>\n    <p id="voice-status" role="status"></p>\n</body>\n</html>' = <Response [200 OK]>.text
+
+tests/test_intake_navigation_library.py:186: AssertionError
+______________ test_public_emergency_requires_no_login_or_consent ______________
+[gw1] linux -- Python 3.12.14 /workspace/clinical-compass/.venv/bin/python
+
+client = <starlette.testclient.TestClient object at 0x7efe382bbe00>
+
+    def test_public_emergency_requires_no_login_or_consent(client):
+        page = client.get("/help-now")
+        assert page.status_code == 200
+        assert "<h1>Экстренная помощь</h1>" in page.text
+        assert 'href="tel:112"' in page.text
+>       assert "При непосредственной опасности" in page.text
+E       assert 'При непосредственной опасности' in '<!DOCTYPE html>\n\n<html lang="ru">\n    <head>\n        <meta charset="utf-8">\n        <meta name="csrf-token" cont...ите реальные медицинские данные.</small>\n    </footer>\n    <p id="voice-status" role="status"></p>\n</body>\n</html>'
+E        +  where '<!DOCTYPE html>\n\n<html lang="ru">\n    <head>\n        <meta charset="utf-8">\n        <meta name="csrf-token" cont...ите реальные медицинские данные.</small>\n    </footer>\n    <p id="voice-status" role="status"></p>\n</body>\n</html>' = <Response [200 OK]>.text
+
+tests/test_interface.py:14: AssertionError
+______ test_calendar_embeds_audio_processing_and_patient_specific_summary ______
+[gw3] linux -- Python 3.12.14 /workspace/clinical-compass/.venv/bin/python
+
+client = <starlette.testclient.TestClient object at 0x7f16bc644770>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f16bc6c4770>
+
+    def test_calendar_embeds_audio_processing_and_patient_specific_summary(
+        client, monkeypatch
+    ):
+        login(client, "patient1")
+        login(client, "doctor")
+        data = calendar_form(client, date="2020-01-01", patient_id="1", url="", fallback="")
+        response = client.post("/doctor/calendar/events", data=data)
+        assert response.status_code == 200 and response.url.path == "/doctor/calendar"
+        aid = records(client, "appointments")[0]["id"]
+        response = client.post(
+            f"/patients/1/appointments/{aid}/meeting",
+            data=dict(csrf=token(client), calendar="true"),
+        )
+        assert response.status_code == 200 and response.url.path == "/doctor/calendar"
+        meeting = records(client, "meeting_sessions")[0]
+        mid = meeting["id"]
+        grants(client, meeting["context_id"])
+        assert (
+            upload(client, mid, calendar="true")
+            .headers["location"]
+            .startswith("/doctor/calendar?")
+        )
+        rid = recording_id(client)
+        for kind in ("transcript", "summary"):
+            r = client.post(
+                f"/meeting-recordings/{rid}/jobs/{kind}",
+                data=dict(csrf=token(client), calendar="true"),
+            )
+            assert r.status_code == 200 and r.url.path == "/doctor/calendar"
+            assert process_one(client.app.state.db_path, SyntheticModels())
+        html = client.get(f"/doctor/calendar?patient_id=1&meeting_id={mid}").text
+        assert 'name="calendar" value="true"' in html
+        assert "Черновик итогов" in html and "Следующие шаги" in html
+        assert "Расшифровать запись" in html
+>       assert re.search(
+            r'<a href="/doctor/calendar[^"\n]*#recording-'
+            + str(rid)
+            + r'">Показать итоги</a>',
+            html,
+        )
+E       assert None
+E        +  where None = <function search at 0x7f16d4b21260>((('<a href="/doctor/calendar[^"\\n]*#recording-' + '1') + '">Показать итоги</a>'), '<!DOCTYPE html>\n\n<html lang="ru">\n    <head>\n        <meta charset="utf-8">\n        <meta name="csrf-token" cont...ите реальные медицинские данные.</small>\n    </footer>\n    <p id="voice-status" role="status"></p>\n</body>\n</html>')
+E        +    where <function search at 0x7f16d4b21260> = re.search
+E        +    and   '1' = str(1)
+
+tests/test_specialist_upgrade.py:203: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     app.services.meetings:meetings.py:305 Meeting job=1 stage=decode_audio processed_seconds=0.0 units=0/0
+INFO     app.services.meetings:meetings.py:305 Meeting job=1 stage=validate_transcript processed_seconds=0.0 units=0/0
+INFO     app.services.meetings:meetings.py:305 Meeting job=1 stage=save_result processed_seconds=0.0 units=0/0
+INFO     app.services.meetings:meetings.py:305 Meeting job=2 stage=summarize processed_seconds=0.0 units=0/0
+INFO     app.services.meetings:meetings.py:305 Meeting job=2 stage=validate_summary processed_seconds=0.0 units=0/0
+INFO     app.services.meetings:meetings.py:305 Meeting job=2 stage=save_result processed_seconds=0.0 units=0/0
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/starlette/testclient.py:37
+.venv/lib/python3.12/site-packages/starlette/testclient.py:37
+.venv/lib/python3.12/site-packages/starlette/testclient.py:37
+.venv/lib/python3.12/site-packages/starlette/testclient.py:37
+.venv/lib/python3.12/site-packages/starlette/testclient.py:37
+  /workspace/clinical-compass/.venv/lib/python3.12/site-packages/starlette/testclient.py:37: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+- generated xml file: /workspace/clinical-compass/docs/reviews/technical-metrics-2026-10-28/pytest.xml -
+
+---------- coverage: platform linux, python 3.12.14-final-0 ----------
+Name                                     Stmts   Miss Branch BrPart  Cover
+--------------------------------------------------------------------------
+app/__init__.py                              0      0      0      0   100%
+app/adverse_catalog.py                       7      0      0      0   100%
+app/assets.py                               10      0      2      0   100%
+app/catalog.py                               4      0      0      0   100%
+app/charts.py                               27      0      8      1    97%
+app/community.py                            92      5     34      6    91%
+app/content.py                               2      0      0      0   100%
+app/experimental_ai/__init__.py              0      0      0      0   100%
+app/experimental_ai/analysis.py             52      0     20      1    99%
+app/experimental_ai/free_text.py             8      0      2      0   100%
+app/experimental_ai/jobs.py                 75      7     14      3    89%
+app/experimental_ai/ollama.py              139      9     54      7    92%
+app/experimental_ai/scenarios.py            22      0      4      0   100%
+app/experimental_ai/sources.py              67      3     20      3    93%
+app/experimental_ai/store.py                80      4     18      2    94%
+app/family.py                              185      7     58      8    94%
+app/intake_catalog.py                       42      0     10      0   100%
+app/main.py                                408     10     92      9    96%
+app/migrations/__init__.py                  28      5     12      2    82%
+app/portal.py                              229     12     74     11    92%
+app/recordings.py                           91      7     24      7    88%
+app/routes/__init__.py                       0      0      0      0   100%
+app/routes/care_orders.py                  140      4     18      4    95%
+app/routes/clinician_forum.py              195     11     62      8    93%
+app/routes/consultations.py                 87      7     26      8    87%
+app/routes/diary.py                         72      9     10      4    84%
+app/routes/diary_library.py                 84      5     18      4    91%
+app/routes/doctor_medicines.py              56      3      6      3    90%
+app/routes/drug_library.py                 292     20     98     13    91%
+app/routes/experimental_ai.py               94     16     16      3    81%
+app/routes/extract_requests.py             135      7     20      8    90%
+app/routes/intake.py                       289     40     80     13    83%
+app/routes/interface.py                     50      0     12      0   100%
+app/routes/materials.py                     85      4     12      5    91%
+app/routes/medicine_drafts.py               83      8     32      8    86%
+app/routes/medicine_reactions.py            45      0      0      0   100%
+app/routes/meetings.py                     255     30     62     14    85%
+app/routes/patient_ai.py                   168     50     30      2    69%
+app/routes/patient_extracts.py             163     10     32      4    93%
+app/routes/patient_journey.py               13      0      2      0   100%
+app/routes/settings.py                      51      1      6      1    96%
+app/safety.py                               50      1     26      1    97%
+app/scales.py                               49      1     26      1    97%
+app/security.py                             17      4      4      2    71%
+app/services/__init__.py                     0      0      0      0   100%
+app/services/account_settings.py            80      6     40      2    93%
+app/services/adverse_reactions.py           57      1     14      1    97%
+app/services/ai_display.py                  53      5     22      3    89%
+app/services/assessment_followups.py        13      0      8      0   100%
+app/services/assessment_results.py          19      0     12      0   100%
+app/services/aviandr_analysis.py           199     13     86     11    92%
+app/services/aviandr_applicability.py      253      7    130      6    96%
+app/services/aviandr_data.py               175     12     94     12    91%
+app/services/aviandr_jobs.py                87      7     16      4    89%
+app/services/aviandr_matching.py           125     17     72     14    81%
+app/services/aviandr_narratives.py         273      3    118      5    98%
+app/services/aviandr_ollama.py             136      9     58      8    91%
+app/services/aviandr_reviews.py             47      4     26      4    89%
+app/services/aviandr_sources.py             72     11     26      9    80%
+app/services/care_orders.py                141     12     56      9    89%
+app/services/clinical_attachments.py       101     26     28      8    74%
+app/services/clinical_forms.py             111     17     60     11    82%
+app/services/clinician_forum.py             57      7     30      7    84%
+app/services/clinician_profile.py           28      2      8      2    83%
+app/services/consent.py                    147     13     78     14    88%
+app/services/consultations.py              171     14     62      9    90%
+app/services/diagnosis_library.py            7      0      0      0   100%
+app/services/diary.py                       95     27     44      1    67%
+app/services/diary_library.py               82      3     30      3    95%
+app/services/diary_questions.py            302     48    174     39    82%
+app/services/doctor_calendar.py            168     27     74     15    82%
+app/services/doctor_medicines.py            64      4     20      4    90%
+app/services/drug_library.py               311     41    158     32    84%
+app/services/extract_narratives.py         115     27     60      6    74%
+app/services/extract_requests.py           240     21    102     20    87%
+app/services/extract_sources.py            120     52     60     12    50%
+app/services/family_layout.py              121      3     48      4    96%
+app/services/forum_attachments.py          112     19     54     12    80%
+app/services/information_requests.py       132      3     50      2    97%
+app/services/intake.py                     252     27     98     16    86%
+app/services/interface.py                   29      1     12      1    95%
+app/services/materials.py                   99      9     36      8    87%
+app/services/medication_preferences.py      87      7     32      5    90%
+app/services/medicine_drafts.py            107     13     50      9    86%
+app/services/medicine_reactions.py         207     13     76     10    91%
+app/services/medicine_reference.py          46      2     14      2    93%
+app/services/medicine_verification.py      113      7     56      8    91%
+app/services/medicine_web.py               211     25    108     18    86%
+app/services/meeting_ai.py                 338     46    130     17    85%
+app/services/meeting_media.py               69     13     26     10    76%
+app/services/meeting_progress.py            59      2     18      0    97%
+app/services/meeting_summary.py             36      1     18      1    96%
+app/services/meeting_views.py               62      4     28      4    91%
+app/services/meetings.py                   196     15     64     14    89%
+app/services/navigation.py                  30      4     16      0    91%
+app/services/patient_activity.py            33      0     10      0   100%
+app/services/patient_ai.py                 107      9     20      4    90%
+app/services/patient_ai_data.py            131     11     62     10    88%
+app/services/patient_extracts.py           207     18    102     18    88%
+app/services/patient_journey.py             25      0     10      0   100%
+app/services/safety_alerts.py               30      0      8      0   100%
+app/session_keys.py                         48      4     10      1    91%
+app/storage.py                              41      1     12      1    96%
+app/workflows.py                           471     31    192     31    91%
+--------------------------------------------------------------------------
+TOTAL                                    11289   1024   4170    643    88%
+Coverage JSON written to file docs/reviews/technical-metrics-2026-10-28/coverage.json
+
+============================= slowest 30 durations =============================
+9.09s call     tests/test_assessment_period_resume.py::test_old_phq4_and_automatic_followups_finish_in_same_original_session
+8.96s call     tests/test_adverse_reactions.py::test_only_sent_preferences_match_this_patients_draft_and_history
+8.41s call     tests/test_cabinet_revision.py::test_family_brother_sister_custom_unique_parents_and_medical_view
+7.89s call     tests/test_specialist_requests.py::test_request_is_scoped_idempotent_and_private_until_submission
+6.95s call     tests/test_forum_files_and_requests.py::test_preferences_only_appear_after_doctor_request_and_require_explicit_send
+6.50s call     tests/test_intake.py::test_catalogue_pages_and_private_draft_publication_versions
+6.21s call     tests/test_medicine_reactions.py::test_backup_immutable_records_lost_key_and_accounts_preserved
+6.08s call     tests/test_migration.py::test_upgrade_v2_preserves_accounts_assessments_and_adds_care_sections
+5.17s call     tests/test_specialist_refinements.py::test_activity_orders_patients_and_keeps_private_drafts_private
+5.12s setup    tests/test_forum_files_and_requests.py::test_birth_date_has_derived_age_and_removed_panels_are_absent
+5.06s setup    tests/test_aviandr_research.py::test_three_actual_scenarios_and_full_questionnaires_without_fabricated_rules
+4.82s call     tests/test_intake_navigation_library.py::test_next_saves_before_redirect_and_follows_relevant_sections
+4.78s setup    tests/test_app.py::test_diary_validation[override7]
+4.78s call     tests/test_forum_files_and_requests.py::test_birth_date_has_derived_age_and_removed_panels_are_absent
+4.70s setup    tests/test_safety_adaptation.py::test_unknown_second_answer_never_becomes_the_negative_branch[declined]
+4.69s call     tests/test_medication_preferences.py::test_private_preference_draft_then_explicit_send_does_not_send_intake
+4.66s setup    tests/test_clinician_forum.py::test_privacy_report_immediately_hides_topic_or_comment_until_author_corrects
+4.57s setup    tests/test_intake.py::test_inactive_answers_stay_private_and_submitted_question_texts_are_frozen
+4.55s setup    tests/test_meetings.py::test_expiry_purges_new_media_but_keeps_metadata
+4.47s setup    tests/test_intake.py::test_family_link_only_accepts_own_tree_and_patient_name_lookup_never_prescribes
+4.47s call     tests/test_migration.py::test_v3_upgrade_keeps_private_history_and_adds_family_slots_without_duplicates
+4.43s call     tests/test_intake_navigation_library.py::test_cycle_history_survives_sex_changes_without_showing_a_hidden_section
+4.40s setup    tests/test_account_meeting_permissions.py::test_old_meeting_decisions_and_preference_flags_are_not_new_global_grants
+4.39s call     tests/test_family_editing.py::test_upgrade_keeps_legacy_facts_and_does_not_assume_they_are_diagnoses
+4.36s call     tests/test_patient_extracts_http.py::test_document_editor_print_publication_and_private_draft_in_real_sessions
+4.26s call     tests/test_navigation_v4.py::test_family_tabs_preserve_sources_unknowns_and_ownership
+4.25s setup    tests/test_meeting_progress.py::test_progress_is_monotonic_and_only_saved_result_is_100_percent
+4.13s setup    tests/test_forum_files_and_requests.py::test_preferences_only_appear_after_doctor_request_and_require_explicit_send
+4.00s call     tests/test_concurrent_sessions.py::test_cookie_and_open_form_work_across_workers_and_restart
+3.96s setup    tests/test_medicine_verification.py::test_every_required_confirmation_and_instruction_section_is_mandatory[locator_indications]
+=========================== short test summary info ============================
+FAILED tests/test_settings.py::test_migration_checksum_and_original_records_survive_restarts
+FAILED tests/test_medicine_workspace.py::test_drafts_are_encrypted_versioned_per_patient_and_do_not_change_orders
+FAILED tests/test_diary_cards.py::test_patient_opens_diary_without_home_or_card_controls
+FAILED tests/test_diary_library.py::test_custom_library_card_survives_restart_and_patient_edits_keep_previous_answers
+FAILED tests/test_navigation_v4.py::test_initial_page_and_profile_sections_load_separately
+FAILED tests/test_intake_navigation_library.py::test_library_sections_active_navigation_and_forum_at_end_of_tasks
+FAILED tests/test_interface.py::test_public_emergency_requires_no_login_or_consent
+FAILED tests/test_specialist_upgrade.py::test_calendar_embeds_audio_processing_and_patient_specific_summary
+8 failed, 1031 passed, 5 warnings in 556.72s (0:09:16)

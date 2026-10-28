@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="7" skipped="0" tests="8" time="10.568" timestamp="2026-10-28T10:14:05.462254+00:00" hostname="cdcb92692374"><testcase classname="tests.test_settings" name="test_migration_checksum_and_original_records_survive_restarts" time="1.198"><failure message="AssertionError: assert ['001_account...ess.sql', ...] == ['001_account...ess.sql', ...]&#10;  &#10;  Left contains 5 more items, first extra item: '019_forum_files_and_preference_requests.sql'&#10;  Use -v to get more diff">client = &lt;starlette.testclient.TestClient object at 0x7fa1cd0030b0&gt;
+
+    def test_migration_checksum_and_original_records_survive_restarts(client):
+        login(client, "patient1")
+        original = user_row(client, "patient1")
+        with TestClient(create_app(client.app.state.db_path)) as restarted:
+            with connect(restarted.app.state.db_path) as c:
+&gt;               assert [
+                    r[0]
+                    for r in c.execute(
+                        "SELECT version FROM schema_migrations ORDER BY version"
+                    )
+                ] == [
+                    "001_account_settings.sql",
+                    "002_interface_preferences.sql",
+                    "003_diary_cards.sql",
+                    "004_drug_library.sql",
+                    "005_meeting_processing.sql",
+                    "006_meeting_progress.sql",
+                    "007_account_meeting_consents.sql",
+                    "008_intake_and_diary_questions.sql",
+                    "009_resources_and_family.sql",
+                    "010_consultation_slots.sql",
+                    "011_patient_ai.sql",
+                    "012_clinician_forum.sql",
+                    "013_patient_information_requests.sql",
+                    "014_medicine_drafts.sql",
+                    "015_care_orders.sql",
+                    "016_medication_preferences.sql",
+                    "017_medicine_reactions.sql",
+                    "018_aviandr_research.sql",
+                ]
+E               AssertionError: assert ['001_account...ess.sql', ...] == ['001_account...ess.sql', ...]
+E
+E                 Left contains 5 more items, first extra item: '019_forum_files_and_preference_requests.sql'
+E                 Use -v to get more diff
+
+tests/test_settings.py:455: AssertionError</failure></testcase><testcase classname="tests.test_medicine_workspace" name="test_drafts_are_encrypted_versioned_per_patient_and_do_not_change_orders" time="2.410" /><testcase classname="tests.test_diary_cards" name="test_patient_opens_diary_without_home_or_card_controls" time="0.819"><failure message="AssertionError: assert '/' == '/patients/1/diary'&#10;  &#10;  - /patients/1/diary&#10;  + /">client = &lt;starlette.testclient.TestClient object at 0x7fa1c6ec30e0&gt;
+
+    def test_patient_opens_diary_without_home_or_card_controls(client):
+        login(client, 'patient1')
+        for entry in ('/', '/me', '/me/overview', '/patients/1'):
+&gt;           assert client.get(entry).url.path == '/patients/1/diary'
+E           AssertionError: assert '/' == '/patients/1/diary'
+E
+E             - /patients/1/diary
+E             + /
+
+tests/test_diary_cards.py:28: AssertionError</failure></testcase><testcase classname="tests.test_diary_library" name="test_custom_library_card_survives_restart_and_patient_edits_keep_previous_answers" time="1.695"><failure message="AssertionError: assert 403 == 200&#10; +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code&#10; +    where &lt;Response [403 Forbidden]&gt; = post('/patients/1/diary/questions/1/save', data={'category': 'activity', 'client_token': 'vyfWx4EZMFAnK1lh5H8QVzXDZ2b0bPPT', 'condition': 'always', 'csrf': 'zpc0vh0ofwX7zA2JZ4C-xkM0zhICOmwh', ...})&#10; +      where post = &lt;starlette.testclient.TestClient object at 0x7fa1cc661a00&gt;.post">client = &lt;starlette.testclient.TestClient object at 0x7fa1cc661a00&gt;
+
+    def test_custom_library_card_survives_restart_and_patient_edits_keep_previous_answers(
+        client,
+    ):
+        login(client, "doctor")
+        page = client.get("/doctor/diary-cards/new?patient_id=1")
+        assert (
+            page.status_code == 200
+            and 'name="prompt"' in page.text
+            and 'name="palette"' in page.text
+        )
+        nonce = re.search(r'name="client_token" value="([^"]+)"', page.text)[1]
+        data = dict(
+            csrf=token(client),
+            client_token=nonce,
+            patient_id="1",
+            question_builder="yes",
+            title="Мой показатель",
+            prompt="Что было полезным?",
+            kind="multi",
+            options="Отдых\nРазговор",
+            category="activity",
+            palette="goals",
+            frequency="daily",
+            condition="always",
+        )
+        assert client.post("/doctor/diary-cards/new", data=data).status_code == 200
+        assert client.post("/doctor/diary-cards/new", data=data).status_code == 200
+        metric = assigned(client)[0]
+        mid = metric["id"]
+        assert len(assigned(client)) == 1 and metric["palette"] == "goals"
+        with TestClient(create_app(client.app.state.db_path)) as restarted:
+            login(restarted, "doctor")
+            own = restarted.get("/doctor/diary-cards?category=own")
+            assert (
+                len(own.context["cards"]) == 1
+                and own.context["cards"][0]["prompt"] == "Что было полезным?"
+            )
+        login(client, "patient1")
+        assert (
+            save_entry(
+                client, **{f"version_{mid}": "1", f"metric_{mid}": ["Отдых", "Разговор"]}
+            ).status_code
+            == 200
+        )
+        login(client, "doctor")
+        change = {**data, "title": "Новый заголовок", "revision": "1"}
+&gt;       assert (
+            client.post(f"/patients/1/diary/questions/{mid}/save", data=change).status_code
+            == 200
+        )
+E       AssertionError: assert 403 == 200
+E        +  where 403 = &lt;Response [403 Forbidden]&gt;.status_code
+E        +    where &lt;Response [403 Forbidden]&gt; = post('/patients/1/diary/questions/1/save', data={'category': 'activity', 'client_token': 'vyfWx4EZMFAnK1lh5H8QVzXDZ2b0bPPT', 'condition': 'always', 'csrf': 'zpc0vh0ofwX7zA2JZ4C-xkM0zhICOmwh', ...})
+E        +      where post = &lt;starlette.testclient.TestClient object at 0x7fa1cc661a00&gt;.post
+
+tests/test_diary_library.py:290: AssertionError</failure></testcase><testcase classname="tests.test_navigation_v4" name="test_initial_page_and_profile_sections_load_separately" time="0.998"><failure message="AssertionError: assert '/' == '/patients/1/diary'&#10;  &#10;  - /patients/1/diary&#10;  + /">client = &lt;starlette.testclient.TestClient object at 0x7fa1cc5727b0&gt;
+
+    def test_initial_page_and_profile_sections_load_separately(client):
+        login(client, "patient1")
+        r = client.get("/me")
+        assert r.url.path == "/patients/1/diary"
+        for entry in ["/", "/patients/1", "/me/overview"]:
+&gt;           assert client.get(entry).url.path == r.url.path
+E           AssertionError: assert '/' == '/patients/1/diary'
+E
+E             - /patients/1/diary
+E             + /
+
+tests/test_navigation_v4.py:19: AssertionError</failure></testcase><testcase classname="tests.test_intake_navigation_library" name="test_library_sections_active_navigation_and_forum_at_end_of_tasks" time="0.687"><failure message="assert 0 == 4&#10; +  where 0 = &lt;built-in method count of str object at 0x2f7edfd0&gt;('class=&quot;library-section&quot;')&#10; +    where &lt;built-in method count of str object at 0x2f7edfd0&gt; = '&lt;!DOCTYPE html&gt;\n\n&lt;html lang=&quot;ru&quot;&gt;\n    &lt;head&gt;\n        &lt;meta charset=&quot;utf-8&quot;&gt;\n        &lt;meta name=&quot;csrf-token&quot; cont...ите реальные медицинские данные.&lt;/small&gt;\n    &lt;/footer&gt;\n    &lt;p id=&quot;voice-status&quot; role=&quot;status&quot;&gt;&lt;/p&gt;\n&lt;/body&gt;\n&lt;/html&gt;'.count&#10; +      where '&lt;!DOCTYPE html&gt;\n\n&lt;html lang=&quot;ru&quot;&gt;\n    &lt;head&gt;\n        &lt;meta charset=&quot;utf-8&quot;&gt;\n        &lt;meta name=&quot;csrf-token&quot; cont...ите реальные медицинские данные.&lt;/small&gt;\n    &lt;/footer&gt;\n    &lt;p id=&quot;voice-status&quot; role=&quot;status&quot;&gt;&lt;/p&gt;\n&lt;/body&gt;\n&lt;/html&gt;' = &lt;Response [200 OK]&gt;.text">client = &lt;starlette.testclient.TestClient object at 0x7fa1cc3939b0&gt;
+
+    def test_library_sections_active_navigation_and_forum_at_end_of_tasks(client):
+        login(client, "doctor")
+        library = client.get("/doctor/library", follow_redirects=False)
+        assert library.status_code == 200 and library.headers["cache-control"] == "no-store"
+&gt;       assert library.text.count('class="library-section"') == 4
+E       assert 0 == 4
+E        +  where 0 = &lt;built-in method count of str object at 0x2f7edfd0&gt;('class="library-section"')
+E        +    where &lt;built-in method count of str object at 0x2f7edfd0&gt; = '&lt;!DOCTYPE html&gt;\n\n&lt;html lang="ru"&gt;\n    &lt;head&gt;\n        &lt;meta charset="utf-8"&gt;\n        &lt;meta name="csrf-token" cont...ите реальные медицинские данные.&lt;/small&gt;\n    &lt;/footer&gt;\n    &lt;p id="voice-status" role="status"&gt;&lt;/p&gt;\n&lt;/body&gt;\n&lt;/html&gt;'.count
+E        +      where '&lt;!DOCTYPE html&gt;\n\n&lt;html lang="ru"&gt;\n    &lt;head&gt;\n        &lt;meta charset="utf-8"&gt;\n        &lt;meta name="csrf-token" cont...ите реальные медицинские данные.&lt;/small&gt;\n    &lt;/footer&gt;\n    &lt;p id="voice-status" role="status"&gt;&lt;/p&gt;\n&lt;/body&gt;\n&lt;/html&gt;' = &lt;Response [200 OK]&gt;.text
+
+tests/test_intake_navigation_library.py:186: AssertionError</failure></testcase><testcase classname="tests.test_interface" name="test_public_emergency_requires_no_login_or_consent" time="0.803"><failure message="assert 'При непосредственной опасности' in '&lt;!DOCTYPE html&gt;\n\n&lt;html lang=&quot;ru&quot;&gt;\n    &lt;head&gt;\n        &lt;meta charset=&quot;utf-8&quot;&gt;\n        &lt;meta name=&quot;csrf-token&quot; cont...ите реальные медицинские данные.&lt;/small&gt;\n    &lt;/footer&gt;\n    &lt;p id=&quot;voice-status&quot; role=&quot;status&quot;&gt;&lt;/p&gt;\n&lt;/body&gt;\n&lt;/html&gt;'&#10; +  where '&lt;!DOCTYPE html&gt;\n\n&lt;html lang=&quot;ru&quot;&gt;\n    &lt;head&gt;\n        &lt;meta charset=&quot;utf-8&quot;&gt;\n        &lt;meta name=&quot;csrf-token&quot; cont...ите реальные медицинские данные.&lt;/small&gt;\n    &lt;/footer&gt;\n    &lt;p id=&quot;voice-status&quot; role=&quot;status&quot;&gt;&lt;/p&gt;\n&lt;/body&gt;\n&lt;/html&gt;' = &lt;Response [200 OK]&gt;.text">client = &lt;starlette.testclient.TestClient object at 0x7fa1cc3dbd10&gt;
+
+    def test_public_emergency_requires_no_login_or_consent(client):
+        page = client.get("/help-now")
+        assert page.status_code == 200
+        assert "&lt;h1&gt;Экстренная помощь&lt;/h1&gt;" in page.text
+        assert 'href="tel:112"' in page.text
+&gt;       assert "При непосредственной опасности" in page.text
+E       assert 'При непосредственной опасности' in '&lt;!DOCTYPE html&gt;\n\n&lt;html lang="ru"&gt;\n    &lt;head&gt;\n        &lt;meta charset="utf-8"&gt;\n        &lt;meta name="csrf-token" cont...ите реальные медицинские данные.&lt;/small&gt;\n    &lt;/footer&gt;\n    &lt;p id="voice-status" role="status"&gt;&lt;/p&gt;\n&lt;/body&gt;\n&lt;/html&gt;'
+E        +  where '&lt;!DOCTYPE html&gt;\n\n&lt;html lang="ru"&gt;\n    &lt;head&gt;\n        &lt;meta charset="utf-8"&gt;\n        &lt;meta name="csrf-token" cont...ите реальные медицинские данные.&lt;/small&gt;\n    &lt;/footer&gt;\n    &lt;p id="voice-status" role="status"&gt;&lt;/p&gt;\n&lt;/body&gt;\n&lt;/html&gt;' = &lt;Response [200 OK]&gt;.text
+
+tests/test_interface.py:14: AssertionError</failure></testcase><testcase classname="tests.test_specialist_upgrade" name="test_calendar_embeds_audio_processing_and_patient_specific_summary" time="1.607"><failure message="assert None&#10; +  where None = &lt;function search at 0x7fa1df0a3d80&gt;((('&lt;a href=&quot;/doctor/calendar[^&quot;\\n]*#recording-' + '1') + '&quot;&gt;Показать итоги&lt;/a&gt;'), '&lt;!DOCTYPE html&gt;\n\n&lt;html lang=&quot;ru&quot;&gt;\n    &lt;head&gt;\n        &lt;meta charset=&quot;utf-8&quot;&gt;\n        &lt;meta name=&quot;csrf-token&quot; cont...ите реальные медицинские данные.&lt;/small&gt;\n    &lt;/footer&gt;\n    &lt;p id=&quot;voice-status&quot; role=&quot;status&quot;&gt;&lt;/p&gt;\n&lt;/body&gt;\n&lt;/html&gt;')&#10; +    where &lt;function search at 0x7fa1df0a3d80&gt; = re.search&#10; +    and   '1' = str(1)">client = &lt;starlette.testclient.TestClient object at 0x7fa1cc4680e0&gt;
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7fa1cc46bbf0&gt;
+
+    def test_calendar_embeds_audio_processing_and_patient_specific_summary(
+        client, monkeypatch
+    ):
+        login(client, "patient1")
+        login(client, "doctor")
+        data = calendar_form(client, date="2020-01-01", patient_id="1", url="", fallback="")
+        response = client.post("/doctor/calendar/events", data=data)
+        assert response.status_code == 200 and response.url.path == "/doctor/calendar"
+        aid = records(client, "appointments")[0]["id"]
+        response = client.post(
+            f"/patients/1/appointments/{aid}/meeting",
+            data=dict(csrf=token(client), calendar="true"),
+        )
+        assert response.status_code == 200 and response.url.path == "/doctor/calendar"
+        meeting = records(client, "meeting_sessions")[0]
+        mid = meeting["id"]
+        grants(client, meeting["context_id"])
+        assert (
+            upload(client, mid, calendar="true")
+            .headers["location"]
+            .startswith("/doctor/calendar?")
+        )
+        rid = recording_id(client)
+        for kind in ("transcript", "summary"):
+            r = client.post(
+                f"/meeting-recordings/{rid}/jobs/{kind}",
+                data=dict(csrf=token(client), calendar="true"),
+            )
+            assert r.status_code == 200 and r.url.path == "/doctor/calendar"
+            assert process_one(client.app.state.db_path, SyntheticModels())
+        html = client.get(f"/doctor/calendar?patient_id=1&amp;meeting_id={mid}").text
+        assert 'name="calendar" value="true"' in html
+        assert "Черновик итогов" in html and "Следующие шаги" in html
+        assert "Расшифровать запись" in html
+&gt;       assert re.search(
+            r'&lt;a href="/doctor/calendar[^"\n]*#recording-'
+            + str(rid)
+            + r'"&gt;Показать итоги&lt;/a&gt;',
+            html,
+        )
+E       assert None
+E        +  where None = &lt;function search at 0x7fa1df0a3d80&gt;((('&lt;a href="/doctor/calendar[^"\\n]*#recording-' + '1') + '"&gt;Показать итоги&lt;/a&gt;'), '&lt;!DOCTYPE html&gt;\n\n&lt;html lang="ru"&gt;\n    &lt;head&gt;\n        &lt;meta charset="utf-8"&gt;\n        &lt;meta name="csrf-token" cont...ите реальные медицинские данные.&lt;/small&gt;\n    &lt;/footer&gt;\n    &lt;p id="voice-status" role="status"&gt;&lt;/p&gt;\n&lt;/body&gt;\n&lt;/html&gt;')
+E        +    where &lt;function search at 0x7fa1df0a3d80&gt; = re.search
+E        +    and   '1' = str(1)
+
+tests/test_specialist_upgrade.py:203: AssertionError</failure></testcase></testsuite></testsuites>

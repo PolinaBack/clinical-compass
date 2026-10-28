@@ -1,0 +1,489 @@
+{
+  "commit": "f388634e1e89e115eb7ece9a3db1be9f917195ba",
+  "at": "2026-10-28T10:11:21+00:00",
+  "python": "3.12.14",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "cpu_count": 5,
+  "cpu_affinity_count": 5,
+  "sqlite": "3.53.1",
+  "packages": {
+    "fastapi": "0.115.12",
+    "uvicorn": "0.34.2",
+    "httpx": "0.28.1",
+    "cryptography": "46.0.7"
+  },
+  "working_database_sha256_before": "682838038e9b33aaf8491b9c33a4c0ee29a9c73396915da15db443ef0d61e1cd",
+  "cpu.max": "800000 200000",
+  "memory.max": "34359738368",
+  "dataset": {
+    "patients": 55,
+    "accounts": 58,
+    "diary": 4590,
+    "assessments": 27,
+    "answers": 180
+  },
+  "schema": {
+    "tables": 97,
+    "indexes": 95,
+    "migrations": 23,
+    "foreign_key_check": [],
+    "journal_mode": "delete",
+    "synchronous": 2,
+    "diary_query_plan": [
+      [
+        5,
+        0,
+        61,
+        "SEARCH diary USING INDEX diary_patient (patient_id=?)"
+      ],
+      [
+        28,
+        0,
+        0,
+        "USE TEMP B-TREE FOR ORDER BY"
+      ]
+    ]
+  },
+  "offline_analysis": {
+    "C": {
+      "n": 30,
+      "mean_ms": 27.944,
+      "p50_ms": 25.502,
+      "p95_ms": 50.035,
+      "p99_ms": 51.086,
+      "max_ms": 51.086,
+      "directions": 4,
+      "basis_entries": 12,
+      "verified_official_sources": 0
+    },
+    "D": {
+      "n": 30,
+      "mean_ms": 33.278,
+      "p50_ms": 28.778,
+      "p95_ms": 46.32,
+      "p99_ms": 85.62,
+      "max_ms": 85.62,
+      "directions": 4,
+      "basis_entries": 12,
+      "verified_official_sources": 0
+    }
+  },
+  "sql_read": {
+    "n": 200,
+    "mean_ms": 0.26,
+    "p50_ms": 0.168,
+    "p95_ms": 0.641,
+    "p99_ms": 1.606,
+    "max_ms": 2.359
+  },
+  "startup_ms": 1482.15,
+  "security_checks": [
+    {
+      "check": "anonymous_access",
+      "path": "/doctor/messages",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "check": "anonymous_access",
+      "path": "/api/safety-messages",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "check": "anonymous_access",
+      "path": "/patients/100/diary",
+      "status": 401,
+      "passed": true
+    },
+    {
+      "check": "patient_role_and_ownership",
+      "path": "/api/safety-messages",
+      "status": 403,
+      "passed": true
+    },
+    {
+      "check": "patient_role_and_ownership",
+      "path": "/patients/101/diary",
+      "status": 403,
+      "passed": true
+    },
+    {
+      "check": "patient_role_and_ownership",
+      "path": "/patients/100/ai-analysis",
+      "status": 403,
+      "passed": true
+    },
+    {
+      "check": "csrf_invalid",
+      "status": 403,
+      "passed": true
+    },
+    {
+      "check": "invalid_wellbeing_input",
+      "value": -1,
+      "status": 422,
+      "passed": true
+    },
+    {
+      "check": "invalid_wellbeing_input",
+      "value": 11,
+      "status": 422,
+      "passed": true
+    },
+    {
+      "check": "invalid_wellbeing_input",
+      "value": "invalid",
+      "status": 422,
+      "passed": true
+    },
+    {
+      "check": "invalid_wellbeing_input",
+      "value": "",
+      "status": 422,
+      "passed": true
+    },
+    {
+      "check": "other_doctor_ownership",
+      "status": 403,
+      "passed": true
+    },
+    {
+      "check": "invalid_writes_leave_no_rows",
+      "rows": 0,
+      "passed": true
+    }
+  ],
+  "http_read": {
+    "/": {
+      "n": 30,
+      "mean_ms": 6.101,
+      "p50_ms": 5.831,
+      "p95_ms": 7.982,
+      "p99_ms": 11.655,
+      "max_ms": 11.655
+    },
+    "/doctor": {
+      "n": 30,
+      "mean_ms": 32.921,
+      "p50_ms": 31.458,
+      "p95_ms": 40.523,
+      "p99_ms": 52.074,
+      "max_ms": 52.074
+    },
+    "/doctor/messages": {
+      "n": 30,
+      "mean_ms": 7.432,
+      "p50_ms": 7.082,
+      "p95_ms": 9.687,
+      "p99_ms": 12.87,
+      "max_ms": 12.87
+    },
+    "/api/safety-messages": {
+      "n": 30,
+      "mean_ms": 9.421,
+      "p50_ms": 8.414,
+      "p95_ms": 13.494,
+      "p99_ms": 14.801,
+      "max_ms": 14.801
+    },
+    "/medicines": {
+      "n": 30,
+      "mean_ms": 16.675,
+      "p50_ms": 15.161,
+      "p95_ms": 23.314,
+      "p99_ms": 53.56,
+      "max_ms": 53.56
+    },
+    "/patients/3/ai-analysis": {
+      "n": 30,
+      "mean_ms": 46.888,
+      "p50_ms": 43.349,
+      "p95_ms": 72.398,
+      "p99_ms": 76.024,
+      "max_ms": 76.024
+    }
+  },
+  "headers": {
+    "csp": false,
+    "nosniff": null,
+    "cache_control": "no-store",
+    "session_httponly": true,
+    "session_samesite": "strict",
+    "session_secure": false
+  },
+  "notice_api_after_commit": [
+    {
+      "commit_ms": 4.107585991732776,
+      "api_after_commit_ms": 10.144862986635417,
+      "found": true
+    },
+    {
+      "commit_ms": 2.3772119893692434,
+      "api_after_commit_ms": 10.274922009557486,
+      "found": true
+    },
+    {
+      "commit_ms": 2.9710849630646408,
+      "api_after_commit_ms": 15.786025032866746,
+      "found": true
+    },
+    {
+      "commit_ms": 2.8530809795483947,
+      "api_after_commit_ms": 11.493136989884079,
+      "found": true
+    },
+    {
+      "commit_ms": 2.0131109631620347,
+      "api_after_commit_ms": 16.302089032251388,
+      "found": true
+    },
+    {
+      "commit_ms": 1.869091996923089,
+      "api_after_commit_ms": 11.451766011305153,
+      "found": true
+    },
+    {
+      "commit_ms": 2.7438660035841167,
+      "api_after_commit_ms": 16.744793043471873,
+      "found": true
+    },
+    {
+      "commit_ms": 2.0669400109909475,
+      "api_after_commit_ms": 15.525394002906978,
+      "found": true
+    },
+    {
+      "commit_ms": 2.249323995783925,
+      "api_after_commit_ms": 19.970181048847735,
+      "found": true
+    },
+    {
+      "commit_ms": 2.166341000702232,
+      "api_after_commit_ms": 15.737192006781697,
+      "found": true
+    }
+  ],
+  "load": [
+    {
+      "concurrent_sessions": 1,
+      "requests": 8,
+      "read": {
+        "n": 6,
+        "mean_ms": 29.148,
+        "p50_ms": 28.801,
+        "p95_ms": 33.066,
+        "p99_ms": 33.066,
+        "max_ms": 33.066
+      },
+      "write": {
+        "n": 2,
+        "mean_ms": 14.135,
+        "p50_ms": 14.061,
+        "p95_ms": 14.209,
+        "p99_ms": 14.209,
+        "max_ms": 14.209
+      },
+      "all": {
+        "n": 8,
+        "mean_ms": 25.395,
+        "p50_ms": 28.077,
+        "p95_ms": 33.066,
+        "p99_ms": 33.066,
+        "max_ms": 33.066
+      },
+      "errors": [],
+      "elapsed_s": 0.203,
+      "throughput_rps": 39.35
+    },
+    {
+      "concurrent_sessions": 5,
+      "requests": 40,
+      "read": {
+        "n": 30,
+        "mean_ms": 211.908,
+        "p50_ms": 210.423,
+        "p95_ms": 289.216,
+        "p99_ms": 305.475,
+        "max_ms": 305.475
+      },
+      "write": {
+        "n": 10,
+        "mean_ms": 40.45,
+        "p50_ms": 32.382,
+        "p95_ms": 73.031,
+        "p99_ms": 73.031,
+        "max_ms": 73.031
+      },
+      "all": {
+        "n": 40,
+        "mean_ms": 169.044,
+        "p50_ms": 198.983,
+        "p95_ms": 275.563,
+        "p99_ms": 305.475,
+        "max_ms": 305.475
+      },
+      "errors": [],
+      "elapsed_s": 1.391,
+      "throughput_rps": 28.75
+    },
+    {
+      "concurrent_sessions": 10,
+      "requests": 80,
+      "read": {
+        "n": 60,
+        "mean_ms": 457.965,
+        "p50_ms": 453.262,
+        "p95_ms": 642.753,
+        "p99_ms": 676.363,
+        "max_ms": 676.363
+      },
+      "write": {
+        "n": 20,
+        "mean_ms": 106.583,
+        "p50_ms": 93.472,
+        "p95_ms": 173.265,
+        "p99_ms": 198.08,
+        "max_ms": 198.08
+      },
+      "all": {
+        "n": 80,
+        "mean_ms": 370.119,
+        "p50_ms": 394.661,
+        "p95_ms": 619.337,
+        "p99_ms": 676.363,
+        "max_ms": 676.363
+      },
+      "errors": [],
+      "elapsed_s": 3.027,
+      "throughput_rps": 26.43
+    },
+    {
+      "concurrent_sessions": 25,
+      "requests": 200,
+      "read": {
+        "n": 150,
+        "mean_ms": 1244.386,
+        "p50_ms": 1156.937,
+        "p95_ms": 2166.254,
+        "p99_ms": 3296.991,
+        "max_ms": 3331.517
+      },
+      "write": {
+        "n": 50,
+        "mean_ms": 383.613,
+        "p50_ms": 400.831,
+        "p95_ms": 762.357,
+        "p99_ms": 871.947,
+        "max_ms": 871.947
+      },
+      "all": {
+        "n": 200,
+        "mean_ms": 1029.193,
+        "p50_ms": 1031.907,
+        "p95_ms": 2027.65,
+        "p99_ms": 2441.26,
+        "max_ms": 3331.517
+      },
+      "errors": [],
+      "elapsed_s": 8.756,
+      "throughput_rps": 22.84
+    },
+    {
+      "concurrent_sessions": 50,
+      "requests": 400,
+      "read": {
+        "n": 300,
+        "mean_ms": 2626.051,
+        "p50_ms": 2308.777,
+        "p95_ms": 4855.835,
+        "p99_ms": 6798.081,
+        "max_ms": 7857.293
+      },
+      "write": {
+        "n": 100,
+        "mean_ms": 1030.07,
+        "p50_ms": 1007.392,
+        "p95_ms": 1797.635,
+        "p99_ms": 1845.334,
+        "max_ms": 1911.367
+      },
+      "all": {
+        "n": 400,
+        "mean_ms": 2227.056,
+        "p50_ms": 1994.596,
+        "p95_ms": 4421.872,
+        "p99_ms": 6761.564,
+        "max_ms": 7857.293
+      },
+      "errors": [
+        {
+          "method": "GET",
+          "status": 500
+        },
+        {
+          "method": "GET",
+          "error": "ReadError"
+        },
+        {
+          "method": "GET",
+          "status": 500
+        },
+        {
+          "method": "GET",
+          "status": 500
+        },
+        {
+          "method": "GET",
+          "status": 500
+        },
+        {
+          "method": "GET",
+          "error": "ReadError"
+        },
+        {
+          "method": "GET",
+          "error": "ReadError"
+        },
+        {
+          "method": "GET",
+          "error": "ReadError"
+        }
+      ],
+      "elapsed_s": 19.213,
+      "throughput_rps": 20.82
+    }
+  ],
+  "server_rss_bytes": 141291520,
+  "backup": {
+    "snapshot_ms": 31.224,
+    "bytes": 8044544,
+    "key_included": true,
+    "integrity": "ok",
+    "critical_snapshot_readable": true,
+    "post_backup_critical_event_in_old_snapshot": false,
+    "restored_web_start_ms": 1170.458,
+    "restored_auth_and_message_ms": 125.96,
+    "restored_critical_messages": 11,
+    "safety_only_backup": {
+      "key_included": false,
+      "decrypted": false,
+      "error": "HTTPException",
+      "status": 503
+    }
+  },
+  "crash": {
+    "integrity": "ok",
+    "uncommitted_rows": 0,
+    "committed_critical_snapshots_before": 12,
+    "committed_critical_snapshots_after": 12,
+    "kill_to_readable_ms": 10.86
+  },
+  "ollama": {
+    "available": false,
+    "error": "ConnectError"
+  },
+  "synthetic_database_bytes": 8044544,
+  "working_database_sha256_after": "682838038e9b33aaf8491b9c33a4c0ee29a9c73396915da15db443ef0d61e1cd",
+  "working_database_unchanged": true
+}

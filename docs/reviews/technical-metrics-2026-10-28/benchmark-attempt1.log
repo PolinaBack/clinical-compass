@@ -1,0 +1,9 @@
+Synthetic dataset ready
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspace/clinical-compass/scripts/measure_technical_metrics.py", line 659, in <module>
+    main()
+  File "/workspace/clinical-compass/scripts/measure_technical_metrics.py", line 573, in main
+    raise RuntimeError(
+RuntimeError: Benchmark route unavailable /reference/drugs: 404
